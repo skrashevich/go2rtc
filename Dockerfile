@@ -6,10 +6,10 @@ ARG GO_VERSION="1.19.3"
 ARG NGROK_VERSION="3.1.0"
 
 
-FROM python:${PYTHON_VERSION}-alpine AS base
+FROM python:${PYTHON_VERSION}-slim AS base
 
 
-FROM golang:${GO_VERSION}-alpine AS go
+FROM golang:${GO_VERSION} AS go
 
 
 FROM ngrok/ngrok:${NGROK_VERSION}-alpine AS ngrok
@@ -45,13 +45,21 @@ COPY ./docker/run.sh /run.sh
 
 # Final image
 FROM base
-
+ARG TARGETARCH
 # Install ffmpeg, bash (for run.sh), tini (for signal handling),
 # and other common tools for the echo source.
-RUN apk add --no-cache ffmpeg bash tini curl jq
+RUN apt update && apt-get install -y --no-upgrade  bash tini curl jq xz-utils && apt-get clean
+
+# Download and install ffmpeg binaries
+RUN --mount=type=bind,source=docker/ffmpeg.sh,target=/deps/ffmpeg.sh \
+        /deps/ffmpeg.sh
+
+ENV NVIDIA_DRIVER_CAPABILITIES="compute,video,utility"
+
+ENV PATH="/usr/lib/btbn-ffmpeg/bin:${PATH}"
 
 COPY --from=rootfs / /
 
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["/run.sh"]
