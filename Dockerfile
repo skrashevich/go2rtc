@@ -1,10 +1,7 @@
-# https://hub.docker.com/_/python/tags?page=1&name=-alpine
-ARG PYTHON_VERSION="3.10.8"
-# https://hub.docker.com/_/golang/tags?page=1&name=-alpine
-ARG GO_VERSION="1.19.3"
-# https://hub.docker.com/r/ngrok/ngrok/tags?page=1&name=-alpine
-ARG NGROK_VERSION="3.1.0"
-
+# 0. Prepare images
+ARG PYTHON_VERSION="3.11"
+ARG GO_VERSION="1.19"
+ARG NGROK_VERSION="3"
 
 FROM python:${PYTHON_VERSION}-slim AS base
 
@@ -15,35 +12,28 @@ FROM golang:${GO_VERSION} AS go
 FROM ngrok/ngrok:${NGROK_VERSION}-alpine AS ngrok
 
 
-# Build go2rtc binary
+# 1. Build go2rtc binary
 FROM go AS build
 
-WORKDIR /workspace
+WORKDIR /build
 
 # Cache dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Build binary
-COPY cmd cmd
-COPY pkg pkg
-COPY www www
-COPY main.go .
+COPY . .
 RUN CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
 
-RUN mkdir -p /config
 
-# Collect all files
+# 2. Collect all files
 FROM scratch AS rootfs
 
-COPY --from=build /workspace/go2rtc /usr/local/bin/
-# Ensure an empty /config folder exists so that the container can be run without a volume
-COPY --from=build /config /config
+COPY --from=build /build/go2rtc /usr/local/bin/
 COPY --from=ngrok /bin/ngrok /usr/local/bin/
-COPY ./docker/run.sh /run.sh
+COPY ./build/docker/run.sh /
 
 
-# Final image
+# 3. Final image
 FROM base
 ARG TARGETARCH
 # Install ffmpeg, bash (for run.sh), tini (for signal handling),
