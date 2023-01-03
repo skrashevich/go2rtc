@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const packetSize = 8192
+const packetSize = 1400
 
 func handlerWSMSE(tr *api.Transport, msg *api.Message) error {
 	src := tr.Request.URL.Query().Get("src")
@@ -85,6 +85,8 @@ func handlerWSMP4(tr *api.Transport, msg *api.Message) error {
 		log.Error().Err(err).Caller().Send()
 		return err
 	}
+
+	tr.Write(&api.Message{Type: "mp4", Value: cons.MimeType})
 
 	tr.OnClose(func() {
 		stream.RemoveConsumer(cons)
