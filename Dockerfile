@@ -61,8 +61,6 @@ RUN apt update && apt-get install -y --no-upgrade  bash tini curl jq xz-utils &&
 RUN <<EOT
     #!/bin/bash
 
-    set -euxo pipefail
-
     # btbn-ffmpeg -> amd64 / arm64
     if [[ "${TARGETARCH}" == "amd64" || "${TARGETARCH}" == "arm64" ]]; then
         if [[ "${TARGETARCH}" == "amd64" ]]; then
