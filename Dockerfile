@@ -87,5 +87,5 @@ ENV PATH="/usr/lib/btbn-ffmpeg/bin:${PATH}"
 COPY --from=rootfs / /
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-
+RUN chmod +x /run.sh
 CMD ["/run.sh"]
