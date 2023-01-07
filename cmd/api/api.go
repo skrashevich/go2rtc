@@ -2,12 +2,15 @@ package api
 
 import (
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 
 	"github.com/AlexxIT/go2rtc/cmd/app"
 	"github.com/AlexxIT/go2rtc/cmd/streams"
 	"github.com/rs/zerolog"
+	"gopkg.in/yaml.v3"
 )
 
 type apiCfg struct {
@@ -45,6 +48,8 @@ func Init() {
 
 	HandleFunc("api/streams", streamsHandler)
 	HandleFunc("api/ws", apiWS)
+	HandleFunc("api/saveConfig", handleSaveConfig)
+	HandleFunc("api/getConfig", handleGetConfig)
 
 	// ensure we can listen without errors
 	listener, err := net.Listen("tcp", cfg.Mod.Listen)
@@ -102,6 +107,44 @@ func middlewareCORS(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		next.ServeHTTP(w, r)
 	})
+}
+func handleGetConfig(w http.ResponseWriter, r *http.Request) {
+
+	absPath := app.GetConfigPath()
+
+	// Read the file contents.
+	body, err := ioutil.ReadFile(absPath)
+
+	if err != nil {
+		w.Write([]byte(""))
+		return
+	}
+	w.Write(body)
+}
+
+func handleSaveConfig(w http.ResponseWriter, r *http.Request) {
+	absPath := app.GetConfigPath()
+
+	// Save the file contents.
+	body, _ := io.ReadAll(r.Body)
+
+	var cfg struct {
+		Mod map[string]string `yaml:"log"`
+	}
+
+	if body != nil {
+		if err := yaml.Unmarshal(body, &cfg); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err := ioutil.WriteFile(absPath, []byte(body), 0644)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func streamsHandler(w http.ResponseWriter, r *http.Request) {
