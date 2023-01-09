@@ -9,7 +9,7 @@ FROM python:${PYTHON_VERSION}-slim AS base
 FROM ngrok/ngrok:${NGROK_VERSION}-alpine AS ngrok
 
 # 0. collect ace editor
-FROM alpine:latest as ace
+FROM --platform=$BUILDPLATFORM alpine:latest as ace
 RUN apk add curl
 RUN <<EOT
     for i in \
@@ -39,7 +39,7 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go mod download
 
 COPY . .
-COPY --from=ace /ace.js www/ace.js
+COPY --link --from=ace /ace.js www/ace.js
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
 
 # 2. Collect all files
