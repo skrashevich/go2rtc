@@ -76,4 +76,4 @@ jobs:
           tags: ${{ steps.meta-hw.outputs.tags }}
           labels: ${{ steps.meta-hw.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha
+          cache-to: type=gha,mode=max
