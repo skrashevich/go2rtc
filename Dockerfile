@@ -5,7 +5,8 @@ ARG PYTHON_VERSION="3.11"
 ARG GO_VERSION="1.19"
 ARG NGROK_VERSION="3"
 
-FROM python:${PYTHON_VERSION}-alpine AS base
+FROM python:${PYTHON_VERSION}-slim AS base
+FROM ngrok/ngrok:${NGROK_VERSION}-alpine AS ngrok
 
 # 0. collect ace editor
 FROM alpine:latest as ace
@@ -45,7 +46,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
 FROM scratch AS rootfs
 
 COPY --from=build /build/go2rtc /usr/local/bin/
-COPY --from=ngrok/ngrok:${NGROK_VERSION}-alpine /bin/ngrok /usr/local/bin/
+COPY --from=ngrok /bin/ngrok /usr/local/bin/
 COPY ./build/docker/run.sh /
 
 
