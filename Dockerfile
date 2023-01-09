@@ -8,7 +8,6 @@ ARG NGROK_VERSION="3"
 FROM python:${PYTHON_VERSION}-alpine AS base
 FROM ngrok/ngrok:${NGROK_VERSION}-alpine AS ngrok
 
-
 # 1. Build go2rtc binary
 FROM --platform=$BUILDPLATFORM golang:${GO_VERSION}-alpine AS build
 ARG TARGETPLATFORM
@@ -22,10 +21,10 @@ WORKDIR /build
 
 # Cache dependencies
 COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/root/.cache/go-build go mod download
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go mod download
 
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
 
 
 # 2. Collect all files
