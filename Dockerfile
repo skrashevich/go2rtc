@@ -2,7 +2,7 @@
 
 # 0. Prepare images
 ARG PYTHON_VERSION="3.11"
-ARG GO_VERSION="1.19"
+ARG GO_VERSION="1.20"
 ARG NGROK_VERSION="3"
 
 FROM python:${PYTHON_VERSION}-alpine AS base
@@ -58,4 +58,4 @@ ENTRYPOINT ["/sbin/tini", "--"]
 VOLUME /config
 WORKDIR /config
 
-CMD ["go2rtc", "-config", "/config/go2rtc.yaml"]
+CMD ["go2rtc", "-cpuprofile", "/config/cpu.prof", "-memprofile", "/config/mem.prof", "-config", "/config/go2rtc.yaml"]
