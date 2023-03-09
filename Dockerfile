@@ -25,7 +25,7 @@ COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath -pgo=./cpu.pprof
 
 
 # 2. Collect all files
@@ -58,4 +58,4 @@ ENTRYPOINT ["/sbin/tini", "--"]
 VOLUME /config
 WORKDIR /config
 
-CMD ["go2rtc", "-cpuprofile", "/config/cpu.prof", "-memprofile", "/config/mem.prof", "-config", "/config/go2rtc.yaml"]
+CMD ["go2rtc", "-config", "/config/go2rtc.yaml"]

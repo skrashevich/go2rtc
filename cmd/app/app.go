@@ -2,16 +2,18 @@ package app
 
 import (
 	"flag"
-	"github.com/AlexxIT/go2rtc/pkg/shell"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
+
+	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 var Version = "1.2.0"
@@ -26,8 +28,19 @@ func Init() {
 	var confs Config
 
 	flag.Var(&confs, "config", "go2rtc config (path to file or raw text), support multiple")
+	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
 	flag.Parse()
-
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal().Msgf("could not create CPU profile: %s", err)
+		}
+		defer f.Close() // error handling omitted for example
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal().Msgf("could not start CPU profile: %s", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 	if confs == nil {
 		confs = []string{"go2rtc.yaml"}
 	}
