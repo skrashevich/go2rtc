@@ -10,6 +10,7 @@ func Init() {
 	api.HandleFunc("api/stack", stackHandler)
 
 	streams.HandleFunc("null", nullHandler)
+
 }
 
 func nullHandler(string) (core.Producer, error) {

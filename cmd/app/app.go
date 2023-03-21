@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -32,11 +33,23 @@ func Init() {
 	flag.BoolVar(&version, "version", false, "Print the version of the application and exit")
 	flag.Parse()
 
+	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
+	flag.Parse()
 	if version {
 		fmt.Println("Current version: ", Version)
 		os.Exit(0)
 	}
-
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal().Msgf("could not create CPU profile: %s", err)
+		}
+		defer f.Close() // error handling omitted for example
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatal().Msgf("could not start CPU profile: %s", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
 	if confs == nil {
 		confs = []string{"go2rtc.yaml"}
 	}

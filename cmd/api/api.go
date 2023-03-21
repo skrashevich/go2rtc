@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 )
+import _ "net/http/pprof"
 
 func Init() {
 	var cfg struct {

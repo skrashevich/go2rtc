@@ -1,6 +1,10 @@
 package main
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/AlexxIT/go2rtc/cmd/api"
 	"github.com/AlexxIT/go2rtc/cmd/app"
 	"github.com/AlexxIT/go2rtc/cmd/debug"
@@ -26,12 +30,10 @@ import (
 	"github.com/AlexxIT/go2rtc/cmd/tapo"
 	"github.com/AlexxIT/go2rtc/cmd/webrtc"
 	"github.com/AlexxIT/go2rtc/cmd/webtorrent"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
+
 	app.Init()     // init config and logs
 	api.Init()     // init HTTP API server
 	streams.Init() // load streams list
