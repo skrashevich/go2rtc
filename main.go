@@ -28,6 +28,7 @@ import (
 	"github.com/AlexxIT/go2rtc/cmd/srtp"
 	"github.com/AlexxIT/go2rtc/cmd/streams"
 	"github.com/AlexxIT/go2rtc/cmd/tapo"
+	"github.com/AlexxIT/go2rtc/cmd/tcp"
 	"github.com/AlexxIT/go2rtc/cmd/webrtc"
 	"github.com/AlexxIT/go2rtc/cmd/webtorrent"
 )
@@ -51,6 +52,7 @@ func main() {
 	isapi.Init()
 	mpegts.Init()
 	roborock.Init()
+	tcp.Init()
 
 	srtp.Init()
 	homekit.Init()

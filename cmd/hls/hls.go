@@ -7,9 +7,9 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mp4"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
+	"github.com/AlexxIT/go2rtc/pkg/tcp"
 	"github.com/rs/zerolog/log"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -28,6 +28,7 @@ func Init() {
 
 type Consumer interface {
 	core.Consumer
+	Listen(f core.EventFunc)
 	Init() ([]byte, error)
 	MimeCodecs() string
 	Start()
@@ -70,20 +71,20 @@ func handlerStream(w http.ResponseWriter, r *http.Request) {
 	medias := mp4.ParseQuery(r.URL.Query())
 	if medias != nil {
 		cons = &mp4.Consumer{
-			RemoteAddr: r.RemoteAddr,
+			RemoteAddr: tcp.RemoteAddr(r),
 			UserAgent:  r.UserAgent(),
 			Medias:     medias,
 		}
 	} else {
 		cons = &mpegts.Consumer{
-			RemoteAddr: r.RemoteAddr,
+			RemoteAddr: tcp.RemoteAddr(r),
 			UserAgent:  r.UserAgent(),
 		}
 	}
 
 	session := &Session{cons: cons}
 
-	cons.(any).(*core.Listener).Listen(func(msg any) {
+	cons.Listen(func(msg any) {
 		if data, ok := msg.([]byte); ok {
 			session.mu.Lock()
 			session.segment = append(session.segment, data...)
@@ -103,7 +104,7 @@ func handlerStream(w http.ResponseWriter, r *http.Request) {
 
 	cons.Start()
 
-	sid := strconv.FormatInt(time.Now().UnixNano(), 10)
+	sid := core.RandString(8, 62)
 
 	// two segments important for Chromecast
 	if medias != nil {
