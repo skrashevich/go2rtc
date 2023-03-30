@@ -1,0 +1,95 @@
+project_name: go2rtc
+
+before:
+  hooks:
+    - go mod download
+    - go generate ./...
+
+builds:
+  - id: go2rtc
+    env:
+      - CGO_ENABLED=0
+    main: ./main.go
+    goos:
+      - windows
+      - linux
+    goarch:
+      - amd64
+      - "386"
+      - arm64
+      - arm
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: "arm"
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    flags:
+      - -trimpath
+    hooks:
+      post:
+        - upx --lzma --best {{ .Path }}
+  - id: go2darwin{{ .Arch }}
+    env:
+      - CGO_ENABLED=0
+    main: ./main.go
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+    flags:
+      - -trimpath
+
+
+archives:
+  - format_overrides:
+      - goos: windows
+        format: zip
+    replacements:
+      "386": i386
+    files:
+      - CHANGELOG.md
+      - LICENSE
+    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+    wrap_in_directory: true
+
+
+universal_binaries:
+-
+  id: go2darwin
+  ids:
+    - go2darwinamd64
+    - go2darwinarm64
+  replace: true
+  
+brews:
+  - name: go2rtc
+    ids:
+      - go2rtc-amd64
+      - go2rtc-arm64
+    tap:
+      owner: AlexxIT
+      name: homebrew-go2rtc
+    homepage: https://github.com/AlexxIT/go2rtc
+    description: "Ultimate camera streaming application with support RTSP, WebRTC, HomeKit, FFmpeg, RTMP, etc."
+    folder: Formula
+    dependencies:
+      - name: some_dependency
+        type: required
+    test: |
+      system "#{bin}/go2rtc", "--version"
+
+checksum:
+  name_template: 'checksums.txt'
+
+release:
+  github:
+    owner: AlexxIT
+    name: go2rtc
+  draft: false
+  extra_files:
+    - glob: '**/checksums.txt'
