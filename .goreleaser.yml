@@ -9,87 +9,98 @@ builds:
   - id: go2rtc
     env:
       - CGO_ENABLED=0
+    binary: go2rtc_{{ .Os }}_{{ .Arch }}
     main: ./main.go
-    goos:
-      - windows
-      - linux
-    goarch:
-      - amd64
-      - "386"
-      - arm64
-      - arm
-    goarm:
-      - "7"
-    ignore:
-      - goos: windows
-        goarch: "arm"
+    targets:
+      - linux_386
+      - linux_arm
+      - linux_arm64
+      - linux_amd64
+      - linux_mips
+      - darwin_arm64
+      - darwin_amd64
+      - windows_arm64
+      - windows_amd64
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
     flags:
       - -trimpath
     hooks:
       post:
-        - upx --lzma --best {{ .Path }}
-  - id: go2darwin{{ .Arch }}
-    env:
-      - CGO_ENABLED=0
-    main: ./main.go
-    goos:
-      - darwin
-    goarch:
-      - amd64
-      - arm64
-    ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
-    flags:
-      - -trimpath
+        - >-
+          {{ if eq .Os "linux" }}
+            upx --best {{ .Path }}
+          {{ else }}
+            touch {{ .Path }}
+          {{ end }}
+    no_unique_dist_dir: true
 
+universal_binaries:
+-  
+  replace: true
+  name_template: '{{.ProjectName}}_macos'
 
 archives:
   - format_overrides:
+      - goos: darwin
+        format: zip
       - goos: windows
         format: zip
-    replacements:
-      "386": i386
     files:
-      - CHANGELOG.md
       - LICENSE
-    name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}'
+    rlcp: true
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- if eq .Os "darwin" }}mac
+      {{- else }}{{ .Os }}{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
     wrap_in_directory: true
 
-
-universal_binaries:
--
-  id: go2darwin
-  ids:
-    - go2darwinamd64
-    - go2darwinarm64
-  replace: true
   
 brews:
-  - name: go2rtc
-    ids:
-      - go2rtc-amd64
-      - go2rtc-arm64
+  -
+    name: go2rtc
+
     tap:
       owner: AlexxIT
       name: homebrew-go2rtc
     homepage: https://github.com/AlexxIT/go2rtc
     description: "Ultimate camera streaming application with support RTSP, WebRTC, HomeKit, FFmpeg, RTMP, etc."
-    folder: Formula
-    dependencies:
-      - name: some_dependency
-        type: required
+    skip_upload: true
     test: |
       system "#{bin}/go2rtc", "--version"
 
 checksum:
   name_template: 'checksums.txt'
-
+changelog:
+  use: github-native
+  filters:
+    exclude:
+      - '^docs:'
+      - typo
+      - github
+nfpms:
+  -
+    id: go2rtc
+    vendor: AlexxIT
+    homepage: https://github.com/AlexxIT/go2rtc
+    maintainer: AlexxIT
+    formats:
+      - apk
+      - deb
+      - rpm
+    dependencies:
+      - ffmpeg
+      - curl
+      - jq
+    provides:
+      - go2rtc
 release:
   github:
     owner: AlexxIT
     name: go2rtc
-  draft: false
+  draft: true
   extra_files:
     - glob: '**/checksums.txt'
