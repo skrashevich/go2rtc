@@ -7,7 +7,7 @@ require (
 	github.com/deepch/vdk v0.0.19
 	github.com/gorilla/websocket v1.5.0
 	github.com/hashicorp/mdns v1.0.5
-	github.com/pion/ice/v2 v2.3.1
+	github.com/pion/ice/v2 v2.3.2
 	github.com/pion/interceptor v0.1.12
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/rtp v1.7.13
