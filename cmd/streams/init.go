@@ -2,17 +2,28 @@ package streams
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
+
 	"github.com/AlexxIT/go2rtc/cmd/api"
 	"github.com/AlexxIT/go2rtc/cmd/app"
 	"github.com/AlexxIT/go2rtc/cmd/app/store"
 	"github.com/rs/zerolog"
-	"net/http"
 )
 
+var cfg struct {
+	Mod map[string]any `yaml:"streams"`
+	Api struct {
+		Listen    string `yaml:"listen"`
+		Username  string `yaml:"username"`
+		Password  string `yaml:"password"`
+		BasePath  string `yaml:"base_path"`
+		StaticDir string `yaml:"static_dir"`
+		Origin    string `yaml:"origin"`
+	} `yaml:"api"`
+}
+
 func Init() {
-	var cfg struct {
-		Mod map[string]any `yaml:"streams"`
-	}
 
 	app.LoadConfig(&cfg)
 
@@ -61,6 +72,18 @@ func streamsHandler(w http.ResponseWriter, r *http.Request) {
 	if src == "" && r.Method != "POST" {
 		_ = json.NewEncoder(w).Encode(streams)
 		return
+	}
+
+	if r.Method == "POST" || r.Method == "PATCH" || r.Method == "PUT" { // request to modify/add stream
+		if !strings.HasPrefix(r.RemoteAddr, "127.") && !strings.HasPrefix(r.RemoteAddr, "[::1]") { // request not from localhost
+			if strings.HasPrefix(src, "exec:") || strings.HasPrefix(src, "echo:") {
+
+				if cfg.Api.Username == "" && cfg.Api.Password == "" { // user && password defined
+					http.Error(w, "", http.StatusForbidden)
+					return
+				}
+			}
+		}
 	}
 
 	// Not sure about all this API. Should be rewrited...

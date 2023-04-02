@@ -1,17 +1,37 @@
 package api
 
 import (
-	"github.com/AlexxIT/go2rtc/cmd/app"
-	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/AlexxIT/go2rtc/cmd/app"
+	"gopkg.in/yaml.v3"
 )
+
+var cfg struct {
+	Api struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"api"`
+}
 
 func configHandler(w http.ResponseWriter, r *http.Request) {
 	if app.ConfigPath == "" {
 		http.Error(w, "", http.StatusGone)
 		return
+	}
+
+	app.LoadConfig(&cfg)
+
+	if r.Method == "POST" || r.Method == "PATCH" {
+		if !strings.HasPrefix(r.RemoteAddr, "127.") && !strings.HasPrefix(r.RemoteAddr, "[::1]") { // request not from localhost
+			if cfg.Api.Username == "" && cfg.Api.Password == "" { // user && password defined
+				http.Error(w, "", http.StatusForbidden)
+				return
+			}
+		}
 	}
 
 	switch r.Method {
