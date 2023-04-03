@@ -2,6 +2,9 @@ package webrtc
 
 import (
 	"errors"
+	"net"
+	"strings"
+
 	"github.com/AlexxIT/go2rtc/cmd/api"
 	"github.com/AlexxIT/go2rtc/cmd/app"
 	"github.com/AlexxIT/go2rtc/cmd/streams"
@@ -9,7 +12,6 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/webrtc"
 	pion "github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
-	"net"
 )
 
 func Init() {
@@ -25,6 +27,7 @@ func Init() {
 	cfg.Mod.IceServers = []pion.ICEServer{
 		{URLs: []string{"stun:stun.l.google.com:19302"}},
 	}
+	Port = "8555"
 
 	app.LoadConfig(&cfg)
 
@@ -44,6 +47,7 @@ func Init() {
 
 	if address != "" {
 		log.Info().Str("addr", address).Msg("[webrtc] listen")
+		address, _, _ = strings.Cut(address, "/")
 		_, Port, _ = net.SplitHostPort(address)
 
 		clientAPI, _ = webrtc.NewAPI("")
