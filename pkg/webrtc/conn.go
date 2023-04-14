@@ -83,7 +83,8 @@ func NewConn(pc *webrtc.PeerConnection) *Conn {
 				}
 			}()
 		}
-
+		// ReceiveMTU = Ethernet MTU - IP Header (20) - UDP Header (8)
+		ReceiveMTU := core.GetMinimumMTU() - 20 - 8
 		for {
 			b := make([]byte, ReceiveMTU)
 			n, _, err := remote.Read(b)
