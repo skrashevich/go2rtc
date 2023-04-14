@@ -2,10 +2,7 @@ package app
 
 import (
 	"flag"
-	"github.com/AlexxIT/go2rtc/pkg/shell"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -13,6 +10,11 @@ import (
 	"runtime/pprof"
 	"strings"
 	"time"
+
+	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 var Version = "1.3.1"
@@ -25,15 +27,21 @@ var Info = map[string]any{
 
 func Init() {
 	var confs Config
+	var version bool
+	var cpuprofile string
 
 	flag.Var(&confs, "config", "go2rtc config (path to file or raw text), support multiple")
+	flag.BoolVar(&version, "version", false, "Print the version of the application and exit")
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
 	flag.Parse()
 
-	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to `file`")
-	flag.Parse()
-	
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+	if version {
+		fmt.Println("Current version: ", Version)
+		os.Exit(0)
+	}
+
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
 		if err != nil {
 			log.Fatal().Msgf("could not create CPU profile: %s", err)
 		}
