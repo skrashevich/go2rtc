@@ -1,17 +1,21 @@
 package webrtc
 
 import (
+	"net"
+	"strings"
+
+	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/pion/ice/v2"
 	"github.com/pion/interceptor"
 	"github.com/pion/webrtc/v3"
-	"net"
-	"strings"
 )
 
 // ReceiveMTU = Ethernet MTU (1500) - IP Header (20) - UDP Header (8)
 const ReceiveMTU = 1472
 
 func NewAPI(address string) (*webrtc.API, error) {
+	// ReceiveMTU = Ethernet MTU - IP Header (20) - UDP Header (8)
+	ReceiveMTU := core.GetMinimumMTU() - 20 - 8
 	// for debug logs add to env: `PION_LOG_DEBUG=all`
 	m := &webrtc.MediaEngine{}
 	//if err := m.RegisterDefaultCodecs(); err != nil {
@@ -44,7 +48,7 @@ func NewAPI(address string) (*webrtc.API, error) {
 	// fix https://github.com/pion/webrtc/pull/2407
 	s.SetDTLSInsecureSkipHelloVerify(true)
 
-	s.SetReceiveMTU(ReceiveMTU)
+	s.SetReceiveMTU(uint(ReceiveMTU))
 
 	if address != "" {
 		address, network, _ := strings.Cut(address, "/")

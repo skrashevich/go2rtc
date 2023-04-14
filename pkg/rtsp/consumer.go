@@ -87,9 +87,9 @@ func (c *Conn) packetWriter(codec *core.Codec, channel uint8) core.HandlerFunc {
 	if !codec.IsRTP() {
 		switch codec.Name {
 		case core.CodecH264:
-			handlerFunc = h264.RTPPay(1500, handlerFunc)
+			handlerFunc = h264.RTPPay(core.GetMinimumMTU(), handlerFunc)
 		case core.CodecH265:
-			handlerFunc = h265.RTPPay(1500, handlerFunc)
+			handlerFunc = h265.RTPPay(core.GetMinimumMTU(), handlerFunc)
 		case core.CodecAAC:
 			handlerFunc = aac.RTPPay(handlerFunc)
 		case core.CodecJPEG:

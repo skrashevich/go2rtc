@@ -3,6 +3,7 @@ package core
 import (
 	cryptorand "crypto/rand"
 	"github.com/rs/zerolog/log"
+	"net"
 	"runtime"
 	"strconv"
 	"strings"
@@ -52,4 +53,32 @@ func Caller() string {
 	log.Error().Caller(0).Send()
 	_, file, line, _ := runtime.Caller(1)
 	return file + ":" + strconv.Itoa(line)
+}
+func GetMinimumMTU() uint16 {
+	const DefaultMTU uint16 = ^uint16(0)
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return DefaultMTU
+	}
+
+	var minMTU uint16 = DefaultMTU
+	for _, iface := range interfaces {
+		// Skip tunnel and loopback interfaces
+		if (iface.Flags&net.FlagLoopback != 0) || (iface.Flags&net.FlagPointToPoint != 0) || (iface.Flags&net.FlagRunning == 0) {
+			continue
+		}
+
+		// Get the MTU of the current interface
+		mtu := uint16(iface.MTU)
+
+		// Update the minimum MTU if it hasn't been set yet or if the current MTU is smaller
+		if minMTU == DefaultMTU || mtu < minMTU {
+			minMTU = mtu
+			log.Debug().Uint16("mtu", minMTU).Str("iface", iface.Name).Msg("[net] ")
+		}
+	}
+
+	log.Debug().Uint16("mtu", minMTU).Msg("[net] calculated ")
+
+	return minMTU
 }
