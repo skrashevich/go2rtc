@@ -15,7 +15,7 @@ require (
 	github.com/pion/srtp/v2 v2.0.12
 	github.com/pion/stun v0.4.0
 	github.com/pion/webrtc/v3 v3.1.59
-	github.com/rs/zerolog v1.29.0
+	github.com/rs/zerolog v1.29.1
 	github.com/stretchr/testify v1.8.2
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9
 	gopkg.in/yaml.v3 v3.0.1
