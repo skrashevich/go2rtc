@@ -64,7 +64,7 @@ func GetMinimumMTU() uint16 {
 	var minMTU uint16 = DefaultMTU
 	for _, iface := range interfaces {
 		// Skip tunnel and loopback interfaces
-		if (iface.Flags&net.FlagLoopback != 0) || (iface.Flags&net.FlagPointToPoint != 0) {
+		if (iface.Flags&net.FlagLoopback != 0) || (iface.Flags&net.FlagPointToPoint != 0) || (iface.Flags&net.FlagRunning == 0) {
 			continue
 		}
 
@@ -74,10 +74,11 @@ func GetMinimumMTU() uint16 {
 		// Update the minimum MTU if it hasn't been set yet or if the current MTU is smaller
 		if minMTU == DefaultMTU || mtu < minMTU {
 			minMTU = mtu
+			log.Debug().Uint16("mtu", minMTU).Str("iface", iface.Name).Msg("[net] ")
 		}
 	}
 
-	log.Debug().Uint16("mtu", minMTU).Msg("[core] calculated ")
+	log.Debug().Uint16("mtu", minMTU).Msg("[net] calculated ")
 
 	return minMTU
 }
