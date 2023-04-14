@@ -31,10 +31,16 @@ WORKDIR /build
 
 # Cache dependencies
 COPY go.mod go.sum ./
-RUN --mount=type=cache,target=/root/.cache/go-build go mod download
+RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg/mod/cache/download go mod download
 
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
+RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg/mod/cache/download CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
+
+FROM --platform=$BUILDPLATFORM base as upx
+RUN apk add upx
+COPY --link --from=build /build/go2rtc /upx/
+COPY --link --from=ngrok --chmod=755 /bin/ngrok /upx/
+RUN upx /upx/*
 
 # 2. Final image
 FROM base
@@ -44,8 +50,7 @@ FROM base
 # Hardware: AMD and NVidia VDPAU (not sure about this)
 # RUN libva-vdpau-driver mesa-vdpau-gallium (+150MB total)
 
-COPY --link --from=build /build/go2rtc /usr/local/bin/
-COPY --link --from=ngrok /bin/ngrok /usr/local/bin/
+COPY --link --from=upx /upx/* /usr/local/bin/
 
 ENTRYPOINT ["/sbin/tini", "--"]
 VOLUME /config
