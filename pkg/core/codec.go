@@ -99,9 +99,16 @@ func UnmarshalCodec(md *sdp.MediaDescription, payloadType string) *Codec {
 		case "8":
 			c.Name = CodecPCMA
 			c.ClockRate = 8000
+		case "10":
+			c.Name = CodecPCM
+			c.ClockRate = 44100
+			c.Channels = 2
+		case "11":
+			c.Name = CodecPCM
+			c.ClockRate = 44100
 		case "14":
 			c.Name = CodecMP3
-			c.ClockRate = 44100
+			c.ClockRate = 90000 // it's not real sample rate
 		case "26":
 			c.Name = CodecJPEG
 			c.ClockRate = 90000

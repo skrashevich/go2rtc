@@ -93,7 +93,7 @@ func GetKind(name string) string {
 	switch name {
 	case CodecH264, CodecH265, CodecVP8, CodecVP9, CodecAV1, CodecJPEG:
 		return KindVideo
-	case CodecPCMU, CodecPCMA, CodecAAC, CodecOpus, CodecG722, CodecMP3, CodecELD:
+	case CodecPCMU, CodecPCMA, CodecAAC, CodecOpus, CodecG722, CodecMP3, CodecPCM, CodecELD, CodecFLAC:
 		return KindAudio
 	}
 	return ""
@@ -135,6 +135,10 @@ func MarshalSDP(name string, medias []*Media) ([]byte, error) {
 			},
 		}
 		md.WithCodec(codec.PayloadType, name, codec.ClockRate, codec.Channels, codec.FmtpLine)
+
+		if media.ID != "" {
+			md.WithValueAttribute("control", media.ID)
+		}
 
 		sd.MediaDescriptions = append(sd.MediaDescriptions, md)
 	}

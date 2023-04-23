@@ -4,13 +4,11 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/AlexxIT/go2rtc/cmd/api"
 	"github.com/AlexxIT/go2rtc/cmd/app"
 	"github.com/AlexxIT/go2rtc/cmd/streams"
-	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mp4"
 	"github.com/AlexxIT/go2rtc/pkg/tcp"
 	"github.com/rs/zerolog"
@@ -61,6 +59,7 @@ func handlerKeyframe(w http.ResponseWriter, r *http.Request) {
 
 	if err := stream.AddConsumer(cons); err != nil {
 		log.Error().Err(err).Caller().Send()
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -106,17 +105,15 @@ func handlerMP4(w http.ResponseWriter, r *http.Request) {
 	cons := &mp4.Consumer{
 		RemoteAddr: tcp.RemoteAddr(r),
 		UserAgent:  r.UserAgent(),
-		Medias:     core.ParseQuery(r.URL.Query()),
+		Medias:     mp4.ParseQuery(r.URL.Query()),
 	}
 
-	var mu sync.Mutex
 	cons.Listen(func(msg any) {
+		if exit == nil {
+			return
+		}
 		if data, ok := msg.([]byte); ok {
-			mu.Lock()
-			_, err := w.Write(data)
-			mu.Unlock()
-
-			if err != nil && exit != nil {
+			if _, err := w.Write(data); err != nil {
 				select {
 				case exit <- err:
 				default:
@@ -128,6 +125,7 @@ func handlerMP4(w http.ResponseWriter, r *http.Request) {
 
 	if err := stream.AddConsumer(cons); err != nil {
 		log.Error().Err(err).Caller().Send()
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -138,11 +136,13 @@ func handlerMP4(w http.ResponseWriter, r *http.Request) {
 	data, err := cons.Init()
 	if err != nil {
 		log.Error().Err(err).Caller().Send()
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if _, err = w.Write(data); err != nil {
 		log.Error().Err(err).Caller().Send()
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -153,7 +153,10 @@ func handlerMP4(w http.ResponseWriter, r *http.Request) {
 		if i, _ := strconv.Atoi(s); i > 0 {
 			duration = time.AfterFunc(time.Second*time.Duration(i), func() {
 				if exit != nil {
-					exit <- nil
+					select {
+					case exit <- nil:
+					default:
+					}
 					exit = nil
 				}
 			})
@@ -161,6 +164,7 @@ func handlerMP4(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = <-exit
+	exit = nil
 
 	log.Trace().Err(err).Caller().Send()
 
