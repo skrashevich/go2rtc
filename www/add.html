@@ -224,7 +224,7 @@
 </div>
 <script>
     document.getElementById('onvif').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block'
+       
         await getStreams('api/onvif', 'onvif-table')
     })
 
