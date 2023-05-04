@@ -23,7 +23,7 @@ FROM ngrok/ngrok:${NGROK_VERSION} AS ngrok
 
 
 # 1. Build go2rtc binary
-FROM go AS build
+FROM --platform=$BUILDPLATFORM go AS build
 
 WORKDIR /build
 
@@ -55,9 +55,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
         python3 curl jq \
         intel-media-va-driver-non-free \
         libasound2-plugins
-
-COPY --link --from=rootfs / /
-
 
 COPY --link --from=upx /upx/* /usr/local/bin/
 
