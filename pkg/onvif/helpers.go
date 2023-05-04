@@ -3,14 +3,18 @@ package onvif
 import (
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"net"
-	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
+const (
+	PathDevice = "/onvif/device_service"
+)
+
 func FindTagValue(b []byte, tag string) string {
-	re := regexp.MustCompile(tag + `[^>]*>([^<]+)`)
+	re := regexp.MustCompile(`<[^/>]*` + tag + `[^>]*>([^<]+)`)
 	m := re.FindSubmatch(b)
 	if len(m) != 2 {
 		return ""
@@ -24,28 +28,28 @@ func UUID() string {
 	return s[:8] + "-" + s[8:12] + "-" + s[12:16] + "-" + s[16:20] + "-" + s[20:]
 }
 
-func DiscoveryStreamingHosts() ([]string, error) {
-	conn, err := net.ListenPacket("udp4", ":0")
+func DiscoveryStreamingURLs() ([]string, error) {
+	conn, err := net.ListenUDP("udp4", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	msg := `<Envelope xmlns="http://www.w3.org/2003/05/soap-envelope"
-	xmlns:dn="http://www.onvif.org/ver10/network/wsdl">
-	<Header>
-		<wsa:MessageID xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">urn:uuid:` + UUID() + `</wsa:MessageID>
-		<wsa:To xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">urn:schemas-xmlsoap-org:ws:2005:04:discovery</wsa:To>
-		<wsa:Action xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</wsa:Action>
-	</Header>
-	<Body>
-		<Probe xmlns="http://schemas.xmlsoap.org/ws/2005/04/discovery"
-			xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-			<Types />
-			<Scopes />
-		</Probe>
-	</Body>
-</Envelope>`
+	// https://www.onvif.org/wp-content/uploads/2016/12/ONVIF_Feature_Discovery_Specification_16.07.pdf
+	// 5.3 Discovery Procedure:
+	msg := `<?xml version="1.0" ?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
+	<s:Header xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+		<a:Action>http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</a:Action>
+		<a:MessageID>urn:uuid:` + UUID() + `</a:MessageID>
+		<a:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</a:To>
+	</s:Header>
+	<s:Body>
+		<d:Probe xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery">
+            <d:Types />
+			<d:Scopes />
+		</d:Probe>
+	</s:Body>
+</s:Envelope>`
 
 	addr := &net.UDPAddr{
 		IP:   net.IP{239, 255, 255, 250},
@@ -60,33 +64,37 @@ func DiscoveryStreamingHosts() ([]string, error) {
 		return nil, err
 	}
 
-	var hosts []string
+	var urls []string
 
 	b := make([]byte, 8192)
 	for {
-		n, _, err := conn.ReadFrom(b)
+		n, addr, err := conn.ReadFromUDP(b)
 		if err != nil {
 			break
 		}
 
-		rawURL := FindTagValue(b[:n], "XAddrs")
-		if rawURL == "" {
+		//log.Printf("[onvif] discovery response addr=%s:\n%s", addr, b[:n])
+
+		// ignore printers, etc
+		if !strings.Contains(string(b[:n]), "onvif") {
 			continue
 		}
 
-		u, err := url.Parse(rawURL)
-		if err != nil {
+		url := FindTagValue(b[:n], "XAddrs")
+		if url == "" {
 			continue
 		}
 
-		if u.Scheme != "http" {
-			continue
+		// fix some buggy cameras
+		// <wsdd:XAddrs>http://0.0.0.0:8080/onvif/device_service</wsdd:XAddrs>
+		if strings.HasPrefix(url, "http://0.0.0.0") {
+			url = "http://" + addr.IP.String() + url[14:]
 		}
 
-		hosts = append(hosts, u.Host)
+		urls = append(urls, url)
 	}
 
-	return hosts, nil
+	return urls, nil
 }
 
 func atoi(s string) int {

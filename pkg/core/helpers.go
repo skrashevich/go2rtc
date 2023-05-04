@@ -7,7 +7,14 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 )
+
+// Now90000 - timestamp for Video (clock rate = 90000 samples per second)
+// same as: uint32(time.Duration(time.Now().UnixNano()) * 90000 / time.Second)
+func Now90000() uint32 {
+	return uint32(time.Duration(time.Now().UnixMilli()) * 90)
+}
 
 const symbols = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 
@@ -21,6 +28,15 @@ func RandString(size, base byte) string {
 		b[i] = symbols[b[i]%base]
 	}
 	return string(b)
+}
+
+func Any(errs ...error) error {
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func Between(s, sub1, sub2 string) string {

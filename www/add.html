@@ -68,7 +68,8 @@
 <script src="main.js"></script>
 <script>
     async function getStreams(url, tableID) {
-    const table = document.getElementById(tableID)
+        const table = document.getElementById(tableID)
+        table.innerText = 'loading...'
 
     const r = typeof url === 'string' ? await fetch(url, {cache: 'no-cache'}) : url
     if (!r.ok) {
@@ -202,7 +203,34 @@
 </script>
 
 
+<!-- FFMpeg section -->
+<button id="devices">FFmpeg Devices (USB)</button>
+<div class="module">
+    <table id="devices-table">
+    </table>
+</div>
+<script>
+    document.getElementById('devices').addEventListener('click', async ev => {
+        ev.target.nextElementSibling.style.display = 'block'
+        await getStreams('api/ffmpeg/devices', 'devices-table')
+    })
+</script>
+
+
+<button id="hardware">FFmpeg Hardware</button>
+<div class="module">
+    <table id="hardware-table">
+    </table>
+</div>
+<script>
+    document.getElementById('hardware').addEventListener('click', async ev => {
+        ev.target.nextElementSibling.style.display = 'block'
+        await getStreams('api/ffmpeg/hardware', 'hardware-table')
+    })
+</script>
+
 <!-- Home Assistant section -->
+<button id="hass">Home Assistant</button>
 <div class="module">
     <table id="hass-table"></table>
 </div>
@@ -285,6 +313,7 @@
 
 
 <!-- WebTorrent Shares section -->
+<button id="webtorrent">WebTorrent Shares</button>
 <div class="module">
     <table id="webtorrent-table"></table>
 </div>
