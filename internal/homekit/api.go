@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/AlexxIT/go2rtc/cmd/app/store"
-	"github.com/AlexxIT/go2rtc/cmd/streams"
+	"github.com/AlexxIT/go2rtc/internal/app/store"
+	"github.com/AlexxIT/go2rtc/internal/streams"
 
 	"github.com/AlexxIT/go2rtc/pkg/hap"
 	"github.com/AlexxIT/go2rtc/pkg/hap/mdns"

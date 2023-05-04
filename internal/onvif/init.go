@@ -178,7 +178,7 @@ func apiOnvif(w http.ResponseWriter, r *http.Request) {
 		for i, token := range tokens {
 
 			streamuri, err := client.GetStreamUri(token)
-			if err != nil || streamuri == "" {
+			if err != nil || streamuri == nil {
 				continue
 			}
 			items = append(items, api.Stream{
@@ -186,7 +186,7 @@ func apiOnvif(w http.ResponseWriter, r *http.Request) {
 				URL:  src + "?subtype=" + token,
 			})
 			snapshoturi, err := client.GetSnapshotUri(token)
-			if err != nil || snapshoturi == "" {
+			if err != nil || snapshoturi == nil {
 				continue
 			}
 			items = append(items, api.Stream{

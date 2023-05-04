@@ -5,14 +5,13 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/antchfx/xmlquery"
-
+	"html"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -72,10 +71,13 @@ func (c *Client) GetURI() (string, error) {
 		getUri = c.GetSnapshotUri
 	}
 
-	uri, err := getUri(token)
+	b, err := getUri(token)
 	if err != nil {
 		return "", err
 	}
+
+	uri := FindTagValue(b, "Uri")
+	uri = html.UnescapeString(uri)
 
 	u, err := url.Parse(uri)
 	if err != nil {
@@ -114,6 +116,14 @@ func (c *Client) GetProfilesTokens() ([]string, error) {
 	return tokens, nil
 }
 
+func (c *Client) HasSnapshots() bool {
+	b, err := c.GetServiceCapabilities()
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(b), `SnapshotUri="true"`)
+}
+
 func (c *Client) GetCapabilities() ([]byte, error) {
 	return c.Request(
 		c.deviceURL,
@@ -121,14 +131,6 @@ func (c *Client) GetCapabilities() ([]byte, error) {
 	<tds:Category>All</tds:Category>
 </tds:GetCapabilities>`,
 	)
-	doc, err := xmlquery.Parse(bytes.NewReader(response))
-	if err != nil {
-		return nil, err
-	}
-
-	c.media_service = xmlquery.FindOne(doc, "//tt:Media/tt:XAddr").InnerText()
-	c.image_service = xmlquery.FindOne(doc, "//tt:Imaging/tt:XAddr").InnerText()
-	return response, err
 }
 
 func (c *Client) GetNetworkInterfaces() ([]byte, error) {
