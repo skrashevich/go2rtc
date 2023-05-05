@@ -17,12 +17,12 @@ import _ "net/http/pprof"
 func Init() {
 	var cfg struct {
 		Mod struct {
-			Listen    string `yaml:"listen"`
-			Username  string `yaml:"username"`
-			Password  string `yaml:"password"`
-			BasePath  string `yaml:"base_path"`
-			StaticDir string `yaml:"static_dir"`
-			Origin    string `yaml:"origin"`
+			Listen        string `yaml:"listen"`
+			Username      string `yaml:"username"`
+			Password      string `yaml:"password"`
+			BasePath      string `yaml:"base_path"`
+			StaticDir     string `yaml:"static_dir"`
+			Origin        string `yaml:"origin"`
 			TLSListen     string `yaml:"tls_listen"`
 			TLSCert       string `yaml:"tls_cert"`
 			TLSPrivateKey string `yaml:"tls_private_key"`
@@ -141,7 +141,9 @@ var log zerolog.Logger
 
 func middlewareTrailingSlash(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+		if len(r.URL.Path) > 1 {
+			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+		}
 		next.ServeHTTP(w, r)
 	})
 }
