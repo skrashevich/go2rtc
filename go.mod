@@ -3,7 +3,6 @@ module github.com/AlexxIT/go2rtc
 go 1.20
 
 require (
-	github.com/antchfx/xmlquery v1.3.15
 	github.com/brutella/hap v0.0.25
 	github.com/deepch/vdk v0.0.20
 	github.com/gorilla/websocket v1.5.0
@@ -14,7 +13,7 @@ require (
 	github.com/pion/rtp v1.7.13
 	github.com/pion/sdp/v3 v3.0.6
 	github.com/pion/srtp/v2 v2.0.12
-	github.com/pion/stun v0.4.0
+	github.com/pion/stun v0.5.2
 	github.com/pion/webrtc/v3 v3.1.60
 	github.com/rs/zerolog v1.29.1
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
@@ -25,11 +24,9 @@ require (
 )
 
 require (
-	github.com/antchfx/xpath v1.2.4 // indirect
 	github.com/brutella/dnssd v1.2.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-chi/chi v1.5.4 // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -41,7 +38,7 @@ require (
 	github.com/pion/mdns v0.0.7 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/sctp v1.8.6 // indirect
-	github.com/pion/transport/v2 v2.0.2 // indirect
+	github.com/pion/transport/v2 v2.2.0 // indirect
 	github.com/pion/turn/v2 v2.1.0 // indirect
 	github.com/pion/udp/v2 v2.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
