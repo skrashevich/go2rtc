@@ -45,7 +45,7 @@ var defaults = map[string]string{
 	// inputs
 	"file": "-re -i {input}",
 	"http": "-fflags nobuffer -flags low_delay -i {input}",
-	"rtsp": "-fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_transport tcp -i {input}",
+	"rtsp": "-fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i {input}",
 
 	"rtsp/udp": "-fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -i {input}",
 
@@ -127,7 +127,7 @@ func parseArgs(s string) *ffmpeg.Args {
 
 	var query url.Values
 	if i := strings.IndexByte(s, '#'); i > 0 {
-		query = parseQuery(s[i+1:])
+		query = streams.ParseQuery(s[i+1:])
 		args.Video = len(query["video"])
 		args.Audio = len(query["audio"])
 		s = s[:i]
@@ -277,17 +277,4 @@ func parseArgs(s string) *ffmpeg.Args {
 	}
 
 	return args
-}
-
-func parseQuery(s string) map[string][]string {
-	query := map[string][]string{}
-	for _, key := range strings.Split(s, "#") {
-		var value string
-		i := strings.IndexByte(key, '=')
-		if i > 0 {
-			key, value = key[:i], key[i+1:]
-		}
-		query[key] = append(query[key], value)
-	}
-	return query
 }

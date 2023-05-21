@@ -17,6 +17,7 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/mjpeg"
 	"github.com/AlexxIT/go2rtc/internal/mp4"
 	"github.com/AlexxIT/go2rtc/internal/mpegts"
+	"github.com/AlexxIT/go2rtc/internal/nest"
 	"github.com/AlexxIT/go2rtc/internal/ngrok"
 	"github.com/AlexxIT/go2rtc/internal/onvif"
 	"github.com/AlexxIT/go2rtc/internal/roborock"
@@ -27,9 +28,7 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/tapo"
 	"github.com/AlexxIT/go2rtc/internal/webrtc"
 	"github.com/AlexxIT/go2rtc/internal/webtorrent"
-	"os"
-	"os/signal"
-	"syscall"
+	"github.com/AlexxIT/go2rtc/pkg/shell"
 )
 
 func main() {
@@ -52,6 +51,7 @@ func main() {
 	isapi.Init()
 	mpegts.Init()
 	roborock.Init()
+	nest.Init()
 
 	srtp.Init()
 	homekit.Init()
@@ -65,9 +65,5 @@ func main() {
 	ngrok.Init()
 	debug.Init()
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	<-sigs
-
-	println("exit OK")
+	shell.RunUntilSignal()
 }
