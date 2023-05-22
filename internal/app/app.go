@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 	"strings"
+
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/shell"
@@ -29,16 +30,21 @@ func Init() {
 	var confs Config
 	var version bool
 	var cpuprofile string
+	var gomaxproc int
 
 	flag.Var(&confs, "config", "go2rtc config (path to file or raw text), support multiple")
 	flag.BoolVar(&version, "version", false, "Print the version of the application and exit")
 	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
+	flag.IntVar(&gomaxproc, "j", runtime.NumCPU(), "GOMAXPROCS value")
 	flag.Parse()
 
 	if version {
 		fmt.Println("Current version: ", Version)
 		os.Exit(0)
 	}
+
+	runtime.GOMAXPROCS(int(gomaxproc))
+	log.Info().Msgf("GOMAXPROCS: %d", int(gomaxproc))
 
 	if cpuprofile != "" {
 		f, err := os.Create(cpuprofile)

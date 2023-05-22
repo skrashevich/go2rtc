@@ -34,12 +34,6 @@ RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/g
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build --mount=type=cache,target=/go/pkg/mod/cache/download CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath -pgo=./cpu.pprof
 
-FROM --platform=$BUILDPLATFORM base as upx
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked apt install -y --no-install-recommends upx
-COPY --link --from=build /build/go2rtc /upx/
-COPY --link --from=ngrok --chmod=755 /bin/ngrok /upx/
-RUN upx /upx/*
-
 # 2. Final image
 FROM base
 # Prepare apt for buildkit cache
@@ -56,7 +50,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
         intel-media-va-driver-non-free \
         libasound2-plugins
 
-COPY --link --from=upx /upx/* /usr/local/bin/
+COPY --link --from=build /build/go2rtc /usr/local/bin/
+COPY --link --from=ngrok --chmod=755 /bin/ngrok /usr/local/bin/
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 VOLUME /config
