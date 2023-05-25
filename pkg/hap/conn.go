@@ -67,21 +67,14 @@ func Pair(deviceID, pin string) (*Conn, error) {
 	}
 
 	c := &Conn{
-		DeviceAddress: fmt.Sprintf("%s:%d", entry.AddrV4.String(), entry.Port),
+		DeviceAddress: fmt.Sprintf("%s:%d", entry.AddrIPv4[0].String(), entry.Port),
 		DeviceID:      deviceID,
 		ClientID:      GenerateUUID(),
 		ClientPrivate: GenerateKey(),
 	}
 
 	var mfi bool
-	for _, field := range entry.InfoFields {
-		if field[:2] == "ff" {
-			if field[3] == '1' {
-				mfi = true
-			}
-			break
-		}
-	}
+	mfi = mdns.StatusFlags(mdns.ParseFlag(mdns.ParseTXT(entry.Text)["ff"])).Bool()
 
 	return c, c.Pair(mfi, pin)
 }

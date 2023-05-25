@@ -101,7 +101,12 @@ func hkDiscoverDevices(conn *websocket.Conn, done chan struct{}) {
 				timeout = 5 * time.Second
 			}
 
-			entries := mdns.GetAll(timeout)
+			entries, err := mdns.GetAll(timeout)
+
+			if err != nil {
+				log.Error().Err(err).Caller().Send()
+				return
+			}
 
 			for name, src := range store.GetDict("streams") {
 				if src := src.(string); strings.HasPrefix(src, "homekit") {
@@ -123,26 +128,22 @@ func hkDiscoverDevices(conn *websocket.Conn, done chan struct{}) {
 				}
 			}
 
-			for entry := range entries {
-				if !strings.HasSuffix(entry.Name, mdns.Suffix) {
+			for _, entry := range entries {
+
+				if !strings.HasSuffix(entry.HostName, mdns.Suffix) {
 					continue
 				}
 
-				name := entry.Name[:len(entry.Name)-len(mdns.Suffix)]
+				name := entry.HostName[:len(entry.HostName)-len(mdns.Suffix)]
 				device := Device{
 					Name: strings.ReplaceAll(name, "\\", ""),
-					Addr: fmt.Sprintf("%s:%d", entry.AddrV4, entry.Port),
+					Addr: fmt.Sprintf("%s:%d", entry.AddrIPv4[0], entry.Port),
 				}
-				for _, field := range entry.InfoFields {
-					switch field[:2] {
-					case "id":
-						device.ID = field[3:]
-					case "md":
-						device.Model = field[3:]
-					case "sf":
-						device.Paired = field[3] == '0'
-					}
-				}
+				txt := mdns.ParseTXT(entry.Text)
+				device.ID = txt["id"]
+				device.Model = txt["md"]
+				device.Paired = mdns.StatusFlags(mdns.ParseFlag(txt["sf"])).Bool()
+				device.MFi = mdns.StatusFlags(mdns.ParseFlag(txt["ff"])).Bool()
 
 				err := conn.WriteJSON(device)
 				if err != nil {
@@ -217,5 +218,6 @@ type Device struct {
 	Addr   string `json:"addr"`
 	Model  string `json:"model"`
 	Paired bool   `json:"paired"`
+	MFi    bool   `json:"mfi"`
 	//Type    string `json:"type"`
 }

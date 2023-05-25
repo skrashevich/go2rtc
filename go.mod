@@ -3,11 +3,9 @@ module github.com/AlexxIT/go2rtc
 go 1.20
 
 require (
-	github.com/antchfx/xmlquery v1.3.15
 	github.com/brutella/hap v0.0.25
 	github.com/deepch/vdk v0.0.20
 	github.com/gorilla/websocket v1.5.0
-	github.com/hashicorp/mdns v1.0.5
 	github.com/pion/ice/v2 v2.3.2
 	github.com/pion/interceptor v0.1.12
 	github.com/pion/rtcp v1.2.10
@@ -24,13 +22,16 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require github.com/hashicorp/mdns v1.0.5
+
+require github.com/cenkalti/backoff v2.2.1+incompatible // indirect
+
 require (
-	github.com/antchfx/xpath v1.2.4 // indirect
 	github.com/brutella/dnssd v1.2.6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-chi/chi v1.5.4 // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/grandcat/zeroconf v1.0.0
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
