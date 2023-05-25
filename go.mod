@@ -6,18 +6,18 @@ require (
 	github.com/brutella/hap v0.0.25
 	github.com/deepch/vdk v0.0.20
 	github.com/gorilla/websocket v1.5.0
-	github.com/pion/ice/v2 v2.3.2
-	github.com/pion/interceptor v0.1.12
+	github.com/pion/ice/v2 v2.3.6
+	github.com/pion/interceptor v0.1.17
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/rtp v1.7.13
 	github.com/pion/sdp/v3 v3.0.6
-	github.com/pion/srtp/v2 v2.0.12
-	github.com/pion/stun v0.4.0
-	github.com/pion/webrtc/v3 v3.1.60
+	github.com/pion/srtp/v2 v2.0.15
+	github.com/pion/stun v0.6.0
+	github.com/pion/webrtc/v3 v3.2.8
 	github.com/rs/zerolog v1.29.1
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
 	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -37,21 +37,20 @@ require (
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/miekg/dns v1.1.53 // indirect
 	github.com/pion/datachannel v1.5.5 // indirect
-	github.com/pion/dtls/v2 v2.2.6 // indirect
+	github.com/pion/dtls/v2 v2.2.7 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/mdns v0.0.7 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/sctp v1.8.6 // indirect
-	github.com/pion/transport/v2 v2.0.2 // indirect
+	github.com/pion/sctp v1.8.7 // indirect
+	github.com/pion/transport/v2 v2.2.1 // indirect
 	github.com/pion/turn/v2 v2.1.0 // indirect
-	github.com/pion/udp/v2 v2.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/xiam/to v0.0.0-20200126224905-d60d31e03561 // indirect
-	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/crypto v0.9.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 )
