@@ -68,14 +68,14 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		name := r.URL.Query().Get("name")
 		if err := hkPair(id, pin, name); err != nil {
 			log.Error().Err(err).Caller().Send()
-			_, err = w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
 	case "DELETE":
 		src := r.URL.Query().Get("src")
 		if err := hkDelete(src); err != nil {
 			log.Error().Err(err).Caller().Send()
-			_, err = w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
 }
