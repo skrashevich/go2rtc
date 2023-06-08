@@ -22,7 +22,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/hashicorp/mdns v1.0.5
+require (
+	github.com/arl/statsviz v0.5.2
+	github.com/hashicorp/mdns v1.0.5
+)
 
 require github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 

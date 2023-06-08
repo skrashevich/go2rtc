@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/arl/statsviz"
 	"github.com/rs/zerolog"
 	"net"
 	"net/http"
@@ -56,7 +57,7 @@ func Init() {
 	}
 
 	log.Info().Str("addr", cfg.Mod.Listen).Msg("[api] listen")
-
+	statsviz.RegisterDefault()
 	Handler = http.DefaultServeMux // 5th
 
 	if cfg.Mod.Origin == "*" {

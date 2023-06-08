@@ -1,5 +1,7 @@
 github.com/AlexxIT/hap v0.0.15-0.20221108133010-d8a45b7a7045 h1:xJf3FxQJReJSDyYXJfI1NUWv8tUEAGNV9xigLqNtmrI=
 github.com/AlexxIT/hap v0.0.15-0.20221108133010-d8a45b7a7045/go.mod h1:QNA3sm16zE5uUyC8+E/gNkMvQWjqQLuxQKkU5PMi8N4=
+github.com/arl/statsviz v0.5.2 h1:0+F96LduGQx7HZlMTUL9PNHv7lixwWCdxJzWC+SGSkI=
+github.com/arl/statsviz v0.5.2/go.mod h1:UomKe3l2yafXH6/LnOt8xGbiU3CEl70J1LJSW1fZO/E=
 github.com/brutella/dnssd v1.2.3/go.mod h1:JoW2sJUrmVIef25G6lrLj7HS6Xdwh6q8WUIvMkkBYXs=
 github.com/brutella/dnssd v1.2.6 h1:/0P13JkHLRzeLQkWRPEn4hJCr4T3NfknIFw3aNPIC34=
 github.com/brutella/dnssd v1.2.6/go.mod h1:JoW2sJUrmVIef25G6lrLj7HS6Xdwh6q8WUIvMkkBYXs=
