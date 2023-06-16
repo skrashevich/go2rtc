@@ -6,7 +6,7 @@ require (
 	github.com/brutella/hap v0.0.25
 	github.com/deepch/vdk v0.0.20
 	github.com/gorilla/websocket v1.5.0
-	github.com/pion/ice/v2 v2.3.7
+	github.com/pion/ice/v2 v2.3.8
 	github.com/pion/interceptor v0.1.12
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/rtp v1.7.13
