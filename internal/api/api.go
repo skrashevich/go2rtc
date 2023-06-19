@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/AlexxIT/go2rtc/internal/app"
 	"github.com/arl/statsviz"
 	"github.com/rs/zerolog"
@@ -114,6 +115,11 @@ func Init() {
 	}
 }
 
+const (
+	MimeJSON = "application/json"
+	MimeText = "text/plain"
+)
+
 var Handler http.Handler
 
 // HandleFunc handle pattern with relative path:
@@ -136,25 +142,20 @@ func HandleFunc(pattern string, handler http.HandlerFunc) {
 // ResponseJSON important always add Content-Type
 // so go won't need to call http.DetectContentType
 func ResponseJSON(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", MimeJSON)
 	_ = json.NewEncoder(w).Encode(v)
 }
 
 func ResponsePrettyJSON(w http.ResponseWriter, v any) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", MimeJSON)
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(v)
 }
 
-func ResponseRawJSON(w http.ResponseWriter, s string) {
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(s))
-}
-
-func ResponseText(w http.ResponseWriter, b []byte) {
-	w.Header().Set("Content-Type", "text/plain")
-	_, _ = w.Write(b)
+func Response(w http.ResponseWriter, body any, contentType string) {
+	w.Header().Set("Content-Type", contentType)
+	_, _ = fmt.Fprint(w, body)
 }
 
 const StreamNotFound = "stream not found"
