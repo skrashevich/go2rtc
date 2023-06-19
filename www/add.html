@@ -94,6 +94,7 @@
     <button id="devices">USB Devices</button>
     <button id="webtorrent">WebTorrent Shares</button>
     <button id="onvif">ONVIF</button>
+    <button id="nest">Google Nest</button>
 </div>
 <div class="module">
     <form id="stream-form" style="padding: 10px">
@@ -204,7 +205,7 @@
 
 
 <!-- FFMpeg section -->
-<button id="devices">FFmpeg Devices (USB)</button>
+
 <div class="module">
     <table id="devices-table">
     </table>
@@ -217,20 +218,11 @@
 </script>
 
 
-<button id="hardware">FFmpeg Hardware</button>
-<div class="module">
-    <table id="hardware-table">
-    </table>
-</div>
-<script>
-    document.getElementById('hardware').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block'
-        await getStreams('api/ffmpeg/hardware', 'hardware-table')
-    })
-</script>
+
+
 
 <!-- Google Nest section -->
-<button id="nest">Google Nest</button>
+
 <div class="module">
     <form id="nest-form" style="margin-bottom: 10px">
         <input type="text" name="client_id" placeholder="client_id">
@@ -327,18 +319,6 @@
     })
 </script>
 
-
-<!-- USB Devices section -->
-<div class="module">
-    <table id="devices-table">
-    </table>
-</div>
-<script>
-    document.getElementById('devices').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block'
-        await getStreams('api/devices', 'devices-table')
-    })
-</script>
 
 
 <!-- WebTorrent Shares section -->
