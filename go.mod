@@ -12,7 +12,7 @@ require (
 	github.com/pion/rtp v1.7.13
 	github.com/pion/sdp/v3 v3.0.6
 	github.com/pion/srtp/v2 v2.0.12
-	github.com/pion/stun v0.6.0
+	github.com/pion/stun v0.6.1
 	github.com/pion/webrtc/v3 v3.1.60
 	github.com/rs/zerolog v1.29.1
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
