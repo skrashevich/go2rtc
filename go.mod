@@ -6,14 +6,14 @@ require (
 	github.com/brutella/hap v0.0.25
 	github.com/deepch/vdk v0.0.20
 	github.com/gorilla/websocket v1.5.0
-	github.com/pion/ice/v2 v2.3.7
-	github.com/pion/interceptor v0.1.12
+	github.com/pion/ice/v2 v2.3.8
+	github.com/pion/interceptor v0.1.17
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/rtp v1.7.13
 	github.com/pion/sdp/v3 v3.0.6
-	github.com/pion/srtp/v2 v2.0.12
+	github.com/pion/srtp/v2 v2.0.15
 	github.com/pion/stun v0.6.0
-	github.com/pion/webrtc/v3 v3.1.60
+	github.com/pion/webrtc/v3 v3.2.11
 	github.com/rs/zerolog v1.29.1
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3
 	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
@@ -44,7 +44,7 @@ require (
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/mdns v0.0.7 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
-	github.com/pion/sctp v1.8.6 // indirect
+	github.com/pion/sctp v1.8.7 // indirect
 	github.com/pion/transport/v2 v2.2.1 // indirect
 	github.com/pion/turn/v2 v2.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
