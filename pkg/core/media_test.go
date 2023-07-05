@@ -2,11 +2,12 @@ package core
 
 import (
 	"fmt"
+
+	"testing"
+
 	"github.com/pion/sdp/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/url"
-	"testing"
 )
 
 func TestSDP(t *testing.T) {
@@ -24,22 +25,65 @@ func TestSDP(t *testing.T) {
 	err = sd.Unmarshal(data)
 	assert.Empty(t, err)
 }
-
 func TestParseQuery(t *testing.T) {
-	u, _ := url.Parse("rtsp://localhost:8554/camera1")
-	medias := ParseQuery(u.Query())
-	assert.Nil(t, medias)
+	query := map[string][]string{
+		"video": {"H264,COPY"},
+		"audio": {"AAC"},
+	}
 
-	for _, rawULR := range []string{
-		"rtsp://localhost:8554/camera1?video",
-		"rtsp://localhost:8554/camera1?video=copy",
-		"rtsp://localhost:8554/camera1?video=any",
-	} {
-		u, _ = url.Parse(rawULR)
-		medias = ParseQuery(u.Query())
-		assert.Equal(t, []*Media{
-			{Kind: KindVideo, Direction: DirectionRecvonly, Codecs: []*Codec{{Name: CodecAny}}},
-		}, medias)
+	expectedMedias := []*Media{
+		{
+			Kind:      KindVideo,
+			Direction: DirectionSendonly,
+			Codecs: []*Codec{
+				{Name: "H264"},
+				{Name: CodecAny},
+			},
+		},
+		{
+			Kind:      KindAudio,
+			Direction: DirectionSendonly,
+			Codecs: []*Codec{
+				{Name: CodecAAC},
+			},
+		},
+	}
+
+	medias := ParseQuery(query)
+
+	// Check if the number of medias is correct
+	if len(medias) != len(expectedMedias) {
+		t.Errorf("Expected %d medias, but got %d", len(expectedMedias), len(medias))
+	}
+
+	// Check individual medias
+	for i, expectedMedia := range expectedMedias {
+		media := medias[i]
+
+		// Check the kind of media
+		if media.Kind != expectedMedia.Kind {
+			t.Errorf("Expected media kind %s, but got %s", expectedMedia.Kind, media.Kind)
+		}
+
+		// Check the direction of media
+		if media.Direction != expectedMedia.Direction {
+			t.Errorf("Expected media direction %s, but got %s", expectedMedia.Direction, media.Direction)
+		}
+
+		// Check the number of codecs in media
+		if len(media.Codecs) != len(expectedMedia.Codecs) {
+			t.Errorf("Expected %d codecs, but got %d", len(expectedMedia.Codecs), len(media.Codecs))
+		}
+
+		// Check individual codecs in media
+		for j, expectedCodec := range expectedMedia.Codecs {
+			codec := media.Codecs[j]
+
+			// Check the name of codec
+			if codec.Name != expectedCodec.Name {
+				t.Errorf("Expected codec name %s, but got %s", expectedCodec.Name, codec.Name)
+			}
+		}
 	}
 }
 
