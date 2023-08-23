@@ -64,9 +64,9 @@ brews:
     name: go2rtc
 
     tap:
-      owner: AlexxIT
+      owner: skrashevich
       name: homebrew-go2rtc
-    homepage: https://github.com/AlexxIT/go2rtc
+    homepage: https://github.com/skrashevich/go2rtc
     description: "Ultimate camera streaming application with support RTSP, WebRTC, HomeKit, FFmpeg, RTMP, etc."
     skip_upload: true
     test: |
@@ -84,9 +84,9 @@ changelog:
 nfpms:
   -
     id: go2rtc
-    vendor: AlexxIT
-    homepage: https://github.com/AlexxIT/go2rtc
-    maintainer: AlexxIT
+    vendor: skrashevich
+    homepage: https://github.com/skrashevich/go2rtc
+    maintainer: skrashevich
     formats:
       - apk
       - deb
@@ -99,7 +99,7 @@ nfpms:
       - go2rtc
 release:
   github:
-    owner: AlexxIT
+    owner: skrashevich
     name: go2rtc
   draft: false
   prerelease: auto
