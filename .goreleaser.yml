@@ -101,6 +101,7 @@ release:
   github:
     owner: AlexxIT
     name: go2rtc
-  draft: true
+  draft: false
+  prerelease: auto
   extra_files:
     - glob: '**/checksums.txt'
