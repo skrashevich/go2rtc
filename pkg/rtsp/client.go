@@ -24,19 +24,18 @@ func NewClient(uri string) *Conn {
 }
 
 func (c *Conn) Dial() (err error) {
-	var conn net.Conn
-
-	if c.Transport == "" {
-		conn, err = Dial(c.uri)
-	} else {
-		conn, err = websocket.Dial(c.Transport)
-	}
-
-	if err != nil {
+	if c.URL, err = url.Parse(c.uri); err != nil {
 		return
 	}
 
-	if c.URL, err = url.Parse(c.uri); err != nil {
+	var conn net.Conn
+
+	if c.Transport == "" {
+		conn, err = tcp.Dial(c.URL, "554")
+	} else {
+		conn, err = websocket.Dial(c.Transport)
+	}
+	if err != nil {
 		return
 	}
 
@@ -45,7 +44,7 @@ func (c *Conn) Dial() (err error) {
 	c.URL.User = nil
 
 	c.conn = conn
-	c.reader = bufio.NewReader(conn)
+	c.reader = bufio.NewReaderSize(conn, core.BufferSize)
 	c.session = ""
 	c.sequence = 0
 	c.state = StateConn
@@ -145,6 +144,16 @@ func (c *Conn) Describe() error {
 	medias, err := UnmarshalSDP(res.Body)
 	if err != nil {
 		return err
+	}
+
+	if c.Media != "" {
+		clone := make([]*core.Media, 0, len(medias))
+		for _, media := range medias {
+			if strings.Contains(c.Media, media.Kind) {
+				clone = append(clone, media)
+			}
+		}
+		medias = clone
 	}
 
 	// TODO: rewrite more smart

@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/rs/zerolog/log"
 )
 
 const (
+	BufferSize      = 64 * 1024 // 64K
 	ConnDialTimeout = time.Second * 3
 	ConnDeadline    = time.Second * 3
+	ProbeTimeout    = time.Second * 3
 )
 
 // Now90000 - timestamp for Video (clock rate = 90000 samples per second)
@@ -75,7 +75,6 @@ func Assert(ok bool) {
 }
 
 func Caller() string {
-	log.Error().Caller(0).Send()
 	_, file, line, _ := runtime.Caller(1)
 	return file + ":" + strconv.Itoa(line)
 }

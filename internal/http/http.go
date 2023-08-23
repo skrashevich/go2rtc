@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/AlexxIT/go2rtc/internal/streams"
 	"github.com/AlexxIT/go2rtc/pkg/core"
@@ -14,7 +13,6 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/magic"
 	"github.com/AlexxIT/go2rtc/pkg/mjpeg"
 	"github.com/AlexxIT/go2rtc/pkg/multipart"
-	"github.com/AlexxIT/go2rtc/pkg/rtmp"
 	"github.com/AlexxIT/go2rtc/pkg/tcp"
 )
 
@@ -26,11 +24,21 @@ func Init() {
 	streams.HandleFunc("tcp", handleTCP)
 }
 
-func handleHTTP(url string) (core.Producer, error) {
+func handleHTTP(rawURL string) (core.Producer, error) {
+	rawURL, rawQuery, _ := strings.Cut(rawURL, "#")
+
 	// first we get the Content-Type to define supported producer
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", rawURL, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	if rawQuery != "" {
+		query := streams.ParseQuery(rawQuery)
+		for _, header := range query["header"] {
+			key, value, _ := strings.Cut(header, ":")
+			req.Header.Add(key, value)
+		}
 	}
 
 	res, err := tcp.Do(req)
@@ -48,46 +56,23 @@ func handleHTTP(url string) (core.Producer, error) {
 		ct = ct[:i]
 	}
 
-	switch ct {
-	case "image/jpeg":
+	var ext string
+	if i := strings.LastIndexByte(req.URL.Path, '.'); i > 0 {
+		ext = req.URL.Path[i+1:]
+	}
+
+	switch {
+	case ct == "image/jpeg":
 		return mjpeg.NewClient(res), nil
 
-	case "multipart/x-mixed-replace":
-		return multipart.NewClient(res)
+	case ct == "multipart/x-mixed-replace":
+		return multipart.Open(res.Body)
 
-	case "application/vnd.apple.mpegurl":
-		return hls.NewClient(res)
-
-	case "video/x-flv":
-		var conn *rtmp.Client
-		if conn, err = rtmp.Accept(res); err != nil {
-			return nil, err
-		}
-		if err = conn.Describe(); err != nil {
-			return nil, err
-		}
-		return conn, nil
-
-	default: // "video/mpeg":
+	case ct == "application/vnd.apple.mpegurl" || ext == "m3u8":
+		return hls.OpenURL(req.URL, res.Body)
 	}
 
-	// 2. Guess format from extension
-	if i := strings.LastIndexByte(req.URL.Path, '.'); i > 0 {
-		switch req.URL.Path[i+1:] {
-		case "m3u8":
-			return hls.NewClient(res)
-		}
-	}
-
-	client := magic.NewClient(res.Body)
-	if err = client.Probe(); err != nil {
-		return nil, err
-	}
-
-	client.Desc = "HTTP active producer"
-	client.URL = url
-
-	return client, nil
+	return magic.Open(res.Body)
 }
 
 func handleTCP(rawURL string) (core.Producer, error) {
@@ -96,18 +81,10 @@ func handleTCP(rawURL string) (core.Producer, error) {
 		return nil, err
 	}
 
-	conn, err := net.DialTimeout("tcp", u.Host, time.Second*3)
+	conn, err := net.DialTimeout("tcp", u.Host, core.ConnDialTimeout)
 	if err != nil {
 		return nil, err
 	}
 
-	client := magic.NewClient(conn)
-	if err = client.Probe(); err != nil {
-		return nil, err
-	}
-
-	client.Desc = "TCP active producer"
-	client.URL = rawURL
-
-	return client, nil
+	return magic.Open(conn)
 }
