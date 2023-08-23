@@ -1,18 +1,20 @@
 package webrtc
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/pion/ice/v2"
-	"github.com/pion/sdp/v3"
-	"github.com/pion/stun"
-	"github.com/pion/webrtc/v3"
 	"hash/crc32"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/pion/ice/v2"
+	"github.com/pion/sdp/v3"
+	"github.com/pion/stun"
+	"github.com/pion/webrtc/v3"
 )
 
 func UnmarshalMedias(descriptions []*sdp.MediaDescription) (medias []*core.Media) {
@@ -50,6 +52,62 @@ func UnmarshalMedias(descriptions []*sdp.MediaDescription) (medias []*core.Media
 	}
 
 	return
+}
+
+// WithResampling - will add for consumer: PCMA/0, PCMU/0, PCM/0, PCML/0
+// so it can add resampling for PCMA/PCMU and repack for PCM/PCML
+func WithResampling(medias []*core.Media) []*core.Media {
+	for _, media := range medias {
+		if media.Kind != core.KindAudio || media.Direction != core.DirectionSendonly {
+			continue
+		}
+
+		var pcma, pcmu, pcm, pcml *core.Codec
+
+		for _, codec := range media.Codecs {
+			switch codec.Name {
+			case core.CodecPCMA:
+				if codec.ClockRate != 0 {
+					pcma = codec
+				} else {
+					pcma = nil
+				}
+			case core.CodecPCMU:
+				if codec.ClockRate != 0 {
+					pcmu = codec
+				} else {
+					pcmu = nil
+				}
+			case core.CodecPCM:
+				pcm = codec
+			case core.CodecPCML:
+				pcml = codec
+			}
+		}
+
+		if pcma != nil {
+			pcma = pcma.Clone()
+			pcma.ClockRate = 0 // reset clock rate so will match any
+			media.Codecs = append(media.Codecs, pcma)
+		}
+		if pcmu != nil {
+			pcmu = pcmu.Clone()
+			pcmu.ClockRate = 0
+			media.Codecs = append(media.Codecs, pcmu)
+		}
+		if pcma != nil && pcm == nil {
+			pcm = pcma.Clone()
+			pcm.Name = core.CodecPCM
+			media.Codecs = append(media.Codecs, pcm)
+		}
+		if pcma != nil && pcml == nil {
+			pcml = pcma.Clone()
+			pcml.Name = core.CodecPCML
+			media.Codecs = append(media.Codecs, pcml)
+		}
+	}
+
+	return medias
 }
 
 func NewCandidate(network, address string) (string, error) {
@@ -235,4 +293,36 @@ func CandidateManualHostTCPPassive(address string, port int) string {
 		"candidate:%d 1 tcp %d %s %d typ host tcptype passive",
 		foundation, priority, address, port,
 	)
+}
+
+func UnmarshalICEServers(b []byte) ([]webrtc.ICEServer, error) {
+	type ICEServer struct {
+		URLs       any    `json:"urls"`
+		Username   string `json:"username,omitempty"`
+		Credential string `json:"credential,omitempty"`
+	}
+
+	var src []ICEServer
+	if err := json.Unmarshal(b, &src); err != nil {
+		return nil, err
+	}
+
+	var dst []webrtc.ICEServer
+	for i := range src {
+		srv := webrtc.ICEServer{
+			Username:   src[i].Username,
+			Credential: src[i].Credential,
+		}
+
+		switch v := src[i].URLs.(type) {
+		case []string:
+			srv.URLs = v
+		case string:
+			srv.URLs = []string{v}
+		}
+
+		dst = append(dst, srv)
+	}
+
+	return dst, nil
 }

@@ -3,10 +3,11 @@ package core
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/pion/sdp/v3"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/pion/sdp/v3"
 )
 
 type Codec struct {
@@ -51,6 +52,18 @@ func (c *Codec) IsRTP() bool {
 	return c.PayloadType != PayloadTypeRAW
 }
 
+func (c *Codec) IsVideo() bool {
+	return c.Kind() == KindVideo
+}
+
+func (c *Codec) IsAudio() bool {
+	return c.Kind() == KindAudio
+}
+
+func (c *Codec) Kind() string {
+	return GetKind(c.Name)
+}
+
 func (c *Codec) Clone() *Codec {
 	clone := *c
 	return &clone
@@ -68,7 +81,7 @@ func (c *Codec) Match(remote *Codec) bool {
 }
 
 func UnmarshalCodec(md *sdp.MediaDescription, payloadType string) *Codec {
-	c := &Codec{PayloadType: byte(atoi(payloadType))}
+	c := &Codec{PayloadType: byte(Atoi(payloadType))}
 
 	for _, attr := range md.Attributes {
 		switch {
@@ -78,7 +91,7 @@ func UnmarshalCodec(md *sdp.MediaDescription, payloadType string) *Codec {
 
 			c.Name = strings.ToUpper(ss[0])
 			// fix tailing space: `a=rtpmap:96 H264/90000 `
-			c.ClockRate = uint32(atoi(strings.TrimRightFunc(ss[1], unicode.IsSpace)))
+			c.ClockRate = uint32(Atoi(strings.TrimRightFunc(ss[1], unicode.IsSpace)))
 
 			if len(ss) == 3 && ss[2] == "2" {
 				c.Channels = 2
@@ -99,23 +112,61 @@ func UnmarshalCodec(md *sdp.MediaDescription, payloadType string) *Codec {
 		case "8":
 			c.Name = CodecPCMA
 			c.ClockRate = 8000
+		case "10":
+			c.Name = CodecPCM
+			c.ClockRate = 44100
+			c.Channels = 2
+		case "11":
+			c.Name = CodecPCM
+			c.ClockRate = 44100
 		case "14":
 			c.Name = CodecMP3
-			c.ClockRate = 44100
+			c.ClockRate = 90000 // it's not real sample rate
 		case "26":
 			c.Name = CodecJPEG
 			c.ClockRate = 90000
+		case "96", "97", "98":
+			if len(md.Bandwidth) == 0 {
+				c.Name = payloadType
+				break
+			}
+
+			// FFmpeg + RTSP + pcm_s16le = doesn't pass info about codec name and params
+			// so try to guess the codec based on bitrate
+			// https://github.com/AlexxIT/go2rtc/issues/523
+			switch md.Bandwidth[0].Bandwidth {
+			case 128:
+				c.ClockRate = 8000
+			case 256:
+				c.ClockRate = 16000
+			case 384:
+				c.ClockRate = 24000
+			case 512:
+				c.ClockRate = 32000
+			case 705:
+				c.ClockRate = 44100
+			case 768:
+				c.ClockRate = 48000
+			case 1411:
+				// default Windows DShow
+				c.ClockRate = 44100
+				c.Channels = 2
+			case 1536:
+				// default Linux ALSA
+				c.ClockRate = 48000
+				c.Channels = 2
+			default:
+				c.Name = payloadType
+				break
+			}
+
+			c.Name = CodecPCML
 		default:
 			c.Name = payloadType
 		}
 	}
 
 	return c
-}
-
-func atoi(s string) (i int) {
-	i, _ = strconv.Atoi(s)
-	return
 }
 
 func DecodeH264(fmtp string) string {

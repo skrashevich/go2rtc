@@ -3,8 +3,9 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pion/sdp/v3"
 	"strings"
+
+	"github.com/pion/sdp/v3"
 )
 
 // Media take best from:
@@ -82,11 +83,18 @@ func (m *Media) MatchAll() bool {
 	return false
 }
 
+func (m *Media) Equal(media *Media) bool {
+	if media.ID != "" {
+		return m.ID == media.ID
+	}
+	return m.String() == media.String()
+}
+
 func GetKind(name string) string {
 	switch name {
 	case CodecH264, CodecH265, CodecVP8, CodecVP9, CodecAV1, CodecJPEG:
 		return KindVideo
-	case CodecPCMU, CodecPCMA, CodecAAC, CodecOpus, CodecG722, CodecMP3, CodecELD:
+	case CodecPCMU, CodecPCMA, CodecAAC, CodecOpus, CodecG722, CodecMP3, CodecPCM, CodecPCML, CodecELD, CodecFLAC:
 		return KindAudio
 	}
 	return ""
@@ -128,6 +136,10 @@ func MarshalSDP(name string, medias []*Media) ([]byte, error) {
 			},
 		}
 		md.WithCodec(codec.PayloadType, name, codec.ClockRate, codec.Channels, codec.FmtpLine)
+
+		if media.ID != "" {
+			md.WithValueAttribute("control", media.ID)
+		}
 
 		sd.MediaDescriptions = append(sd.MediaDescriptions, md)
 	}

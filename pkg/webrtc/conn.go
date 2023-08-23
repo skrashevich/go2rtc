@@ -1,11 +1,12 @@
 package webrtc
 
 import (
+	"time"
+
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/pion/rtcp"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v3"
-	"time"
 )
 
 type Conn struct {
@@ -130,7 +131,7 @@ func NewConn(pc *webrtc.PeerConnection) *Conn {
 }
 
 func (c *Conn) Close() error {
-	c.closed.Done()
+	c.closed.Done(nil)
 	return c.pc.Close()
 }
 
@@ -143,6 +144,17 @@ func (c *Conn) getTranseiver(mid string) *webrtc.RTPTransceiver {
 	for _, tr := range c.pc.GetTransceivers() {
 		if tr.Mid() == mid {
 			return tr
+		}
+	}
+	return nil
+}
+
+func (c *Conn) getSenderTrack(mid string) *Track {
+	if tr := c.getTranseiver(mid); tr != nil {
+		if s := tr.Sender(); s != nil {
+			if t := s.Track().(*Track); t != nil {
+				return t
+			}
 		}
 	}
 	return nil
