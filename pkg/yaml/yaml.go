@@ -7,6 +7,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func Unmarshal(in []byte, out interface{}) (err error) {
+	return yaml.Unmarshal(in, out)
+}
+
 func Encode(v any, indent int) ([]byte, error) {
 	b := bytes.NewBuffer(nil)
 	e := yaml.NewEncoder(b)
@@ -89,7 +93,7 @@ func LastChild(node *yaml.Node) *yaml.Node {
 	if node.Content == nil {
 		return node
 	}
-	return node.Content[len(node.Content)-1]
+	return LastChild(node.Content[len(node.Content)-1])
 }
 
 func AddOrReplace(src []byte, key string, value any, nodeParent *yaml.Node) ([]byte, error) {
@@ -105,6 +109,13 @@ func AddOrReplace(src []byte, key string, value any, nodeParent *yaml.Node) ([]b
 		i0 := LineOffset(src, nodeKey.Line)
 		i1 := LineOffset(src, LastChild(nodeValue).Line+1)
 
+		if i1 < 0 { // no new line on the end of file
+			if value != nil {
+				return append(src[:i0], put...), nil
+			}
+			return src[:i0], nil
+		}
+
 		dst := make([]byte, 0, len(src)+len(put))
 		dst = append(dst, src[:i0]...)
 		if value != nil {
@@ -116,6 +127,14 @@ func AddOrReplace(src []byte, key string, value any, nodeParent *yaml.Node) ([]b
 	put = AddIndent(put, FirstChild(nodeParent).Column-1)
 
 	i := LineOffset(src, LastChild(nodeParent).Line+1)
+
+	if i < 0 { // no new line on the end of file
+		src = append(src, '\n')
+		if value != nil {
+			src = append(src, put...)
+		}
+		return src, nil
+	}
 
 	dst := make([]byte, 0, len(src)+len(put))
 	dst = append(dst, src[:i]...)

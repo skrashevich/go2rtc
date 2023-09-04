@@ -35,6 +35,7 @@ func handleHTTP(rawURL string) (core.Producer, error) {
 
 	if rawQuery != "" {
 		query := streams.ParseQuery(rawQuery)
+
 		for _, header := range query["header"] {
 			key, value, _ := strings.Cut(header, ":")
 			req.Header.Add(key, strings.TrimSpace(value))

@@ -37,12 +37,15 @@ func Init() {
 	api.HandleFunc("/streams", apiOK)
 	api.HandleFunc("/stream/", apiStream)
 
-	streams.HandleFunc("hass", func(url string) (core.Producer, error) {
-		// check entity by name
-		if url2 := entities[url[5:]]; url2 != "" {
-			return streams.GetProducer(url2)
+	streams.RedirectFunc("hass", func(url string) (string, error) {
+		if location := entities[url[5:]]; location != "" {
+			return location, nil
 		}
 
+		return "", nil
+	})
+
+	streams.HandleFunc("hass", func(url string) (core.Producer, error) {
 		// support hass://supervisor?entity_id=camera.driveway_doorbell
 		client, err := hass.NewClient(url)
 		if err != nil {
@@ -72,11 +75,13 @@ func Init() {
 			}
 		})
 
-		var items []api.Stream
+		var items []*api.Source
 		for name, url := range entities {
-			items = append(items, api.Stream{Name: name, URL: url})
+			items = append(items, &api.Source{
+				Name: name, URL: "hass:" + name, Location: url,
+			})
 		}
-		api.ResponseStreams(w, items)
+		api.ResponseSources(w, items)
 	})
 
 	// for Addon listen on hassio interface, so WebUI feature will work

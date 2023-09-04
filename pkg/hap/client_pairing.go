@@ -4,59 +4,85 @@ import (
 	"bufio"
 	"crypto/sha512"
 	"errors"
-	"fmt"
 	"net"
-	"strings"
+	"net/url"
 
 	"github.com/AlexxIT/go2rtc/pkg/hap/chacha20poly1305"
 	"github.com/AlexxIT/go2rtc/pkg/hap/ed25519"
 	"github.com/AlexxIT/go2rtc/pkg/hap/hkdf"
 	"github.com/AlexxIT/go2rtc/pkg/hap/tlv8"
-	"github.com/AlexxIT/go2rtc/pkg/mdns"
 	"github.com/tadglines/go-pkgs/crypto/srp"
 )
 
-func Pair(deviceID, pin string) (*Client, error) {
-	var addr string
-	var mfi bool
-
-	_ = mdns.Discovery(mdns.ServiceHAP, func(entry *mdns.ServiceEntry) bool {
-		if entry.Complete() && entry.Info["id"] == deviceID {
-			addr = entry.Addr()
-			mfi = entry.Info["ff"] == "1"
-			return true
-		}
-		return false
-	})
-
-	if addr == "" {
-		return nil, errors.New("hap: mdns.Discovery")
+// Pair homekit
+func Pair(rawURL string) (*Client, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
 	}
+
+	query := u.Query()
 
 	c := &Client{
-		DeviceAddress: addr,
-		DeviceID:      deviceID,
-		ClientID:      GenerateUUID(),
-		ClientPrivate: GenerateKey(),
+		DeviceAddress: u.Host,
+		DeviceID:      query.Get("device_id"),
+		ClientID:      query.Get("client_id"),
+		ClientPrivate: DecodeKey(query.Get("client_private")),
 	}
 
-	return c, c.Pair(mfi, pin)
+	if c.ClientID == "" {
+		c.ClientID = GenerateUUID()
+	}
+	if c.ClientPrivate == nil {
+		c.ClientPrivate = GenerateKey()
+	}
+
+	if err = c.Pair(query.Get("feature"), query.Get("pin")); err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
-func (c *Client) Pair(mfi bool, pin string) (err error) {
-	pin = strings.ReplaceAll(pin, "-", "")
-	if len(pin) != 8 {
-		return fmt.Errorf("wrong PIN format: %s", pin)
+func Unpair(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return err
 	}
 
-	pin = pin[:3] + "-" + pin[3:5] + "-" + pin[5:] // 123-45-678
+	query := u.Query()
+	conn := &Client{
+		DeviceAddress: u.Host,
+		DeviceID:      query.Get("device_id"),
+		DevicePublic:  DecodeKey(query.Get("device_public")),
+		ClientID:      query.Get("client_id"),
+		ClientPrivate: DecodeKey(query.Get("client_private")),
+	}
 
-	c.conn, err = net.DialTimeout("tcp", c.DeviceAddress, ConnDialTimeout)
+	if err = conn.Dial(); err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	if err = conn.ListPairings(); err != nil {
+		return err
+	}
+
+	return conn.DeletePairing(conn.ClientID)
+}
+
+func (c *Client) Pair(feature, pin string) (err error) {
+	if pin, err = SanitizePin(pin); err != nil {
+		return err
+	}
+
+	c.Conn, err = net.DialTimeout("tcp", c.DeviceAddress, ConnDialTimeout)
 	if err != nil {
 		return
 	}
 
-	c.reader = bufio.NewReader(c.conn)
+	c.reader = bufio.NewReader(c.Conn)
 
 	// STEP M1. Send HELLO
 	plainM1 := struct {
@@ -66,7 +92,7 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 		Method: MethodPair,
 		State:  StateM1,
 	}
-	if mfi {
+	if feature == "1" {
 		plainM1.Method = MethodPairMFi // ff=1 => method=1, ff=2 => method=0
 	}
 	res, err := c.Post(PathPairSetup, MimeTLV8, tlv8.MarshalReader(plainM1))
@@ -76,8 +102,8 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 
 	// STEP M2. Read Device Salt and session PublicKey
 	var plainM2 struct {
-		Salt       []byte `tlv8:"2"`
-		SessionKey []byte `tlv8:"3"` // server public key, aka session.B
+		Salt       string `tlv8:"2"`
+		SessionKey string `tlv8:"3"` // server public key, aka session.B
 		State      byte   `tlv8:"6"`
 		Error      byte   `tlv8:"7"`
 	}
@@ -85,7 +111,7 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 		return
 	}
 	if plainM2.State != StateM2 {
-		return NewResponseError(plainM1, plainM2)
+		return newResponseError(plainM1, plainM2)
 	}
 	if plainM2.Error != 0 {
 		return newPairingError(plainM2.Error)
@@ -106,19 +132,19 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 
 	// username: "Pair-Setup", password: PIN (with dashes)
 	session := pake.NewClientSession(username, []byte(pin))
-	sessionShared, err := session.ComputeKey(plainM2.Salt, plainM2.SessionKey)
+	sessionShared, err := session.ComputeKey([]byte(plainM2.Salt), []byte(plainM2.SessionKey))
 	if err != nil {
 		return
 	}
 
 	// STEP M3. Send request
 	plainM3 := struct {
-		SessionKey []byte `tlv8:"3"`
-		Proof      []byte `tlv8:"4"`
+		SessionKey string `tlv8:"3"`
+		Proof      string `tlv8:"4"`
 		State      byte   `tlv8:"6"`
 	}{
-		SessionKey: session.GetA(), // client public key, aka session.A
-		Proof:      session.ComputeAuthenticator(),
+		SessionKey: string(session.GetA()), // client public key, aka session.A
+		Proof:      string(session.ComputeAuthenticator()),
 		State:      StateM3,
 	}
 	if res, err = c.Post(PathPairSetup, MimeTLV8, tlv8.MarshalReader(plainM3)); err != nil {
@@ -127,7 +153,7 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 
 	// STEP M4. Read response
 	var plainM4 struct {
-		Proof []byte `tlv8:"4"` // server proof
+		Proof string `tlv8:"4"` // server proof
 		State byte   `tlv8:"6"`
 		Error byte   `tlv8:"7"`
 	}
@@ -135,15 +161,15 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 		return
 	}
 	if plainM4.State != StateM4 {
-		return NewResponseError(plainM3, plainM4)
+		return newResponseError(plainM3, plainM4)
 	}
 	if plainM4.Error != 0 {
 		return newPairingError(plainM4.Error)
 	}
 
 	// STEP M4. Verify response
-	if !session.VerifyServerAuthenticator(plainM4.Proof) {
-		return errors.New("hap: wrong server auth")
+	if !session.VerifyServerAuthenticator([]byte(plainM4.Proof)) {
+		return errors.New("hap: VerifyServerAuthenticator")
 	}
 
 	// STEP M5. Generate signature
@@ -163,12 +189,12 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 	// STEP M5. Generate payload
 	plainM5 := struct {
 		Identifier string `tlv8:"1"`
-		PublicKey  []byte `tlv8:"3"`
-		Signature  []byte `tlv8:"10"`
+		PublicKey  string `tlv8:"3"`
+		Signature  string `tlv8:"10"`
 	}{
 		Identifier: c.ClientID,
-		PublicKey:  c.ClientPublic(),
-		Signature:  signature,
+		PublicKey:  string(c.ClientPublic()),
+		Signature:  string(signature),
 	}
 	if b, err = tlv8.Marshal(plainM5); err != nil {
 		return
@@ -188,10 +214,10 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 
 	// STEP M5. Send request
 	cipherM5 := struct {
-		EncryptedData []byte `tlv8:"5"`
+		EncryptedData string `tlv8:"5"`
 		State         byte   `tlv8:"6"`
 	}{
-		EncryptedData: b,
+		EncryptedData: string(b),
 		State:         StateM5,
 	}
 	if res, err = c.Post(PathPairSetup, MimeTLV8, tlv8.MarshalReader(cipherM5)); err != nil {
@@ -200,7 +226,7 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 
 	// STEP M6. Read response
 	cipherM6 := struct {
-		EncryptedData []byte `tlv8:"5"`
+		EncryptedData string `tlv8:"5"`
 		State         byte   `tlv8:"6"`
 		Error         byte   `tlv8:"7"`
 	}{}
@@ -208,19 +234,19 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 		return
 	}
 	if cipherM6.State != StateM6 || cipherM6.Error != 0 {
-		return NewResponseError(plainM5, cipherM6)
+		return newResponseError(plainM5, cipherM6)
 	}
 
 	// STEP M6. Decrypt payload
-	b, err = chacha20poly1305.Decrypt(encryptKey, "PS-Msg06", cipherM6.EncryptedData)
+	b, err = chacha20poly1305.Decrypt(encryptKey, "PS-Msg06", []byte(cipherM6.EncryptedData))
 	if err != nil {
 		return
 	}
 
 	plainM6 := struct {
 		Identifier string `tlv8:"1"`
-		PublicKey  []byte `tlv8:"3"`
-		Signature  []byte `tlv8:"10"`
+		PublicKey  string `tlv8:"3"`
+		Signature  string `tlv8:"10"`
 	}{}
 	if err = tlv8.Unmarshal(b, &plainM6); err != nil {
 		return
@@ -235,15 +261,15 @@ func (c *Client) Pair(mfi bool, pin string) (err error) {
 	}
 
 	b = Append(remoteSign, plainM6.Identifier, plainM6.PublicKey)
-	if !ed25519.ValidateSignature(plainM6.PublicKey, b, plainM6.Signature) {
-		return errors.New("hap: wrong accessory sign")
+	if !ed25519.ValidateSignature([]byte(plainM6.PublicKey), b, []byte(plainM6.Signature)) {
+		return errors.New("hap: ValidateSignature")
 	}
 
 	if c.DeviceID != plainM6.Identifier {
 		return errors.New("hap: wrong DeviceID: " + plainM6.Identifier)
 	}
 
-	c.DevicePublic = plainM6.PublicKey
+	c.DevicePublic = []byte(plainM6.PublicKey)
 
 	return nil
 }
@@ -264,7 +290,7 @@ func (c *Client) ListPairings() error {
 	// TODO: don't know how to fix array of items
 	var plainM2 struct {
 		Identifier string `tlv8:"1"`
-		PublicKey  []byte `tlv8:"3"`
+		PublicKey  string `tlv8:"3"`
 		State      byte   `tlv8:"6"`
 		Permission byte   `tlv8:"11"`
 	}
@@ -279,13 +305,13 @@ func (c *Client) PairingsAdd(clientID string, clientPublic []byte, admin bool) e
 	plainM1 := struct {
 		Method     byte   `tlv8:"0"`
 		Identifier string `tlv8:"1"`
-		PublicKey  []byte `tlv8:"3"`
+		PublicKey  string `tlv8:"3"`
 		State      byte   `tlv8:"6"`
 		Permission byte   `tlv8:"11"`
 	}{
 		Method:     MethodAddPairing,
 		Identifier: clientID,
-		PublicKey:  clientPublic,
+		PublicKey:  string(clientPublic),
 		State:      StateM1,
 		Permission: PermissionUser,
 	}
@@ -330,7 +356,7 @@ func (c *Client) DeletePairing(id string) error {
 		return err
 	}
 	if plainM2.State != StateM2 {
-		return NewResponseError(plainM1, plainM2)
+		return newResponseError(plainM1, plainM2)
 	}
 
 	return nil

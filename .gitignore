@@ -1,10 +1,8 @@
-
 .idea/
-
 .tmp/
 
 go2rtc.yaml
-
 go2rtc.json
 
 dist/
+0_test.go

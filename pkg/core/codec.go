@@ -64,6 +64,18 @@ func (c *Codec) Kind() string {
 	return GetKind(c.Name)
 }
 
+func (c *Codec) PrintName() string {
+	switch c.Name {
+	case CodecAAC:
+		return "AAC"
+	case CodecPCM:
+		return "S16B"
+	case CodecPCML:
+		return "S16L"
+	}
+	return c.Name
+}
+
 func (c *Codec) Clone() *Codec {
 	clone := *c
 	return &clone
