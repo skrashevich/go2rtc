@@ -38,6 +38,7 @@ COPY --link --from=ngrok /bin/ngrok /usr/local/bin/
 
 # 3. Final image
 FROM base
+ARG TARGETARCH
 # Prepare apt for buildkit cache
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
   && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache
