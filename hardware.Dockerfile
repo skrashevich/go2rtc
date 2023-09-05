@@ -47,14 +47,24 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean \
 # libasound2-plugins for ALSA support
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked \
     echo 'deb http://deb.debian.org/debian bookworm non-free' > /etc/apt/sources.list.d/debian-non-free.list && \
-    apt-get -y update && apt-get -y install tini ffmpeg \
+    apt-get -y update && apt-get -y install tini \
         python3 curl jq \
         intel-media-va-driver-non-free \
         libasound2-plugins
+RUN <<EOT
+  # btbn-ffmpeg -> amd64
+  if [[ "${TARGETARCH}" == "amd64" ]]; then
+      mkdir -p /usr/lib/btbn-ffmpeg
+      wget -qO btbn-ffmpeg.tar.xz "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n6.0-latest-linux64-gpl-6.0.tar.xz"
+      tar -xf btbn-ffmpeg.tar.xz -C /usr/lib/btbn-ffmpeg --strip-components 1
+      rm -rf btbn-ffmpeg.tar.xz /usr/lib/btbn-ffmpeg/doc /usr/lib/btbn-ffmpeg/bin/ffplay
+  fi
+EOT
 
 COPY --link --from=rootfs / /
 
 
+ENV PATH="/usr/lib/btbn-ffmpeg/bin:${PATH}"
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 VOLUME /config
