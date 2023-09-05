@@ -83,3 +83,31 @@ func TestGetProfileLevelID(t *testing.T) {
 	profile = GetProfileLevelID(s)
 	require.Equal(t, "640029", profile)
 }
+
+func TestNALUType(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []byte
+		expected byte
+	}{
+		{
+			name:     "Short input",
+			input:    []byte{0x01, 0x02, 0x03, 0x04},
+			expected: 0,
+		},
+		{
+			name:     "Valid input",
+			input:    []byte{0x01, 0x02, 0x03, 0x04, 0x1F},
+			expected: 0x1F,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := NALUType(tc.input)
+			if result != tc.expected {
+				t.Errorf("Expected %v, but got %v", tc.expected, result)
+			}
+		})
+	}
+}

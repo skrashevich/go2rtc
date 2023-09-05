@@ -20,6 +20,9 @@ const (
 )
 
 func NALUType(b []byte) byte {
+	if len(b) < 5 {
+		return 0 // or handle the error in an appropriate way
+	}
 	return b[4] & 0x1F
 }
 
@@ -31,6 +34,8 @@ func IsKeyframe(b []byte) bool {
 			return false
 		case NALUTypeIFrame:
 			return true
+		case 0:
+			continue
 		}
 
 		size := int(binary.BigEndian.Uint32(b)) + 4
