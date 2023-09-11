@@ -296,10 +296,12 @@ func (c *Client) PutCharacters(characters ...*Character) error {
 		return err
 	}
 
-	_, err = c.Put(PathCharacteristics, MimeJSON, bytes.NewReader(body))
+	res, err := c.Put(PathCharacteristics, MimeJSON, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
+
+	_, _ = io.ReadAll(res.Body) // important to "clear" body
 
 	return nil
 }
@@ -317,8 +319,11 @@ func (c *Client) GetImage(width, height int) ([]byte, error) {
 }
 
 func (c *Client) LocalIP() string {
+	if c.Conn == nil {
+		return ""
+	}
 	addr := c.Conn.LocalAddr().(*net.TCPAddr)
-	return addr.IP.To4().String()
+	return addr.IP.String()
 }
 
 func DecodeKey(s string) []byte {
