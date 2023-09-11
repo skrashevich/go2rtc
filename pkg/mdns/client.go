@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/miekg/dns" // awesome library for parsing mDNS records
+	"golang.org/x/sys/unix"
 )
 
 const ServiceHAP = "_hap._tcp.local." // HomeKit Accessory Protocol
@@ -175,7 +176,8 @@ func (b *Browser) ListenMulticastUDP() error {
 		Control: func(network, address string, c syscall.RawConn) error {
 			return c.Control(func(fd uintptr) {
 				// 1. Allow multicast UDP to listen concurrently across multiple listeners
-				_ = SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+				_ = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
+				_ = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
 			})
 		},
 	}
@@ -199,10 +201,11 @@ func (b *Browser) ListenMulticastUDP() error {
 		Control: func(network, address string, c syscall.RawConn) error {
 			return c.Control(func(fd uintptr) {
 				// 1. Allow multicast UDP to listen concurrently across multiple listeners
-				_ = SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+				_ = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
+				_ = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
 
 				// 2. Disable loop responses
-				_ = SetsockoptInt(fd, syscall.IPPROTO_IP, syscall.IP_MULTICAST_LOOP, 0)
+				_ = unix.SetsockoptInt(int(fd), unix.IPPROTO_IP, unix.IP_MULTICAST_LOOP, 0)
 
 				// 3. Allow receive multicast responses on all this addresses
 				mreq := &syscall.IPMreq{
