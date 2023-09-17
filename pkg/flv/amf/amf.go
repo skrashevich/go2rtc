@@ -60,6 +60,9 @@ func (a *AMF) ReadItem() (any, error) {
 	case TypeObject:
 		return a.ReadObject()
 
+	case TypeEcmaArray:
+		return a.ReadEcmaArray()
+
 	case TypeNull:
 		return nil, nil
 
@@ -174,7 +177,18 @@ func (a *AMF) WriteString(s string) {
 
 func (a *AMF) WriteObject(obj map[string]any) {
 	a.buf = append(a.buf, TypeObject)
+	a.writeKV(obj)
+	a.buf = append(a.buf, 0, 0, TypeObjectEnd)
+}
 
+func (a *AMF) WriteEcmaArray(obj map[string]any) {
+	n := len(obj)
+	a.buf = append(a.buf, TypeEcmaArray, byte(n>>24), byte(n>>16), byte(n>>8), byte(n))
+	a.writeKV(obj)
+	a.buf = append(a.buf, 0, 0, TypeObjectEnd)
+}
+
+func (a *AMF) writeKV(obj map[string]any) {
 	for k, v := range obj {
 		n := len(k)
 		a.buf = append(a.buf, byte(n>>8), byte(n))
@@ -185,16 +199,41 @@ func (a *AMF) WriteObject(obj map[string]any) {
 			a.WriteString(v)
 		case int:
 			a.WriteNumber(float64(v))
+		case uint16:
+			a.WriteNumber(float64(v))
+		case uint32:
+			a.WriteNumber(float64(v))
+		case float64:
+			a.WriteNumber(v)
 		case bool:
 			a.WriteBool(v)
 		default:
 			panic(v)
 		}
 	}
-
-	a.buf = append(a.buf, 0, 0, TypeObjectEnd)
 }
 
 func (a *AMF) WriteNull() {
 	a.buf = append(a.buf, TypeNull)
+}
+
+func EncodeItems(items ...any) []byte {
+	a := &AMF{}
+	for _, item := range items {
+		switch v := item.(type) {
+		case float64:
+			a.WriteNumber(v)
+		case int:
+			a.WriteNumber(float64(v))
+		case string:
+			a.WriteString(v)
+		case map[string]any:
+			a.WriteObject(v)
+		case nil:
+			a.WriteNull()
+		default:
+			panic(v)
+		}
+	}
+	return a.Bytes()
 }
