@@ -42,7 +42,7 @@ func Client(conn net.Conn, sharedKey []byte, isClient bool) (net.Conn, error) {
 
 const (
 	// PacketSizeMax is the max length of encrypted packets
-	PacketSizeMax = 0x400
+	PacketSizeMax = 0xffff
 
 	VerifySize = 2
 	NonceSize  = 8
