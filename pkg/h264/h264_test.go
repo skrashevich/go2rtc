@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -110,4 +111,3 @@ func TestNALUType(t *testing.T) {
 			}
 		})
 	}
-}
