@@ -1,3 +1,13 @@
+## Transcoding pix_fmt
+
+convert `yuvj420p` to `yuv420p`
+
+- `h264_vaapi` - not supported, `scale_vaapi` should be used
+- `h264_v4l2m2m` - supported, should be set, or fail
+- `h264_nvenc` - supported, may be set, or warning
+- `h264_qsv` - supported, may be set, or warning
+- `h264_videotoolbox` - not supported, will get warning anyway
+
 ## FFplay output
 
 [FFplay](https://stackoverflow.com/questions/27778678/what-are-mv-fd-aq-vq-sq-and-f-in-a-video-stream) `7.11 A-V:  0.003 fd=   1 aq=   21KB vq=  321KB sq=    0B f=0/0`:

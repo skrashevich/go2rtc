@@ -86,16 +86,16 @@ var defaults = map[string]string{
 	"mjpeg/vaapi": "-c:v mjpeg_vaapi",
 
 	// hardware Raspberry
-	"h264/v4l2m2m": "-c:v h264_v4l2m2m -g 50 -bf 0",
+	"h264/v4l2m2m": "-c:v h264_v4l2m2m -g 50 -bf 0 -pix_fmt:v yuv420p",
 	"h265/v4l2m2m": "-c:v hevc_v4l2m2m -g 50 -bf 0",
 
 	// hardware NVidia on Linux and Windows
 	// preset=p2 - faster, tune=ll - low latency
-	"h264/cuda": "-c:v h264_nvenc -g 50 -bf 0 -profile:v high -level:v auto -preset:v p2 -tune:v ll",
+	"h264/cuda": "-c:v h264_nvenc -g 50 -bf 0 -profile:v high -level:v auto -preset:v p2 -tune:v ll -pix_fmt:v yuv420p",
 	"h265/cuda": "-c:v hevc_nvenc -g 50 -bf 0 -profile:v high -level:v auto",
 
 	// hardware Intel on Windows
-	"h264/dxva2":  "-c:v h264_qsv -g 50 -bf 0 -profile:v high -level:v 4.1 -async_depth:v 1",
+	"h264/dxva2":  "-c:v h264_qsv -g 50 -bf 0 -profile:v high -level:v 4.1 -async_depth:v 1 -pix_fmt:v yuv420p",
 	"h265/dxva2":  "-c:v hevc_qsv -g 50 -bf 0 -profile:v high -level:v 5.1 -async_depth:v 1",
 	"mjpeg/dxva2": "-c:v mjpeg_qsv -profile:v high -level:v 5.1",
 
