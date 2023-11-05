@@ -22,12 +22,14 @@ func Init() {
 			Password     string `yaml:"password" json:"-"`
 			DefaultQuery string `yaml:"default_query" json:"default_query"`
 			PacketSize   uint16 `yaml:"pkt_size"`
+			Tor          bool   `yaml:"tor"`
 		} `yaml:"rtsp"`
 	}
 
 	// default config
 	conf.Mod.Listen = ":8554"
 	conf.Mod.DefaultQuery = "video&audio"
+	conf.Mod.Tor = false
 
 	app.LoadConfig(&conf)
 	app.Info["rtsp"] = conf.Mod

@@ -32,6 +32,7 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/webrtc"
 	"github.com/AlexxIT/go2rtc/internal/webtorrent"
 	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/AlexxIT/go2rtc/pkg/tor"
 )
 
 func main() {
@@ -84,6 +85,8 @@ func main() {
 	ngrok.Init() // Ngrok module
 	srtp.Init()  // SRTP server
 	debug.Init() // debug API
+
+	tor.Init()
 
 	// 7. Go
 

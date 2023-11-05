@@ -13,6 +13,7 @@ import (
 
 	"github.com/AlexxIT/go2rtc/internal/app"
 	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/AlexxIT/go2rtc/pkg/tor"
 	"github.com/rs/zerolog"
 )
 
@@ -28,6 +29,7 @@ func Init() {
 			TLSListen string `yaml:"tls_listen"`
 			TLSCert   string `yaml:"tls_cert"`
 			TLSKey    string `yaml:"tls_key"`
+			Tor       bool   `yaml:"tor"`
 		} `yaml:"api"`
 	}
 
@@ -57,6 +59,9 @@ func Init() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("[api] listen")
 		return
+	}
+	if cfg.Mod.Tor {
+		tor.Listen(ln)
 	}
 
 	log.Info().Str("addr", cfg.Mod.Listen).Msg("[api] listen")

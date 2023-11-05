@@ -1,0 +1,5 @@
+UseBridges 1
+Bridge meek 0.0.2.0:1 url=https://meek.azureedge.net/
+#Bridge meek 0.0.2.0:2 B9E7141C594AF25699E0079C1F0146F409495296 url=https://d2cly7j4zqgua7.cloudfront.net/ front=a0.awsstatic.com
+#Bridge meek 0.0.2.0:3 97700DFE9F483596DDA6264C4D7DF7641E1E39CE url=https://meek.azureedge.net/ front=ajax.aspnetcdn.com
+ClientTransportPlugin meek exec  /usr/local/bin/meek-client --log meek-client.log

@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	github.com/cretz/bine v0.2.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
