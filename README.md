@@ -759,10 +759,12 @@ The HTTP API is the main part for interacting with the application. Default addr
 - you can change API `base_path` and host go2rtc on your main app webserver suburl
 - all files from `static_dir` hosted on root path: `/`
 - you can use raw TLS cert/key content or path to files
+- Unix socket listening alongside TCP and HTTP(S)
 
 ```yaml
 api:
   listen: ":1984"    # default ":1984", HTTP API port ("" - disabled)
+  unix_listen: "/var/run/myapi.sock"  # default: "", unix socket path
   username: "admin"  # default "", Basic auth for WebUI
   password: "pass"   # default "", Basic auth for WebUI
   base_path: "/rtc"  # default "", API prefix for serve on suburl (/api => /rtc/api)
@@ -778,6 +780,20 @@ api:
     ...
     -----END PRIVATE KEY-----
 ```
+
+**Unix Socket Usage**
+
+The API can be accessed via Unix socket in a similar manner as you would    
+over TCP or HTTPS. Given a Unix socket address specified in the             
+configuration, you can make API calls using HTTP clients that support Unix  
+sockets.                                                                    
+                                                                            
+For example, with  curl :                                                   
+                                                                              
+  `curl --unix-socket /var/run/myapi.sock http://localhost/api/endpoint`
+
+Note: Be sure to correctly set file permissions for your Unix socket file to
+ensure that the intended clients have access.             
 
 **PS:**
 
