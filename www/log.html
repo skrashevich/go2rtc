@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Logs</title>
-    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <style>
+<title>Logs</title>
+<meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<style>
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: white;
@@ -50,22 +50,38 @@
     </style>
 </head>
 <body>
+
 <script src="main.js"></script>
 <div>
-    <button id="clean">Clean</button>
-    <button id="update">Auto Update: ON</button>
+<button id="clean">Clean</button>
+<button id="update">Auto Update: ON</button>
 </div>
+<div>
+    <label for="timeFilter">Time Filter:</label>
+    <select id="timeFilter" onchange="filterTable()">
+    <option value="">Select Time Range</option>
+    <option value="lastHour">Last Hour</option>
+    <option value="last24Hours">Last 24 Hours</option>
+    <option value="lastWeek">Last Week</option>
+    </select>
+    <label for="levelFilter">Level Filter:</label>
+    <select id="levelFilter" onchange="filterTable()">
+    <option value="">Select Level</option>
+    </select>
+    <label for="messageFilter">Message Filter:</label>
+    <input id="messageFilter" onkeyup="filterTable()" placeholder="Enter message..." type="text"/>
+    </div>
 <br>
-<table>
-    <thead>
-    <tr>
-        <th style="width: 130px">Time</th>
-        <th style="width: 40px">Level</th>
-        <th>Message</th>
-    </tr>
-    </thead>
-    <tbody id="log">
-    </tbody>
+<table id="logtable">
+<thead>
+<tr>
+<th style="width: 130px">Time</th>
+<th style="width: 40px">Level</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody id="log">
+</tbody>
 </table>
 <script>
     document.getElementById('clean').addEventListener('click', async () => {
@@ -104,6 +120,8 @@
             .then(data => {
                 // Apply styling to the log data
                 document.getElementById('log').innerHTML = applyLogStyling(data);
+                populateLevelFilter();
+                filterTable();
             })
             .catch(error => {
                 console.error('An error occurred:', error);
@@ -125,6 +143,83 @@
     setInterval(() => {
         if (autoUpdateEnabled) reload();
     }, 5000);
+
+    function filterTable() {
+        var timeFilter = document.getElementById("timeFilter").value;
+        var levelFilter = document.getElementById("levelFilter").value;
+        var messageFilter = document.getElementById("messageFilter").value.toLowerCase();
+
+        var table = document.getElementById("log");
+        var tr = table.getElementsByTagName("tr");
+
+        var now = new Date();
+        for (var i = 0; i < tr.length; i++) {
+            var tdTime = tr[i].getElementsByTagName("td")[0];
+            var tdLevel = tr[i].getElementsByTagName("td")[1];
+            var tdMessage = tr[i].getElementsByTagName("td")[2];
+
+            if (tdTime && tdLevel && tdMessage) {
+                var timeText = tdTime.textContent || tdTime.innerText;
+                var timeDate = new Date(timeText); //TODO: handle dates in format `18.12.2023, 13:21:49`
+                var levelText = tdLevel.textContent || tdLevel.innerText;
+                var messageText = tdMessage.textContent || tdMessage.innerText;
+
+                var timeMatch = false;
+                switch(timeFilter) {
+                    case "lastHour":
+                        timeMatch = (now - timeDate) < 3600000;  // 1 hour in milliseconds
+                        break;
+                    case "last24Hours":
+                        timeMatch = (now - timeDate) < 86400000;  // 24 hours in milliseconds
+                        break;
+                    case "lastWeek":
+                        timeMatch = (now - timeDate) < 604800000;  // 1 week in milliseconds
+                        break;
+                    default:
+                        timeMatch = true; // No filter or invalid value
+                }
+
+                if (timeMatch &&
+                    levelText.indexOf(levelFilter) > -1 &&
+                    messageText.toLowerCase().indexOf(messageFilter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }       
+        }
+    }
+
+    function populateLevelFilter() {
+        var levelSet = new Set();
+        var table = document.getElementById("log");
+        var tr = table.getElementsByTagName("tr");
+
+        for (var i = 0; i < tr.length; i++) {
+            var tdLevel = tr[i].getElementsByTagName("td")[1];
+            if (tdLevel) {
+                levelSet.add(tdLevel.textContent || tdLevel.innerText);
+            }
+        }
+
+        var levelFilter = document.getElementById("levelFilter");
+        var currentLevelSelection = levelFilter.value; // Save current selection
+        levelFilter.innerHTML = ''; // Clear existing options
+        levelFilter.add(new Option('Select Level', '')); // Add default option
+
+        levelSet.forEach(function(level) {
+            var option = document.createElement("option");
+            option.value = option.text = level;
+            levelFilter.add(option);
+        });
+
+        levelFilter.value = currentLevelSelection; // Restore previous selection
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        populateLevelFilter();
+        filterTable();
+    });
 </script>
 </body>
 </html>
