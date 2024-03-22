@@ -55,7 +55,7 @@ func ServiceCameraRTPStreamManagement() *hap.Service {
 				CodecType: VideoCodecTypeH264,
 				CodecParams: []VideoParams{
 					{
-						ProfileID: []byte{VideoCodecProfileMain},
+						ProfileID: []byte{VideoCodecProfileMain, VideoCodecProfileConstrainedBaseline, VideoCodecProfileHigh},
 						Level:     []byte{VideoCodecLevel31, VideoCodecLevel32, VideoCodecLevel40},
 					},
 				},
