@@ -26,6 +26,7 @@ func Init() {
 			Name          string   `json:"name"`
 			DeviceID      string   `json:"device_id"`
 			DevicePrivate string   `json:"device_private"`
+			DeviceSerial  string   `json:"device_serial"`
 			Pairings      []string `json:"pairings"`
 			//Listen        string   `json:"listen"`
 		} `yaml:"homekit"`
@@ -75,6 +76,7 @@ func Init() {
 			Pin:           pin,
 			DeviceID:      deviceID,
 			DevicePrivate: calcDevicePrivate(conf.DevicePrivate, id),
+			DeviceSerial:  calcDeviceSerial(conf.DeviceSerial, id),
 			GetPair:       srv.GetPair,
 			AddPair:       srv.AddPair,
 			Handler:       homekit.ServerHandler(srv),
@@ -92,7 +94,7 @@ func Init() {
 			srv.hap.Handler = homekit.ProxyHandler(srv, dial)
 		} else {
 			// 2. Act as basic HomeKit camera
-			srv.accessory = camera.NewAccessory("AlexxIT", "go2rtc", name, "-", app.Version)
+			srv.accessory = camera.NewAccessory("AlexxIT", "go2rtc", name, conf.DeviceSerial, app.Version)
 			srv.hap.Handler = homekit.ServerHandler(srv)
 		}
 
