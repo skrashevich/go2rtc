@@ -257,14 +257,22 @@ func restartHandler(w http.ResponseWriter, r *http.Request) {
 func logHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		// Send current state of the log file immediately
 		w.Header().Set("Content-Type", "application/jsonlines")
-		_, _ = app.MemoryLog.WriteTo(w)
+		if _, err := app.MemoryLog.WriteTo(w); err != nil {
+			log.Printf("Error writing memory log: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 	case "DELETE":
-		app.MemoryLog.Reset()
-		Response(w, "OK", "text/plain")
+		if err := app.MemoryLog.Reset(); err != nil {
+			log.Printf("Error resetting memory log: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+		Response(w, "OK", "text/plain") // Assuming Response() correctly sets the status code to 204 or similar.
 	default:
-		http.Error(w, "Method not allowed", http.StatusBadRequest)
+		w.Header().Set("Allow", "GET, DELETE")
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
