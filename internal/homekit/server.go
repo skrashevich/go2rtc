@@ -263,3 +263,15 @@ func calcDevicePrivate(private, seed string) []byte {
 	b := sha512.Sum512([]byte(seed))
 	return ed25519.NewKeyFromSeed(b[:ed25519.SeedSize])
 }
+
+func calcDeviceSerial(serial, seed string) string {
+	if serial != "" {
+		if len(serial) >= 12 {
+			return serial
+		}
+		seed = serial
+	}
+	b := sha512.Sum512([]byte(seed))
+
+	return fmt.Sprintf("%X-%X-%X", b[0:4], b[16:20], b[32:36])
+}
