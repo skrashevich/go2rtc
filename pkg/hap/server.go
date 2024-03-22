@@ -24,7 +24,6 @@ type Server struct {
 	Pin           string
 	DeviceID      string
 	DevicePrivate []byte
-	DeviceSerial  string
 
 	GetPair func(conn net.Conn, id string) []byte
 	AddPair func(conn net.Conn, id string, public []byte, permissions byte)
