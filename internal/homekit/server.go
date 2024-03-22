@@ -2,7 +2,6 @@ package homekit
 
 import (
 	"crypto/ed25519"
-	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
@@ -265,38 +264,14 @@ func calcDevicePrivate(private, seed string) []byte {
 	return ed25519.NewKeyFromSeed(b[:ed25519.SeedSize])
 }
 
-func calcDeviceSerial(currentSerial, seed string) string {
-	if currentSerial != "" && len(currentSerial) == 16 {
-		return currentSerial
-	}
-	input := currentSerial + seed
-	hash := sha256.Sum256([]byte(input))
-	hexStr := hex.EncodeToString(hash[:])
-
-	// Convert hex string to a base36-like string but without confusing characters.
-	// This step is to ensure the serial number is alphanumeric and less likely to contain ambiguous characters.
-	var serialBuilder strings.Builder
-	for _, c := range hexStr {
-		if c >= '0' && c <= '9' {
-			serialBuilder.WriteRune(c)
-		} else {
-			// Map a-f to less ambiguous characters
-			mappedChars := map[rune]rune{
-				'a': 'J', 'b': 'K', 'c': 'L', 'd': 'M', 'e': 'N', 'f': 'P',
-			}
-			serialBuilder.WriteRune(mappedChars[c])
+func calcDeviceSerial(serial, seed string) string {
+	if serial != "" {
+		if len(serial) >= 12 {
+			return serial
 		}
+		seed = serial
 	}
+	b := sha512.Sum512([]byte(seed))
 
-	// Truncate or pad the serial number to make sure it's exactly 16 characters long.
-	// This is an arbitrary choice; adjust length as needed to fit the actual requirements.
-	const serialLength = 16
-	serial := serialBuilder.String()
-	if len(serial) > serialLength {
-		return serial[:serialLength]
-	}
-	for len(serial) < serialLength {
-		serial += "2" // Padding with a neutral character, adjust as necessary.
-	}
-	return serial
+	return fmt.Sprintf("%X-%X-%X", b[0:4], b[16:20], b[32:36])
 }
