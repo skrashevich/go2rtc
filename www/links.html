@@ -43,7 +43,7 @@
 <script src="main.js"></script>
 <div id="links"></div>
 <script>
-    const src = new URLSearchParams(location.search).get('src').replace(/[<">]/g, ''); // sanitize
+    const src = sanitizeForHTML(new URLSearchParams(window.location.search).get('src'));
 
     document.getElementById('links').innerHTML = `
         <h2>Any codec in source</h2>

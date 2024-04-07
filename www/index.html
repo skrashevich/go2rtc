@@ -125,7 +125,7 @@
             tbody.innerHTML = '';
 
             for (const [key, value] of Object.entries(data)) {
-                const name = key.replace(/[<">]/g, ''); // sanitize
+                const name = sanitizeForHTML(key);
                 const online = value && value.consumers ? value.consumers.length : 0;
                 const src = encodeURIComponent(name);
                 const links = templates.map(link => {
