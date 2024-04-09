@@ -1,6 +1,8 @@
 package api
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -257,12 +259,34 @@ func restartHandler(w http.ResponseWriter, r *http.Request) {
 func logHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
+		levelFilter := r.URL.Query().Get("level")
+
 		w.Header().Set("Content-Type", "application/jsonlines")
-		if _, err := app.MemoryLog.WriteTo(w); err != nil {
-			log.Printf("Error writing memory log: %v", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+
+		// Assuming app.MemoryLog is a bytes.Buffer or similar
+		scanner := bufio.NewScanner(bytes.NewReader(app.MemoryLog.Bytes()))
+		var filteredLog bytes.Buffer
+
+		for scanner.Scan() {
+			var logEntry map[string]interface{}
+			if err := json.Unmarshal(scanner.Bytes(), &logEntry); err != nil {
+				http.Error(w, "Error processing log entries", http.StatusInternalServerError)
+				return
+			}
+
+			// Filter by level if parameter is set
+			if levelFilter == "" || logEntry["level"] == levelFilter {
+				filteredLog.Write(scanner.Bytes())
+				filteredLog.WriteByte('\n')
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			http.Error(w, "Error reading log entries", http.StatusInternalServerError)
 			return
 		}
+
+		_, _ = filteredLog.WriteTo(w)
 	case "DELETE":
 		if err := app.MemoryLog.Reset(); err != nil {
 			log.Printf("Error resetting memory log: %v", err)
