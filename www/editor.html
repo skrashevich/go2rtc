@@ -36,8 +36,6 @@
         mode: 'ace/mode/yaml',
     });
 
-    editor.setTheme(isDarkModeEnabled() ? "ace/theme/tomorrow_night_eighties" : "ace/theme/github");
-
     document.getElementById('save').addEventListener('click', async () => {
         let r = await fetch('api/config', {cache: 'no-cache'});
         if (r.ok && dump !== await r.text()) {
