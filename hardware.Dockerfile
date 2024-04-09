@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -ldflags "-s -w" -trimpath
-RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go install -ldflags "-s -w" -trimpath github.com/mikefarah/yq/v4@v4.42.1
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go install -ldflags "-s -w" -trimpath github.com/mikefarah/yq/v4@v4.43.1
 
 # 2. Collect all files
 FROM scratch AS rootfs
