@@ -12,6 +12,14 @@ FROM golang:${GO_VERSION} AS go
 FROM --platform=linux/amd64 ngrok/ngrok:${NGROK_VERSION} AS ngrok
 
 
+FROM --platform=linux/amd64 alpine AS ffmpeg
+
+ADD https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.0-latest-linux64-gpl-7.0.tar.xz /root/
+RUN apk add --no-cache wget tar xz && \
+    mkdir -p /opt/ffmpeg/bin && cd /root && \
+    tar -xJf ffmpeg-n7.0-latest-linux64-gpl-7.0.tar.xz --strip-components=1 -C /opt/ffmpeg/ ffmpeg-n7.0-latest-linux64-gpl-7.0/bin/ffmpeg ffmpeg-n7.0-latest-linux64-gpl-7.0/bin/ffprobe \
+    && rm ffmpeg-n7.0-latest-linux64-gpl-7.0.tar.xz
+
 # 1. Build go2rtc binary
 FROM --platform=$BUILDPLATFORM go AS build
 ARG TARGETPLATFORM
@@ -36,6 +44,7 @@ FROM scratch AS rootfs
 
 COPY --link --from=build /build/go2rtc /go/bin/yq /usr/local/bin/
 COPY --link --from=ngrok /bin/ngrok /usr/local/bin/
+COPY --link --from=ffmpeg /opt/ffmpeg/bin/ /opt/ffmpeg/bin/
 
 # 3. Final image
 FROM base
@@ -58,6 +67,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
 
 COPY --link --from=rootfs / /
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
+
+ENV PATH="/opt/ffmpeg/bin:${PATH}"
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/entrypoint.sh"]
 VOLUME /config
