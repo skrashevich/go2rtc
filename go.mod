@@ -8,7 +8,7 @@ require (
 	github.com/miekg/dns v1.1.57
 	github.com/pion/ice/v2 v2.3.11
 	github.com/pion/interceptor v0.1.25
-	github.com/pion/rtcp v1.2.13
+	github.com/pion/rtcp v1.2.14
 	github.com/pion/rtp v1.8.3
 	github.com/pion/sdp/v3 v3.0.6
 	github.com/pion/srtp/v2 v2.0.18
