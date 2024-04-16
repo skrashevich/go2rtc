@@ -51,7 +51,11 @@ func Init() {
 		}
 		// Re-run the program in background and exit
 		cmd := exec.Command(os.Args[0], os.Args[1:]...)
-		cmd.Start()
+		err := cmd.Start()
+		if err != nil {
+			fmt.Println("Error starting daemon child:", err)
+			os.Exit(1)
+		}
 		fmt.Println("Running in daemon mode with PID:", cmd.Process.Pid)
 		os.Exit(0)
 	}

@@ -44,8 +44,8 @@ func (c *Conn) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, e
 }
 
 func (c *Conn) Start() error {
-	c.closed.Wait()
-	return nil
+	err := c.closed.Wait()
+	return err
 }
 
 func (c *Conn) Stop() error {
