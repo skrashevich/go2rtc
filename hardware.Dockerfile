@@ -14,11 +14,14 @@ FROM --platform=linux/amd64 ngrok/ngrok:${NGROK_VERSION} AS ngrok
 
 FROM --platform=linux/amd64 alpine AS ffmpeg
 
-ADD https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.0-latest-linux64-gpl-7.0.tar.xz /root/
-RUN apk add --no-cache wget tar xz && \
+ADD https://nightly.link/skrashevich/FFmpeg-Builds/workflows/build/master/ffmpeg-linux64-nonfree-7.0.zip /root/
+RUN apk add --no-cache unzip && \
     mkdir -p /opt/ffmpeg/bin && cd /root && \
-    tar -xJf ffmpeg-n7.0-latest-linux64-gpl-7.0.tar.xz --strip-components=1 -C /opt/ffmpeg/ ffmpeg-n7.0-latest-linux64-gpl-7.0/bin/ffmpeg ffmpeg-n7.0-latest-linux64-gpl-7.0/bin/ffprobe \
-    && rm ffmpeg-n7.0-latest-linux64-gpl-7.0.tar.xz
+    unzip ffmpeg-linux64-nonfree-7.0.zip -d extracted && \
+    tar -xf extracted/ffmpeg-n7.0-*-linux64-nonfree-7.0.tar.xz -C extracted && \
+    mv extracted/ffmpeg-n7.0-*-linux64-nonfree-7.0/bin/ffmpeg /opt/ffmpeg/bin/ && \
+    mv extracted/ffmpeg-n7.0-*-linux64-nonfree-7.0/bin/ffprobe /opt/ffmpeg/bin/ && \
+    rm -rf extracted ffmpeg-linux64-nonfree-7.0.zip
 
 # 1. Build go2rtc binary
 FROM --platform=$BUILDPLATFORM go AS build
