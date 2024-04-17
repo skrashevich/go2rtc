@@ -2,6 +2,7 @@ package core
 
 import (
 	"crypto/rand"
+	"fmt"
 	"unicode"
 
 	"runtime"
@@ -9,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/unascribed/FlexVer/go/flexver"
 )
 
@@ -158,4 +161,50 @@ func CompareVersions(v1, v2 string) int {
 		return 1
 	}
 	return 0
+}
+
+// GetCPUUsage calculates the CPU usage percentage over a specified interval.
+// It returns the average CPU usage as a float64 and any error encountered.
+//
+// The function works by first fetching the CPU usage percentage before the sleep interval,
+// then calculating the average CPU usage over that interval. This is useful for monitoring
+// or logging system performance metrics.
+//
+// Parameters:
+// - interval: A time.Duration value specifying how long to measure CPU usage for.
+//
+// Returns:
+// - A float64 representing the average CPU usage percentage over the interval.
+// - An error if there was an issue fetching the CPU usage data.
+func GetCPUUsage(interval time.Duration) (float64, error) {
+	percentages, err := cpu.Percent(interval, false)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(percentages) == 0 {
+		return 0, fmt.Errorf("no CPU usage data available")
+	}
+
+	var total float64
+	for _, percent := range percentages {
+		total += percent
+	}
+	avgCPUUsage := total / float64(len(percentages))
+
+	return avgCPUUsage, nil
+}
+
+// GetRAMUsage fetches the current virtual memory statistics.
+// It returns a pointer to a VirtualMemoryStat struct containing detailed memory usage stats
+// and any error encountered.
+//
+// This function is useful for retrieving comprehensive memory usage data, such as total and available RAM,
+// used and free amounts, and various other metrics related to system memory performance.
+//
+// Returns:
+// - A pointer to a mem.VirtualMemoryStat struct containing the memory usage statistics.
+// - An error if there was an issue fetching the memory usage data.
+func GetRAMUsage() (*mem.VirtualMemoryStat, error) {
+	return mem.VirtualMemory()
 }

@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/internal/app"
+	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/shell"
 	"github.com/rs/zerolog"
 )
@@ -228,9 +229,32 @@ var mu sync.Mutex
 
 func apiHandler(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
+	defer mu.Unlock()
+
+	if app.Info["stats"] == nil {
+		app.Info["stats"] = make(map[string]interface{})
+	}
+
+	cpuUsage, err := core.GetCPUUsage(100 * time.Millisecond)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Failed to get CPU usage."}`))
+		return
+	}
+
+	memUsage, err := core.GetRAMUsage()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Failed to get memory usage."}`))
+		return
+	}
+
+	app.Info["stats"].(map[string]interface{})["cpu"] = cpuUsage
+	app.Info["stats"].(map[string]interface{})["mem"] = memUsage
+
 	app.Info["host"] = r.Host
 	app.Info["ffmpeg"] = app.FFmpegVersion
-	mu.Unlock()
 
 	ResponseJSON(w, app.Info)
 }
