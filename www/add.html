@@ -95,7 +95,8 @@
 </div>
 <script>
     document.getElementById('stream').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
     });
 
     document.getElementById('stream-form').addEventListener('submit', async ev => {
@@ -142,8 +143,11 @@
     }
 
     document.getElementById('homekit').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await reloadHomeKit();
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await reloadHomeKit();
+        }
     });
 
     document.getElementById('homekit-table').addEventListener('click', ev => {
@@ -188,8 +192,11 @@
 </div>
 <script>
     document.getElementById('dvrip').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('dvrip-table', 'api/dvrip');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('dvrip-table', 'api/dvrip');
+        }
     });
 </script>
 
@@ -200,8 +207,11 @@
 </div>
 <script>
     document.getElementById('devices').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('devices-table', 'api/ffmpeg/devices');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('devices-table', 'api/ffmpeg/devices');
+        }
     });
 </script>
 
@@ -212,8 +222,11 @@
 </div>
 <script>
     document.getElementById('hardware').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('hardware-table', 'api/ffmpeg/hardware');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('hardware-table', 'api/ffmpeg/hardware');
+        }
     });
 </script>
 
@@ -231,7 +244,8 @@
 </div>
 <script>
     document.getElementById('nest').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
     });
 
     document.getElementById('nest-form').addEventListener('submit', async ev => {
@@ -252,8 +266,11 @@
 </div>
 <script>
     document.getElementById('gopro').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('gopro-table', 'api/gopro');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('gopro-table', 'api/gopro');
+        }
     });
 </script>
 
@@ -264,8 +281,11 @@
 </div>
 <script>
     document.getElementById('hass').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('hass-table', 'api/hass');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('hass-table', 'api/hass');
+        }
     });
 </script>
 
@@ -280,8 +300,11 @@
 </div>
 <script>
     document.getElementById('onvif').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('onvif-table', 'api/onvif');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('onvif-table', 'api/onvif');
+        }
     });
 
     document.getElementById('onvif-form').addEventListener('submit', async ev => {
@@ -307,8 +330,11 @@
 </div>
 <script>
     document.getElementById('roborock').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('roborock-table', 'api/roborock');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('roborock-table', 'api/roborock');
+        }
     });
 
     document.getElementById('roborock-form').addEventListener('submit', async ev => {
@@ -325,8 +351,11 @@
 </div>
 <script>
     document.getElementById('webtorrent').addEventListener('click', async ev => {
-        ev.target.nextElementSibling.style.display = 'block';
-        await getSources('webtorrent-table', 'api/webtorrent');
+        const nextElement = ev.target.nextElementSibling;
+        nextElement.style.display = nextElement.style.display === 'block' ? 'none' : 'block';
+        if ( nextElement.style.display === 'block' ) {
+            await getSources('webtorrent-table', 'api/webtorrent');
+        }
     });
 </script>
 
