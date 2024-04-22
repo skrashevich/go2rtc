@@ -235,11 +235,12 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		app.Info["stats"] = make(map[string]interface{})
 	}
 
-	cpuUsage, err := core.GetCPUUsage(100 * time.Millisecond)
+	cpuUsage, err := core.GetCPUUsage(0)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error": "Failed to get CPU usage."}`))
+		log.Warn().Err(err).Msg("[api] cpu stat")
 		return
 	}
 
@@ -247,6 +248,7 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error": "Failed to get memory usage."}`))
+		log.Warn().Err(err).Msg("[api] ram stat")
 		return
 	}
 
