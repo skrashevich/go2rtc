@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
 	"github.com/unascribed/FlexVer/go/flexver"
 )
@@ -25,6 +26,12 @@ const (
 // Now90000 - timestamp for Video (clock rate = 90000 samples per second)
 func Now90000() uint32 {
 	return uint32(time.Duration(time.Now().UnixNano()) * 90000 / time.Second)
+}
+
+type HostInfo struct {
+	Platform string `json:"platform"`
+	Family   string `json:"family"`
+	Version  string `json:"version"`
 }
 
 const symbols = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
@@ -207,4 +214,15 @@ func GetCPUUsage(interval time.Duration) (float64, error) {
 // - An error if there was an issue fetching the memory usage data.
 func GetRAMUsage() (*mem.VirtualMemoryStat, error) {
 	return mem.VirtualMemory()
+}
+
+func GetHostInfo() (HostInfo, error) {
+
+	platform, family, version, err := host.PlatformInformation()
+
+	return HostInfo{
+		Platform: platform,
+		Family:   family,
+		Version:  version,
+	}, err
 }

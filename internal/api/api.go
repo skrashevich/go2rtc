@@ -252,8 +252,18 @@ func apiHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hostInfo, err := core.GetHostInfo()
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error": "Failed to get system info"}`))
+		log.Warn().Err(err).Msg("[api] system info")
+		return
+	}
+
 	app.Info["stats"].(map[string]interface{})["cpu"] = cpuUsage
 	app.Info["stats"].(map[string]interface{})["mem"] = memUsage
+	app.Info["system"] = hostInfo
 
 	app.Info["host"] = r.Host
 	app.Info["ffmpeg"] = app.FFmpegVersion

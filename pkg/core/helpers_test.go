@@ -106,3 +106,12 @@ func TestGetCPUUsage(t *testing.T) {
 	require.GreaterOrEqual(t, avgCPUUsage, 0.0, "Average CPU usage should be >= 0%")
 	require.LessOrEqual(t, avgCPUUsage, 100.0, "Average CPU usage should be <= 100%")
 }
+
+func TestGetHostInfo(t *testing.T) {
+	hostInfo, err := GetHostInfo()
+
+	require.NoError(t, err, "GetHostInfo should not return an error")
+	require.NotEmpty(t, hostInfo.Platform, "Platform should not be empty")
+	require.NotEmpty(t, hostInfo.Family, "Family should not be empty")
+	require.NotEmpty(t, hostInfo.Version, "Version should not be empty")
+}
