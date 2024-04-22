@@ -3,7 +3,7 @@ package shell
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestQuoteSplit(t *testing.T) {
@@ -11,8 +11,8 @@ func TestQuoteSplit(t *testing.T) {
 python "-c" 'import time
 print("time", time.time())'
 `
-	require.Equal(t, []string{"python", "-c", "import time\nprint(\"time\", time.time())"}, QuoteSplit(s))
+	assert.Equal(t, []string{"python", "-c", "import time\nprint(\"time\", time.time())"}, QuoteSplit(s))
 
 	s = `ffmpeg -i "video=FaceTime HD Camera" -i "DeckLink SDI (2)"`
-	require.Equal(t, []string{"ffmpeg", "-i", `video=FaceTime HD Camera`, "-i", "DeckLink SDI (2)"}, QuoteSplit(s))
+	assert.Equal(t, []string{"ffmpeg", "-i", `video=FaceTime HD Camera`, "-i", "DeckLink SDI (2)"}, QuoteSplit(s))
 }

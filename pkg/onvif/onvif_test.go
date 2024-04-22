@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetStreamUri(t *testing.T) {
@@ -91,8 +91,8 @@ func TestGetStreamUri(t *testing.T) {
 			uri := FindTagValue([]byte(test.xml), "Uri")
 			uri = strings.TrimSpace(html.UnescapeString(uri))
 			u, err := url.Parse(uri)
-			require.Nil(t, err)
-			require.Equal(t, test.url, u.String())
+			assert.Nil(t, err)
+			assert.Equal(t, test.url, u.String())
 		})
 	}
 }
@@ -190,10 +190,10 @@ func TestGetCapabilities(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			rawURL := FindTagValue([]byte(test.xml), "Media.+?XAddr")
-			require.Equal(t, "http://192.168.1.123/onvif/media_service", rawURL)
+			assert.Equal(t, "http://192.168.1.123/onvif/media_service", rawURL)
 
 			rawURL = FindTagValue([]byte(test.xml), "Imaging.+?XAddr")
-			require.Equal(t, "http://192.168.1.123/onvif/imaging_service", rawURL)
+			assert.Equal(t, "http://192.168.1.123/onvif/imaging_service", rawURL)
 		})
 	}
 }

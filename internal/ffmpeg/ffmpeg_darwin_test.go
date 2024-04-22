@@ -1,5 +1,5 @@
-//go:build !darwin
-// +build !darwin
+//go:build darwin
+// +build darwin
 
 package ffmpeg
 
@@ -38,15 +38,15 @@ func TestParseArgsFile(t *testing.T) {
 func TestParseArgsDevice(t *testing.T) {
 	// [DEVICE] video will be output for MJPEG to pipe, with size 1920x1080
 	args := parseArgs("device?video=0&video_size=1920x1080")
-	assert.Equal(t, `ffmpeg -hide_banner -f dshow -video_size 1920x1080 -i "video=0" -c copy -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -f avfoundation -video_size 1920x1080 -i "0:" -c copy -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [DEVICE] video will be transcoded to H265 with framerate 20, audio will be skipped
 	//args = parseArgs("device?video=0&video_size=1280x720&framerate=20#video=h265#audio=pcma")
 	args = parseArgs("device?video=0&framerate=20#video=h265")
-	assert.Equal(t, `ffmpeg -hide_banner -f dshow -framerate 20 -i "video=0" -c:v libx265 -g 50 -profile:v main -level:v 5.1 -preset:v superfast -tune:v zerolatency -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -f avfoundation -framerate 20 -i "0:" -c:v libx265 -g 50 -profile:v main -level:v 5.1 -preset:v superfast -tune:v zerolatency -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	args = parseArgs("device?video=FaceTime HD Camera&audio=Microphone (High Definition Audio Device)")
-	assert.Equal(t, `ffmpeg -hide_banner -f dshow -i "video=FaceTime HD Camera:audio=Microphone (High Definition Audio Device)" -c copy -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -f avfoundation -i "FaceTime HD Camera:Microphone (High Definition Audio Device)" -c copy -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestParseArgsIpCam(t *testing.T) {
@@ -90,7 +90,7 @@ func TestParseArgsAudio(t *testing.T) {
 
 	// [AUDIO] audio will be transcoded to OPUS, video will be skipped
 	args = parseArgs("rtsp:///example.com#audio=opus")
-	assert.Equal(t, `ffmpeg -hide_banner -allowed_media_types audio -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp:///example.com -c:a libopus -application:a lowdelay -frame_duration 20 -min_comp 0 -vn -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -allowed_media_types audio -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp:///example.com -c:a libopus -application:a lowdelay -min_comp 0 -vn -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [AUDIO] audio will be transcoded to PCMU, video will be skipped
 	args = parseArgs("rtsp:///example.com#audio=pcmu")
@@ -120,23 +120,23 @@ func TestParseArgsAudio(t *testing.T) {
 func TestParseArgsHwVaapi(t *testing.T) {
 	// [HTTP-MJPEG] video will be transcoded to H264
 	args := parseArgs("http:///example.com#video=h264#hardware=vaapi")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -fflags nobuffer -flags low_delay -i http:///example.com -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=out_range=tv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -fflags nobuffer -flags low_delay -i http:///example.com -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=out_color_matrix=bt709:out_range=tv:format=nv12" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [RTSP] video with rotation, should be transcoded, so select H264
 	args = parseArgs("rtsp://example.com#video=h264#rotate=180#hardware=vaapi")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,transpose_vaapi=4,scale_vaapi=out_range=tv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,transpose_vaapi=4,scale_vaapi=out_color_matrix=bt709:out_range=tv:format=nv12" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [RTSP] video with resize to 1280x720, should be transcoded, so select H265
 	args = parseArgs("rtsp://example.com#video=h265#width=1280#height=720#hardware=vaapi")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v hevc_vaapi -g 50 -bf 0 -profile:v high -level:v 5.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=1280:720:out_range=tv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v hevc_vaapi -g 50 -bf 0 -profile:v main -level:v 5.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=1280:720" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [FILE] video will be output for MJPEG to pipe, audio will be skipped
 	args = parseArgs("/media/bbb.mp4#video=mjpeg#hardware=vaapi")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -re -i /media/bbb.mp4 -c:v mjpeg_vaapi -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=out_range=tv" -f mjpeg -`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -re -i /media/bbb.mp4 -c:v mjpeg_vaapi -an -vf "format=vaapi|nv12,hwupload" -f mjpeg -`, args.String())
 
 	// [DEVICE] MJPEG video with size 1920x1080 will be transcoded to H265
 	args = parseArgs("device?video=0&video_size=1920x1080#video=h265#hardware=vaapi")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -f dshow -video_size 1920x1080 -i video="0" -c:v hevc_vaapi -g 50 -bf 0 -profile:v high -level:v 5.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=out_range=tv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -f avfoundation -video_size 1920x1080 -i "0:" -c:v hevc_vaapi -g 50 -bf 0 -profile:v main -level:v 5.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestParseArgsHwV4l2m2m(t *testing.T) {
@@ -154,7 +154,7 @@ func TestParseArgsHwV4l2m2m(t *testing.T) {
 
 	// [DEVICE] MJPEG video with size 1920x1080 will be transcoded to H265
 	args = parseArgs("device?video=0&video_size=1920x1080#video=h265#hardware=v4l2m2m")
-	assert.Equal(t, `ffmpeg -hide_banner -f dshow -video_size 1920x1080 -i video="0" -c:v hevc_v4l2m2m -g 50 -bf 0 -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -f avfoundation -video_size 1920x1080 -i "0:" -c:v hevc_v4l2m2m -g 50 -bf 0 -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestParseArgsHwRKMPP(t *testing.T) {
@@ -180,11 +180,11 @@ func TestParseArgsHwCuda(t *testing.T) {
 
 	// [RTSP] video with resize to 1280x720, should be transcoded, so select H265
 	args = parseArgs("rtsp://example.com#video=h265#width=1280#height=720#hardware=cuda")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel cuda -hwaccel_output_format cuda -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v hevc_nvenc -g 50 -bf 0 -profile:v high -level:v auto -an -vf "scale_cuda=1280:720" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel cuda -hwaccel_output_format cuda -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v hevc_nvenc -g 50 -bf 0 -profile:v main -level:v auto -an -vf "scale_cuda=1280:720" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [DEVICE] MJPEG video with size 1920x1080 will be transcoded to H265
 	args = parseArgs("device?video=0&video_size=1920x1080#video=h265#hardware=cuda")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel cuda -hwaccel_output_format cuda -f dshow -video_size 1920x1080 -i video="0" -c:v hevc_nvenc -g 50 -bf 0 -profile:v high -level:v auto -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel cuda -hwaccel_output_format cuda -f avfoundation -video_size 1920x1080 -i "0:" -c:v hevc_nvenc -g 50 -bf 0 -profile:v main -level:v auto -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestParseArgsHwDxva2(t *testing.T) {
@@ -198,15 +198,15 @@ func TestParseArgsHwDxva2(t *testing.T) {
 
 	// [RTSP] video with resize to 1280x720, should be transcoded, so select H265
 	args = parseArgs("rtsp://example.com#video=h265#width=1280#height=720#hardware=dxva2")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel dxva2 -hwaccel_output_format dxva2_vld -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v hevc_qsv -g 50 -bf 0 -profile:v high -level:v 5.1 -async_depth:v 1 -an -vf "hwmap=derive_device=qsv,format=qsv,scale_qsv=1280:720" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel dxva2 -hwaccel_output_format dxva2_vld -allowed_media_types video -fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i rtsp://example.com -c:v hevc_qsv -g 50 -bf 0 -profile:v main -level:v 5.1 -async_depth:v 1 -an -vf "hwmap=derive_device=qsv,format=qsv,scale_qsv=1280:720" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	// [FILE] video will be output for MJPEG to pipe, audio will be skipped
 	args = parseArgs("/media/bbb.mp4#video=mjpeg#hardware=dxva2")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel dxva2 -hwaccel_output_format dxva2_vld -re -i /media/bbb.mp4 -c:v mjpeg_qsv -profile:v high -level:v 5.1 -an -vf "hwmap=derive_device=qsv,format=qsv" -f mjpeg -`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel dxva2 -hwaccel_output_format dxva2_vld -re -i /media/bbb.mp4 -c:v mjpeg_qsv -an -vf "hwmap=derive_device=qsv,format=qsv" -f mjpeg -`, args.String())
 
 	// [DEVICE] MJPEG video with size 1920x1080 will be transcoded to H265
 	args = parseArgs("device?video=0&video_size=1920x1080#video=h265#hardware=dxva2")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel dxva2 -hwaccel_output_format dxva2_vld -f dshow -video_size 1920x1080 -i video="0" -c:v hevc_qsv -g 50 -bf 0 -profile:v high -level:v 5.1 -async_depth:v 1 -an -vf "hwmap=derive_device=qsv,format=qsv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel dxva2 -hwaccel_output_format dxva2_vld -f avfoundation -video_size 1920x1080 -i "0:" -c:v hevc_qsv -g 50 -bf 0 -profile:v main -level:v 5.1 -async_depth:v 1 -an -vf "hwmap=derive_device=qsv,format=qsv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestParseArgsHwVideotoolbox(t *testing.T) {
@@ -224,21 +224,21 @@ func TestParseArgsHwVideotoolbox(t *testing.T) {
 
 	// [DEVICE] MJPEG video with size 1920x1080 will be transcoded to H265
 	args = parseArgs("device?video=0&video_size=1920x1080#video=h265#hardware=videotoolbox")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel videotoolbox -hwaccel_output_format videotoolbox_vld -f dshow -video_size 1920x1080 -i video="0" -c:v hevc_videotoolbox -g 50 -bf 0 -profile:v high -level:v 5.1 -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel videotoolbox -hwaccel_output_format videotoolbox_vld -f avfoundation -video_size 1920x1080 -i "0:" -c:v hevc_videotoolbox -g 50 -bf 0 -profile:v main -level:v 5.1 -an -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestDeckLink(t *testing.T) {
 	args := parseArgs(`DeckLink SDI (2)#video=h264#hardware=vaapi#input=-format_code Hp29 -f decklink -i "{input}"`)
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -format_code Hp29 -f decklink -i "DeckLink SDI (2)" -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=out_range=tv" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format vaapi -hwaccel_flags allow_profile_mismatch -format_code Hp29 -f decklink -i "DeckLink SDI (2)" -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "format=vaapi|nv12,hwupload,scale_vaapi=out_color_matrix=bt709:out_range=tv:format=nv12" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }
 
 func TestDrawText(t *testing.T) {
 	args := parseArgs("http:///example.com#video=h264#drawtext=fontsize=12")
-	assert.Equal(t, `ffmpeg -hide_banner -fflags nobuffer -flags low_delay -i http:///example.com -c:v libx264 -g 50 -profile:v high -level:v 4.1 -preset:v superfast -tune:v zerolatency -pix_fmt:v yuv420p -an -vf "drawtext=fontsize=12:text='%{localtime\:%Y-%m-%d %X}'" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -fflags nobuffer -flags low_delay -i http:///example.com -c:v libx264 -g 50 -profile:v high -level:v 4.1 -preset:v superfast -tune:v zerolatency -pix_fmt:v yuv420p -an -vf "drawtext=fontsize=12:text='%{localtime:%Y-%m-%d %X}'" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	args = parseArgs("http:///example.com#video=h264#width=640#drawtext=fontsize=12")
-	assert.Equal(t, `ffmpeg -hide_banner -fflags nobuffer -flags low_delay -i http:///example.com -c:v libx264 -g 50 -profile:v high -level:v 4.1 -preset:v superfast -tune:v zerolatency -pix_fmt:v yuv420p -an -vf "scale=640:-1,drawtext=fontsize=12:text='%{localtime\:%Y-%m-%d %X}'" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -fflags nobuffer -flags low_delay -i http:///example.com -c:v libx264 -g 50 -profile:v high -level:v 4.1 -preset:v superfast -tune:v zerolatency -pix_fmt:v yuv420p -an -vf "scale=640:-1,drawtext=fontsize=12:text='%{localtime:%Y-%m-%d %X}'" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 
 	args = parseArgs("http:///example.com#video=h264#width=640#drawtext=fontsize=12#hardware=vaapi")
-	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch -fflags nobuffer -flags low_delay -i http:///example.com -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "scale=640:-1:out_color_matrix=bt709:out_range=tv,drawtext=fontsize=12:text='%{localtime\:%Y-%m-%d %X}',hwupload" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
+	assert.Equal(t, `ffmpeg -hide_banner -hwaccel vaapi -hwaccel_output_format nv12 -hwaccel_flags allow_profile_mismatch -fflags nobuffer -flags low_delay -i http:///example.com -c:v h264_vaapi -g 50 -bf 0 -profile:v high -level:v 4.1 -sei:v 0 -an -vf "scale=640:-1,drawtext=fontsize=12:text='%{localtime:%Y-%m-%d %X}',hwupload" -user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}`, args.String())
 }

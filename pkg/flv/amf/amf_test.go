@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewReader(t *testing.T) {
@@ -205,13 +205,13 @@ func TestNewReader(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			b, err := hex.DecodeString(test.actual)
-			require.Nil(t, err)
+			assert.Nil(t, err)
 
 			rd := NewReader(b)
 			v, err := rd.ReadItems()
-			require.Nil(t, err)
+			assert.Nil(t, err)
 
-			require.Equal(t, test.expect, v)
+			assert.Equal(t, test.expect, v)
 		})
 	}
 }

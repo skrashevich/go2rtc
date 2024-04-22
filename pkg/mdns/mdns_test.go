@@ -1,7 +1,7 @@
 package mdns
 
 import (
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -12,5 +12,5 @@ func TestDiscovery(t *testing.T) {
 	err := Discovery(ServiceHAP, onentry)
 	//err := Discovery("_ewelink._tcp.local.", time.Second, onentry)
 	// err := Discovery("_googlecast._tcp.local.", time.Second, onentry)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 }

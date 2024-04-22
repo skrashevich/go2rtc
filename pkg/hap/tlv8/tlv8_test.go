@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMarshal(t *testing.T) {
@@ -29,13 +29,13 @@ func TestMarshal(t *testing.T) {
 	}
 
 	b, err := Marshal(src)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	var dst Struct
 	err = Unmarshal(b, &dst)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, src, dst)
+	assert.Equal(t, src, dst)
 }
 
 func TestBytes(t *testing.T) {
@@ -52,14 +52,14 @@ func TestBytes(t *testing.T) {
 	}
 
 	b, err := Marshal(src)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	var dst Struct
 	err = Unmarshal(b, &dst)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, src, dst)
-	require.Equal(t, bytes, []byte(dst.String))
+	assert.Equal(t, src, dst)
+	assert.Equal(t, bytes, []byte(dst.String))
 }
 
 func TestVideoCodecParams(t *testing.T) {
@@ -72,16 +72,16 @@ func TestVideoCodecParams(t *testing.T) {
 	}
 
 	src, err := hex.DecodeString("0101010201000000020102030100040100")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	var v VideoCodecParams
 	err = Unmarshal(src, &v)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	dst, err := Marshal(v)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, src, dst)
+	assert.Equal(t, src, dst)
 }
 
 func TestInterface(t *testing.T) {
@@ -95,15 +95,15 @@ func TestInterface(t *testing.T) {
 	var v1 any = &src
 
 	b, err := Marshal(v1)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, []byte{1, 1, 1}, b)
+	assert.Equal(t, []byte{1, 1, 1}, b)
 
 	var dst Struct
 	var v2 any = &dst
 
 	err = Unmarshal(b, v2)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, src, dst)
+	assert.Equal(t, src, dst)
 }
