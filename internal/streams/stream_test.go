@@ -14,7 +14,7 @@ func TestRecursion(t *testing.T) {
 	stream1 := New("from_yaml", "exec:")
 	streams["from_yaml"] = stream1
 	fmt.Printf("Current streams: %+v\n", streams)
-	require.Len(t, streams, 1)
+	assert.Len(t, streams, 1)
 
 	// ask another unnamed stream that links go2rtc
 	query, err := url.ParseQuery("src=rtsp://localhost:8554/from_yaml?video")
