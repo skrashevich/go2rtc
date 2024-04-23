@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/pion/webrtc/v3"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAlexa(t *testing.T) {
@@ -60,12 +60,12 @@ a=fingerprint:sha-256 A2:93:53:50:E4:2F:C5:4E:DF:7C:70:99:5A:A7:39:50:1A:63:E5:B
 `
 
 	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	conn := NewConn(pc)
 	err = conn.SetOffer(offer)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	_, err = conn.GetAnswer()
-	require.Nil(t, err)
+	assert.Nil(t, err)
 }

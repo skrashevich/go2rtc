@@ -7,7 +7,6 @@ import (
 
 	"github.com/pion/sdp/v3"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSDP(t *testing.T) {
@@ -56,9 +55,9 @@ func TestClone(t *testing.T) {
 
 	p1 := fmt.Sprintf("%p", media1)
 	p2 := fmt.Sprintf("%p", media2)
-	require.NotEqualValues(t, p1, p2)
+	assert.NotEqualValues(t, p1, p2)
 
 	p3 := fmt.Sprintf("%p", media1.Codecs[0])
 	p4 := fmt.Sprintf("%p", media2.Codecs[0])
-	require.NotEqualValues(t, p3, p4)
+	assert.NotEqualValues(t, p3, p4)
 }

@@ -6,15 +6,14 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/pion/webrtc/v3"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestClient(t *testing.T) {
 	api, err := NewAPI()
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	pc, err := api.NewPeerConnection(webrtc.Configuration{})
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	prod := NewConn(pc)
 
@@ -25,11 +24,11 @@ func TestClient(t *testing.T) {
 	}
 
 	offer, err := prod.CreateOffer(medias)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 	assert.NotEmpty(t, offer)
 
-	require.Len(t, prod.pc.GetReceivers(), 2)
-	require.Len(t, prod.pc.GetSenders(), 1)
+	assert.Len(t, prod.pc.GetReceivers(), 2)
+	assert.Len(t, prod.pc.GetSenders(), 1)
 
 	answer := `v=0
 o=- 1934370540648269799 1678277622 IN IP4 0.0.0.0
@@ -85,7 +84,7 @@ a=recvonly
 `
 
 	err = prod.SetAnswer(answer)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	sender := prod.pc.GetSenders()[0]
 
@@ -96,15 +95,15 @@ a=recvonly
 	}
 	track := sender.Track()
 	track, err = webrtc.NewTrackLocalStaticRTP(caps, track.ID(), track.StreamID())
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	err = sender.ReplaceTrack(track)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 }
 
 func TestUnmarshalICEServers(t *testing.T) {
 	s := `[{"credential":"xxx","urls":"xxx","username":"xxx"},{"credential":null,"urls":"xxx","username":null}]`
 	servers, err := UnmarshalICEServers([]byte(s))
-	require.Nil(t, err)
-	require.Len(t, servers, 2)
+	assert.Nil(t, err)
+	assert.Len(t, servers, 2)
 }

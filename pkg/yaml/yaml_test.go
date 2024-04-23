@@ -3,7 +3,7 @@ package yaml
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPatch(t *testing.T) {
@@ -11,18 +11,18 @@ func TestPatch(t *testing.T) {
 
 	// 1. Add first
 	b, err := Patch(b, "camera1", "url1", "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `# prefix
+	assert.Equal(t, `# prefix
 streams:
   camera1: url1
 `, string(b))
 
 	// 2. Add second
 	b, err = Patch(b, "camera2", []string{"url2", "url3"}, "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `# prefix
+	assert.Equal(t, `# prefix
 streams:
   camera1: url1
   camera2:
@@ -32,9 +32,9 @@ streams:
 
 	// 3. Replace first
 	b, err = Patch(b, "camera1", "url4", "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `# prefix
+	assert.Equal(t, `# prefix
 streams:
   camera1: url4
   camera2:
@@ -44,9 +44,9 @@ streams:
 
 	// 4. Replace second
 	b, err = Patch(b, "camera2", "url5", "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `# prefix
+	assert.Equal(t, `# prefix
 streams:
   camera1: url4
   camera2: url5
@@ -54,9 +54,9 @@ streams:
 
 	// 5. Delete first
 	b, err = Patch(b, "camera1", nil, "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `# prefix
+	assert.Equal(t, `# prefix
 streams:
   camera2: url5
 `, string(b))
@@ -74,9 +74,9 @@ streams:
 	pairings := []string{"client1", "client2"}
 
 	b, err := Patch(b, "pairings", pairings, "homekit", "camera1")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `homekit:
+	assert.Equal(t, `homekit:
   camera1:
     pin: 123-45-678
     pairings:
@@ -95,9 +95,9 @@ func TestPatch2(t *testing.T) {
 `)
 
 	b, err := Patch(b, "camera2", "url3", "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `streams:
+	assert.Equal(t, `streams:
   camera1:
     - url1
     - url2
@@ -113,9 +113,9 @@ func TestNoNewLineEnd1(t *testing.T) {
     - url3`)
 
 	b, err := Patch(b, "camera2", "url5", "streams")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `streams:
+	assert.Equal(t, `streams:
   camera1: url4
   camera2: url5
 `, string(b))
@@ -132,9 +132,9 @@ homekit:
 	pairings := []string{"client1", "client2"}
 
 	b, err := Patch(b, "pairings", pairings, "homekit", "camera1")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, `streams:
+	assert.Equal(t, `streams:
   camera1: url1
 homekit:
   camera1:

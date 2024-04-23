@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/AlexxIT/go2rtc/pkg/hap"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 type testTLV8 struct {
@@ -23,13 +23,13 @@ func (test testTLV8) run(t *testing.T) {
 
 	src := &hap.Character{Value: test.value, Format: hap.FormatTLV8}
 	err := src.ReadTLV8(test.actual)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
-	require.Equal(t, test.expect, test.actual)
+	assert.Equal(t, test.expect, test.actual)
 
 	dst := &hap.Character{Format: hap.FormatTLV8}
 	err = dst.Write(test.actual)
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	a, _ := base64.StdEncoding.DecodeString(test.value)
 	b, _ := base64.StdEncoding.DecodeString(dst.Value.(string))
@@ -37,7 +37,7 @@ func (test testTLV8) run(t *testing.T) {
 	t.Logf("%x\n", b)
 
 	if !test.noequal {
-		require.Equal(t, test.value, dst.Value)
+		assert.Equal(t, test.value, dst.Value)
 	}
 }
 

@@ -6,39 +6,39 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTimeout(t *testing.T) {
 	Timeout = time.Millisecond
 
 	ln, err := net.Listen("tcp", "localhost:0")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	client := NewClient("rtsp://" + ln.Addr().String() + "/stream")
 	client.Backchannel = true
 
 	err = client.Dial()
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	err = client.Describe()
-	require.ErrorIs(t, err, os.ErrDeadlineExceeded)
+	assert.ErrorIs(t, err, os.ErrDeadlineExceeded)
 }
 
 func TestMissedControl(t *testing.T) {
 	Timeout = time.Millisecond
 
 	ln, err := net.Listen("tcp", "localhost:0")
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	go func() {
 		conn, err := ln.Accept()
-		require.Nil(t, err)
+		assert.Nil(t, err)
 
 		b := make([]byte, 8192)
 		for {
 			n, err := conn.Read(b)
-			require.Nil(t, err)
+			assert.Nil(t, err)
 
 			req := string(b[:n])
 
@@ -83,13 +83,13 @@ Session: 1
 	client.Backchannel = true
 
 	err = client.Dial()
-	require.Nil(t, err)
+	assert.Nil(t, err)
 
 	err = client.Describe()
-	require.Nil(t, err)
-	require.Len(t, client.Medias, 3)
+	assert.Nil(t, err)
+	assert.Len(t, client.Medias, 3)
 
 	ch, err := client.SetupMedia(client.Medias[2])
-	require.Nil(t, err)
-	require.Equal(t, ch, byte(4))
+	assert.Nil(t, err)
+	assert.Equal(t, ch, byte(4))
 }
