@@ -12,7 +12,6 @@ import (
 
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/mem"
-	"github.com/unascribed/FlexVer/go/flexver"
 )
 
 const (
@@ -151,7 +150,7 @@ func CompareVersions(v1, v2 string) int {
 	if len(v2) > 0 && unicode.IsLetter(rune(v2[0])) {
 		v2 = v2[1:]
 	}
-	result, err := flexver.CompareError(v1, v2)
+	result, err := CompareError(v1, v2)
 	if err != nil {
 		return -1
 	}
