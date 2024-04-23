@@ -55,14 +55,19 @@ func ServiceCameraRTPStreamManagement() *hap.Service {
 				CodecType: VideoCodecTypeH264,
 				CodecParams: []VideoParams{
 					{
-						ProfileID: []byte{VideoCodecProfileMain},
-						Level:     []byte{VideoCodecLevel31, VideoCodecLevel40},
+						ProfileID: []byte{VideoCodecProfileMain, VideoCodecProfileConstrainedBaseline, VideoCodecProfileHigh},
+						Level:     []byte{VideoCodecLevel31, VideoCodecLevel32, VideoCodecLevel40},
 					},
 				},
 				VideoAttrs: []VideoAttrs{
 					{Width: 1920, Height: 1080, Framerate: 30},
-					{Width: 1280, Height: 720, Framerate: 30}, // important for iPhones
-					{Width: 320, Height: 240, Framerate: 15}, // apple watch
+					{Width: 1280, Height: 720, Framerate: 30},  // important for iPhones
+					{Width: 3840, Height: 2160, Framerate: 30}, // 4k
+					{Width: 2880, Height: 1620, Framerate: 30}, // 3K
+					{Width: 2560, Height: 1440, Framerate: 30}, // 2MP
+					{Width: 960, Height: 540, Framerate: 30},
+					{Width: 640, Height: 360, Framerate: 30},
+					{Width: 320, Height: 240, Framerate: 15}, // Apple Watch
 				},
 			},
 		},
@@ -83,7 +88,7 @@ func ServiceCameraRTPStreamManagement() *hap.Service {
 		ComfortNoise: 0,
 	})
 	val116, _ := tlv8.MarshalBase64(SupportedRTPConfig{
-		CryptoType: []byte{CryptoAES_CM_128_HMAC_SHA1_80},
+		CryptoType: []byte{CryptoAES_CM_128_HMAC_SHA1_80, CryptoNone},
 	})
 
 	service := &hap.Service{

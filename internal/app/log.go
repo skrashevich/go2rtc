@@ -3,6 +3,7 @@ package app
 import (
 	"io"
 	"os"
+	"sync"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -53,6 +54,7 @@ const chunkSize = 1 << 16
 type circularBuffer struct {
 	chunks [][]byte
 	r, w   int
+	mu     sync.Mutex
 }
 
 func newBuffer(chunks int) *circularBuffer {
@@ -110,8 +112,32 @@ func (b *circularBuffer) WriteTo(w io.Writer) (n int64, err error) {
 	return
 }
 
-func (b *circularBuffer) Reset() {
-	b.chunks[0] = b.chunks[0][:0]
+func (b *circularBuffer) Reset() error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	for i := range b.chunks {
+		b.chunks[i] = b.chunks[i][:0]
+	}
+
 	b.r = 0
 	b.w = 0
+
+	return nil
+}
+
+// Bytes concatenates all chunks into a single byte slice.
+func (b *circularBuffer) Bytes() []byte {
+	var result []byte
+	for i := b.r; ; {
+		result = append(result, b.chunks[i]...)
+
+		if i == b.w {
+			break
+		}
+		if i++; i == cap(b.chunks) {
+			i = 0
+		}
+	}
+	return result
 }
