@@ -88,15 +88,14 @@
 
         const url = new URL('api/streams', location.href);
         const src = decodeURIComponent(ev.target.dataset.name);
-        const message = `Are you sure you want to stop and delete the stream ${src} from the configuration? This action is irreversible`;
+        url.searchParams.set('src', src);
+        const message = `Are you sure you want to stop and delete the stream "${src}" from the configuration? This action is irreversible`;
     
         const confirmDelete = confirm(message);
         if (!confirmDelete) return;
     
-        try {
-            const url = new URL('api/streams', location.href);
-            url.searchParams.set('src', src);
-    
+        try {    
+            
             await fetch(url, { method: 'DELETE' });
             reload();
         } catch (error) {
