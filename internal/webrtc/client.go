@@ -48,7 +48,9 @@ func streamsHandler(rawURL string) (core.Producer, error) {
 			}
 
 		case "http", "https":
-			if format == "wyze" {
+			if format == "milestone" {
+				return milestoneClient(rawURL, query)
+			} else if format == "wyze" {
 				// https://github.com/mrlt8/docker-wyze-bridge
 				return wyzeClient(rawURL)
 			} else {
@@ -189,10 +191,10 @@ func whepClient(url string) (core.Producer, error) {
 	}
 
 	req, err := http.NewRequest("POST", url, strings.NewReader(offer))
-	req.Header.Set("Content-Type", MimeSDP)
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("Content-Type", MimeSDP)
 
 	client := http.Client{Timeout: time.Second * 5000}
 	defer client.CloseIdleConnections()
