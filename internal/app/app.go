@@ -18,6 +18,7 @@ import (
 var Version = "1.8.5"
 var UserAgent = "go2rtc/" + Version
 var FFmpegVersion = ""
+var DefaultConfigFileName = "go2rtc.yaml"
 
 var ConfigPath string
 var Info = map[string]any{
@@ -29,7 +30,6 @@ func Init() {
 	var version bool
 	var daemon bool
 	configflag := false
-	confs = append(confs, "")
 
 	flag.Var(&confs, "config", "go2rtc config (path to file or raw text), support multiple")
 	if runtime.GOOS != "windows" {
@@ -63,7 +63,7 @@ func Init() {
 	}
 
 	if confs == nil {
-		confs = []string{"go2rtc.yaml"}
+		confs = []string{DefaultConfigFileName}
 	}
 
 	for _, conf := range confs {
@@ -93,11 +93,11 @@ func Init() {
 	}
 
 	if !configflag {
-		data, _ := os.ReadFile("go2rtc.yaml")
+		data, _ := os.ReadFile(DefaultConfigFileName)
 		if data != nil {
 			data = []byte(shell.ReplaceEnvVars(string(data)))
 			configs = prepend(configs, data)
-			ConfigPath = "go2rtc.yaml"
+			ConfigPath = DefaultConfigFileName
 		}
 	}
 
