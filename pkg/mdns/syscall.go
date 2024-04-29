@@ -1,3 +1,5 @@
+//go:build !(darwin || freebsd || openbsd || windows)
+
 package mdns
 
 import (
