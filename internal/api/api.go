@@ -18,7 +18,6 @@ import (
 
 	"github.com/AlexxIT/go2rtc/internal/app"
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/shell"
 	"github.com/rs/zerolog"
 )
 
@@ -325,7 +324,15 @@ func restartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go shell.Restart()
+	path, err := os.Executable()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Debug().Msgf("[api] restart %s", path)
+
+	go syscall.Exec(path, os.Args, os.Environ())
 }
 
 func logHandler(w http.ResponseWriter, r *http.Request) {
