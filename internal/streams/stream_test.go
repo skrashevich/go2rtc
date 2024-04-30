@@ -11,9 +11,7 @@ import (
 
 func TestRecursion(t *testing.T) {
 	// create stream with some source
-	stream1 := New("from_yaml", "exec:")
-	streams["from_yaml"] = stream1
-	fmt.Printf("Current streams: %+v\n", streams)
+	stream1 := New("from_yaml", "does_not_matter")
 	require.Len(t, streams, 1)
 
 	// ask another unnamed stream that links go2rtc

@@ -19,17 +19,30 @@
             height: 100%;
         }
 
-        
-
-        
-
         table tbody td {
             font-size: 13px;
             vertical-align: top;
         }
 
-        
+        .info {
+            color: #0174DF;
+        }
 
+        .debug {
+            color: #808080;
+        }
+
+        .error {
+            color: #DF0101;
+        }
+
+        .trace {
+            color: #585858;
+        }
+
+        .warn {
+            color: #FF9966;
+        }
     </style>
 </head>
 <body>
@@ -69,8 +82,8 @@
             .replace(/\n/g, '<br>');
     }
 
-    let reverseBtn = document.getElementById('reverse');
-    let update = document.getElementById('update');
+    const reverseBtn = document.getElementById('reverse');
+    const update = document.getElementById('update');
 
     let reverseOrder = localStorage.getItem('reverseOrder') === 'true';
     let autoUpdateEnabled = localStorage.getItem('autoUpdateEnabled') !== 'false';
