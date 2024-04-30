@@ -3,7 +3,6 @@ module github.com/AlexxIT/go2rtc
 go 1.22
 
 require (
-	github.com/asticode/go-astits v1.13.0
 	github.com/expr-lang/expr v1.16.5
 	github.com/gorilla/websocket v1.5.1
 	github.com/miekg/dns v1.1.59
