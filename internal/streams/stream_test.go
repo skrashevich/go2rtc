@@ -1,7 +1,6 @@
 package streams
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
 
