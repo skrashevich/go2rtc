@@ -1,36 +1,36 @@
 ---
 name: Documentation Improvement
-description: Suggest improvements or report inaccuracies in the documentation
-labels: ["issue:documentation"]
+description: Help us enhance our documentation with your suggestions or by pointing out inaccuracies.
+labels: ["documentation", "improvement"]
 
 body:
   - type: markdown
     attributes:
-      value: "### Describe the Issue with Documentation\n<!-- A clear and concise description of what the issue is. -->"
+      value: "### Documentation Issue Summary\n<!-- Please provide a clear and concise summary of the issue or the inaccuracy you've encountered. -->"
 
   - type: textarea
     id: issue-description
     attributes:
-      label: Describe the Issue with Documentation
-      description: "A clear and concise description of what the issue is."
-      placeholder: "Explain the issue or the inaccuracies you've found..."
+      label: Detailed Issue Description
+      description: "Provide a detailed description of the issue or inaccuracy with the documentation."
+      placeholder: "Describe the specific issue or inaccuracy you've identified..."
     validations:
       required: true
 
   - type: textarea
     id: suggested-improvement
     attributes:
-      label: Suggested Improvement
-      description: "Describe your proposed changes in detail."
-      placeholder: "Detail your proposed changes to improve the documentation..."
+      label: Detailed Suggested Improvement
+      description: "Offer a detailed suggestion for how we can improve the documentation."
+      placeholder: "Please detail your proposed improvements or corrections..."
     validations:
       required: true
 
   - type: textarea
     id: additional-context
     attributes:
-      label: Additional context
-      description: "Add any other context about the problem here, such as links to the relevant sections or screenshots."
-      placeholder: "Any additional information, links, or screenshots that might help illustrate the problem or your suggestion..."
+      label: Additional Context (Optional)
+      description: "Provide any additional context that could help us understand the problem better, such as links to the documentation in question or screenshots illustrating the issue."
+      placeholder: "Links to documentation, screenshots, etc., that might help clarify the issue or your suggestion..."
     validations:
       required: false

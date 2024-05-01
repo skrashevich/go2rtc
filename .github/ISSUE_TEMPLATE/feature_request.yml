@@ -1,17 +1,17 @@
 name: Feature Request
-description: Suggest an idea for this project
-labels: ["issue:enhancement"]
+description: Share your ideas or suggest new features to improve the project.
+labels: ["type:enhancement", "status:review needed"]
 
 body:
   - type: markdown
     attributes:
-      value: "### Is your feature request related to a problem? Please describe.\n<!-- A clear and concise description of what the problem is. Ex. I'm always frustrated when [...] -->"
+      value: "### Feature Request Overview\n<!-- Please provide a clear and concise description of the problem your feature request is addressing or the new feature you are proposing. -->"
 
   - type: textarea
     id: problem-description
     attributes:
-      label: Problem Description
-      description: "A clear and concise description of what the problem is."
+      label: Problem or Opportunity Description
+      description: "Describe the problem you're facing or the opportunity for improvement. Be as specific as possible."
       placeholder: "I'm always frustrated when..."
     validations:
       required: true
@@ -19,26 +19,26 @@ body:
   - type: textarea
     id: desired-solution
     attributes:
-      label: Desired Solution
-      description: "A clear and concise description of what you want to happen."
-      placeholder: "I would like..."
+      label: Proposed Solution
+      description: "Describe what you would like to happen that would solve this problem or seize this opportunity."
+      placeholder: "Ideally, I would like..."
     validations:
       required: true
 
   - type: textarea
     id: alternative-solutions
     attributes:
-      label: Alternative Solutions
-      description: "A clear and concise description of any alternative solutions or features you've considered."
-      placeholder: "Another solution could be..."
+      label: Considered Alternatives
+      description: "Describe any alternative solutions or features you've considered. Why might these alternatives be less desirable?"
+      placeholder: "Another potential solution could be..."
     validations:
       required: false
 
   - type: textarea
     id: additional-context
     attributes:
-      label: Additional Context
-      description: "Add any other context or screenshots about the feature request here."
-      placeholder: "Any additional information, links, or screenshots that might help..."
+      label: Additional Context and Information
+      description: "Provide any other context, links, or screenshots that might help clarify your feature request or idea."
+      placeholder: "Additional details, context, or screenshots..."
     validations:
       required: false
