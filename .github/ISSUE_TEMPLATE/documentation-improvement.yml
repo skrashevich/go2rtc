@@ -1,0 +1,36 @@
+---
+name: Documentation Improvement
+description: Suggest improvements or report inaccuracies in the documentation
+labels: ["issue:documentation"]
+
+body:
+  - type: markdown
+    attributes:
+      value: "### Describe the Issue with Documentation\n<!-- A clear and concise description of what the issue is. -->"
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: Describe the Issue with Documentation
+      description: "A clear and concise description of what the issue is."
+      placeholder: "Explain the issue or the inaccuracies you've found..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: Suggested Improvement
+      description: "Describe your proposed changes in detail."
+      placeholder: "Detail your proposed changes to improve the documentation..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: "Add any other context about the problem here, such as links to the relevant sections or screenshots."
+      placeholder: "Any additional information, links, or screenshots that might help illustrate the problem or your suggestion..."
+    validations:
+      required: false
