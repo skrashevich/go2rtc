@@ -99,6 +99,8 @@ func Init() {
 
 	modules = cfg.Mod
 
+	LoadPlugins()
+
 	log.Info().Msgf("go2rtc version %s %s/%s", Version, runtime.GOOS, runtime.GOARCH)
 
 	migrateStore()
