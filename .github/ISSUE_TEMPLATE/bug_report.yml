@@ -1,0 +1,136 @@
+---
+name: Bug report
+title: Create a report to help us improve
+description: "Create a report to help us improve"
+labels: ['issue:bug']
+
+body:
+  - type: markdown
+    attributes:
+      value: "### Issue Summary\n<!-- Provide a concise summary of the issue you're experiencing. -->"
+
+  - type: input
+    id: go2rtc-version
+    attributes:
+      label: go2rtc version
+      description: "Please specify the version of go2rtc you're using."
+      placeholder: "e.g., 1.2.3"
+    validations:
+      required: true
+
+  - type: input
+    id: operating-system
+    attributes:
+      label: Operating System and Version
+      description: "What operating system are you using?"
+      placeholder: "e.g., Ubuntu 20.04, Windows 10"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser (if applicable)
+      description: "Which browser are you using? Specify the version if possible."
+      placeholder: "e.g., Chrome 88.0.4324.150"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: "### Camera and Stream Details"
+
+  - type: input
+    id: camera-brand-model
+    attributes:
+      label: Camera Brand and Model
+      description: "Specify the brand and model of your camera."
+      placeholder: "e.g., Axis P3375-LVE"
+    validations:
+      required: true
+
+  - type: input
+    id: firmware-version
+    attributes:
+      label: Firmware Version
+      description: "What is the firmware version of your camera?"
+      placeholder: "e.g., 9.12.1"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: "What type of issue are you experiencing? Select all that apply."
+      options:
+        - label: Two-Way Audio Support
+        - label: RTSP Stream Opening
+        - label: Stream Not Clearing After View Change
+        - label: Security Concern (e.g., plaintext password)
+        - label: Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: rtsp-url-format
+    attributes:
+      label: RTSP URL Format Used
+      description: "If your issue is related to RTSP URLs or security, please provide a generalized format without sensitive information."
+      placeholder: "rtsp://[USERNAME]:[PASSWORD]@[IP_ADDRESS]/[STREAM_PATH]"
+    validations:
+      required: false
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction Steps
+      description: "Please provide detailed steps for reproducing the issue."
+      placeholder: "1. Configuration used (without sensitive info like IP, user, and password)\n2. Exact command to start go2rtc (if applicable)\n3. Steps to reproduce the behavior"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: Expected vs Actual Behavior
+      description: "What did you expect to happen? What actually happened?"
+      placeholder: "- Expected: \n- Actual:"
+    validations:
+      required: true
+
+  - type: textarea
+    id: av-support
+    attributes:
+      label: Audio/Video Support
+      description: "Does this issue involve two-way audio support or RTSP stream compatibility?"
+      placeholder: "- Two-way audio support: Yes/No\n- RTSP stream compatibility: Yes/No"
+    validations:
+      required: false
+
+  - type: textarea
+    id: security-concerns
+    attributes:
+      label: Security Concerns
+      description: "Are you reporting a potential security vulnerability? Please provide general details without revealing specific, sensitive information."
+      placeholder: "Yes/No\nDetails:"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs-context
+    attributes:
+      label: Logs and Additional Context
+      description: "Please include any relevant logs and error messages. Screenshots, configuration settings, and any other context that might help us understand the problem."
+      placeholder: "Logs, error messages, screenshots, etc."
+    validations:
+      required: false
+
+  - type: textarea
+    id: potential-solution
+    attributes:
+      label: Potential Solution (if any)
+      description: "Not obligatory, but if you have a suggestion on how to fix the issue, please share it here."
+      placeholder: "Your suggested solution..."
+    validations:
+      required: false
