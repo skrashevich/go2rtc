@@ -350,7 +350,7 @@ func logHandler(w http.ResponseWriter, r *http.Request) {
 			var logEntry map[string]interface{}
 			if err := json.Unmarshal(scanner.Bytes(), &logEntry); err != nil {
 				http.Error(w, "Error processing log entries", http.StatusInternalServerError)
-				return
+				continue
 			}
 
 			// Filter by level if parameter is set
