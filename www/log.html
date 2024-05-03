@@ -102,12 +102,15 @@
             const msg = Object.keys(line).reduce((msg, key) => {
                 return KEYS.indexOf(key) < 0 ? `${msg} ${key}=${line[key]}` : msg;
             }, line['message']);
+            if ( msg.indexOf('GET /api/log?autoupdate') !== -1 ) {
+                return;
+            }
             return `<tr class="${line['level']}"><td>${ts.toLocaleString()}</td><td>${escapeHTML(line['level'])}</td><td>${escapeHTML(msg)}</td></tr>`;
         }).join('');
     }
 
     function reload() {
-        const url = new URL('api/log', location.href);
+        const url = new URL(autoUpdateEnabled ? 'api/log?autoupdate' : 'api/log', location.href);
         fetch(url, {cache: 'no-cache'})
             .then(response => response.text())
             .then(data => {
