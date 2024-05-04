@@ -91,6 +91,26 @@ func NewDNSAnswer(entries []*ServiceEntry, service string, ip net.IP) *dns.Msg {
 		)
 		msg.Extra = append(
 			msg.Extra,
+			&dns.A{
+				Hdr: dns.RR_Header{
+					Name:     srvName,
+					Rrtype:   dns.TypeA,
+					Class:    ClassCacheFlush,
+					Ttl:      120,
+					Rdlength: 0,
+				},
+				A: ip,
+			},
+			&dns.A{
+				Hdr: dns.RR_Header{
+					Name:     ptrName,
+					Rrtype:   dns.TypeA,
+					Class:    ClassCacheFlush,
+					Ttl:      120,
+					Rdlength: 0,
+				},
+				A: ip,
+			},
 			&dns.TXT{
 				Hdr: dns.RR_Header{
 					Name:   ptrName,
@@ -110,16 +130,6 @@ func NewDNSAnswer(entries []*ServiceEntry, service string, ip net.IP) *dns.Msg {
 				},
 				Port:   entry.Port,
 				Target: srvName,
-			},
-			&dns.A{
-				Hdr: dns.RR_Header{
-					Name:     srvName,
-					Rrtype:   dns.TypeA,
-					Class:    ClassCacheFlush,
-					Ttl:      120,
-					Rdlength: 0,
-				},
-				A: ip,
 			},
 		)
 	}
