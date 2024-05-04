@@ -36,47 +36,61 @@ export GOOS=linux
 export GOARCH=amd64
 FILENAME="go2rtc_linux_amd64"
 go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+./scripts/plugins.sh
 
 # Linux 386
 export GOOS=linux
 export GOARCH=386
+export CGO_ENABLED=0
 FILENAME="go2rtc_linux_i386"
 go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+./scripts/plugins.sh
 
 # Linux arm64
 export GOOS=linux
 export GOARCH=arm64
+export CGO_ENABLED=0
 FILENAME="go2rtc_linux_arm64"
 go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+./scripts/plugins.sh
 
 # Linux arm v7
 export GOOS=linux
 export GOARCH=arm
 export GOARM=7
+export CGO_ENABLED=0
 FILENAME="go2rtc_linux_arm"
 go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+./scripts/plugins.sh
 
 # Linux arm v6
 export GOOS=linux
 export GOARCH=arm
 export GOARM=6
+export CGO_ENABLED=0
 FILENAME="go2rtc_linux_armv6"
 go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+./scripts/plugins.sh
 
 # Linux mipsle
 export GOOS=linux
 export GOARCH=mipsle
+export CGO_ENABLED=0
 FILENAME="go2rtc_linux_mipsel"
 go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+
+./scripts/plugins.sh
 
 # Darwin amd64
 export GOOS=darwin
 export GOARCH=amd64
 FILENAME="go2rtc_mac_amd64.zip"
 go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc
+./scripts/plugins.sh
 
 # Darwin arm64
 export GOOS=darwin
 export GOARCH=arm64
 FILENAME="go2rtc_mac_arm64.zip"
 go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc
+./scripts/plugins.sh
