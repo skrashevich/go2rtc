@@ -23,7 +23,7 @@ func Init() {
 
 	app.LoadConfig(&cfg)
 
-	log = app.GetLogger("api")
+	log = app.GetLogger("ws")
 
 	initWS(cfg.Mod.Origin)
 
