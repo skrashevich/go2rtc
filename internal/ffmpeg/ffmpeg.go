@@ -34,7 +34,11 @@ func Init() {
 		return "exec:" + args.String(), nil
 	})
 
-	app.FFmpegVersion, _ = parseArgs("").GetFFmpegVersion()
+	if cfg.Mod["version"] == "6.0-default" {
+		app.FFmpegVersion, _ = parseArgs("").GetFFmpegVersion()
+	} else {
+		app.FFmpegVersion = cfg.Mod["version"]
+	}
 	log.Info().Str("version", app.FFmpegVersion).Msg("[ffmpeg] found")
 
 	if core.CompareVersions(app.FFmpegVersion, "7.0") >= 0 {
@@ -54,8 +58,9 @@ func Init() {
 }
 
 var defaults = map[string]string{
-	"bin":    "ffmpeg",
-	"global": "-hide_banner",
+	"bin":     "ffmpeg",
+	"version": "6.0-default",
+	"global":  "-hide_banner",
 
 	// inputs
 	"file": "-re -i {input}",
