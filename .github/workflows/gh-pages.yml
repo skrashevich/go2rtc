@@ -1,43 +1,43 @@
-# Simple workflow for deploying static content to GitHub Pages
 name: Deploy static content to Pages
 
 on:
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   push:
     paths:
       - 'api/openapi.yaml'
+      - 'website/icons/**' # Updated to use glob pattern
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
-
-# Allow one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  # Single deploy job since we're just deploying
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
+      
+      # Setup Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          bun-version: latest
+          node-version: '18' # Specify your project's required Node.js version
+
       - name: Build API documentation
-        run: bunx @redocly/cli build-docs ./api/openapi.yaml -o ./website/api/index.html
-        working-directory: ${{ github.workspace }}
+        run: npx @redocly/cli build-docs ./api/openapi.yaml -o ./website/api/index.html
+      
       - name: Setup Pages
         uses: actions/configure-pages@v4
+      
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: './website'
+      
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
