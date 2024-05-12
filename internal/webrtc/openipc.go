@@ -1,8 +1,8 @@
 package webrtc
 
 import (
-	"encoding/json"
 	"errors"
+	"github.com/goccy/go-json"
 	"io"
 	"net/url"
 

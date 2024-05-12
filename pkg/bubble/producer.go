@@ -1,7 +1,7 @@
 package bubble
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 )

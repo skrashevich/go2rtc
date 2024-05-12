@@ -1,8 +1,8 @@
 package isapi
 
 import (
-	"encoding/json"
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/goccy/go-json"
 	"github.com/pion/rtp"
 )
 

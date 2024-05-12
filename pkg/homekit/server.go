@@ -3,8 +3,8 @@ package homekit
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
+	"github.com/goccy/go-json"
 	"io"
 	"net"
 	"net/http"

@@ -2,8 +2,8 @@ package hass
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+	"github.com/goccy/go-json"
 	"net/http"
 	"os"
 	"path"

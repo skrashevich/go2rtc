@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"github.com/goccy/go-json"
 	"os"
 
 	"github.com/AlexxIT/go2rtc/pkg/hap"

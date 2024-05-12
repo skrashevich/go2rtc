@@ -2,8 +2,8 @@ package ngrok
 
 import (
 	"bufio"
-	"encoding/json"
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/goccy/go-json"
 	"io"
 	"os/exec"
 	"strings"

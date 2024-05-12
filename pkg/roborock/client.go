@@ -3,9 +3,9 @@ package roborock
 import (
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/goccy/go-json"
 	"log"
 	"net/rpc"
 	"net/url"
