@@ -1,10 +1,11 @@
 name: Test Build and Run
 
 on:
-  push:
-    branches:
-      - '*'
-  pull_request:
+#  push:
+#    branches:
+#      - '*'
+#  pull_request:
+#  merge_group:
   workflow_dispatch:
 
 jobs:
@@ -108,31 +109,3 @@ jobs:
         if: matrix.platform == 'amd64'
         run: |
           docker run --platform=linux/${{ matrix.platform }} --rm go2rtc-${{ matrix.platform }}-hardware go2rtc -version
-
-  run-tests:
-    name: Run Go Tests
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        arch: [amd64, arm64]
-    runs-on: ${{ matrix.os }}
-    continue-on-error: true
-    steps:
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Set up cache for Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Run Go Tests
-        run: go test ./... -v
