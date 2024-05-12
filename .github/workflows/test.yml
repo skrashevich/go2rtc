@@ -29,7 +29,7 @@ jobs:
           go-version: '1.22'
       
       - name: Set up cache for Go modules
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -56,7 +56,7 @@ jobs:
             if [ "${{ matrix.arch }}" = "amd64" ]; then
               ./go2rtc -version
             else
-              echo "ARM64 architecture is not yet supported on macOS"
+              ./go2rtc -version
             fi
       - name: Test Go binary on windows
         if: matrix.os == 'windows-latest'
