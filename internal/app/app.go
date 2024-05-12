@@ -17,15 +17,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var Version = "1.9.1.1"
-var UserAgent = "go2rtc/" + Version
-var FFmpegVersion = ""
-var DefaultConfigFileName = "go2rtc.yaml"
+var (
+	Version               = "1.9.1.2"
+	UserAgent             = "go2rtc/" + Version
+	FFmpegVersion         = ""
+	DefaultConfigFileName = "go2rtc.yaml"
+)
 
-var ConfigPath string
-var Info = map[string]any{
-	"version": Version,
-}
+var (
+	ConfigPath string
+	Info       = map[string]any{
+		"version": Version,
+	}
+)
 
 func Init() {
 	var confs Config
@@ -188,7 +192,7 @@ func PatchConfig(key string, value any, path ...string) error {
 		return err
 	}
 
-	return os.WriteFile(ConfigPath, b, 0644)
+	return os.WriteFile(ConfigPath, b, 0o644)
 }
 
 // internal
