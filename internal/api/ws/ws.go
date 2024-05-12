@@ -105,6 +105,7 @@ func apiWS(w http.ResponseWriter, r *http.Request) {
 		log.Error().Err(err).Caller().Msgf("host=%s origin=%s", r.Host, origin)
 		return
 	}
+	defer ws.Close()
 
 	tr := &Transport{Request: r}
 	tr.OnWrite(func(msg any) error {
@@ -129,7 +130,7 @@ func apiWS(w http.ResponseWriter, r *http.Request) {
 
 		log.Trace().Str("type", msg.Type).Msg("[api.ws] msg")
 
-		if handler := wsHandlers[msg.Type]; handler != nil {
+		if handler, ok := wsHandlers[msg.Type]; ok {
 			go func() {
 				if err = handler(tr, msg); err != nil {
 					tr.Write(&Message{Type: "error", Value: msg.Type + ": " + err.Error()})
