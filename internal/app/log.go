@@ -137,14 +137,21 @@ func (b *circularBuffer) Reset() error {
 
 // Bytes concatenates all chunks into a single byte slice.
 func (b *circularBuffer) Bytes() []byte {
-	var result []byte
+	var totalLen int
+	for _, chunk := range b.chunks {
+		totalLen += len(chunk)
+	}
+	result := make([]byte, 0, totalLen)
+
 	for i := b.r; ; {
 		result = append(result, b.chunks[i]...)
 
 		if i == b.w {
 			break
 		}
-		if i++; i == cap(b.chunks) {
+
+		i++
+		if i == len(b.chunks) {
 			i = 0
 		}
 	}
