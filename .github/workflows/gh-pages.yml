@@ -24,15 +24,15 @@ jobs:
       
       # Setup Node.js environment
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18' # Specify your project's required Node.js version
+          node-version: '>=18.0'
 
       - name: Build API documentation
         run: npx @redocly/cli build-docs ./api/openapi.yaml -o ./website/api/index.html
       
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
