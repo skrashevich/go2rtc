@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	Version               = "1.9.1.2"
+	Version               = "1.9.1.3"
 	UserAgent             = "go2rtc/" + Version
 	FFmpegVersion         = ""
 	DefaultConfigFileName = "go2rtc.yaml"
