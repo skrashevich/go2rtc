@@ -4,17 +4,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/AlexxIT/go2rtc/pkg/yaml"
+	"github.com/rs/zerolog/log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strings"
-	"time"
-
-	"github.com/AlexxIT/go2rtc/pkg/shell"
-	"github.com/AlexxIT/go2rtc/pkg/yaml"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -31,17 +29,17 @@ var (
 	}
 )
 
-const usage = `Usage of go2rtc:
+/*const usage = `Usage of go2rtc:
 
   -c, --config   Path to config file or config string as YAML or JSON, support multiple
   -d, --daemon   Run in background
   -v, --version  Print version and exit
-`
+`*/
 
 func Init() {
 	var confs Config
 	var daemon bool
-	configflag := false
+	// configflag := false
 	var version bool
 
 	flag.Var(&confs, "config", "go2rtc config (path to file or raw text), support multiple")
@@ -78,8 +76,6 @@ func Init() {
 
 	flag.Parse()
 
-
-
 	if version {
 		fmt.Println("go2rtc version " + GetVersionString())
 		os.Exit(0)
@@ -111,7 +107,7 @@ func Init() {
 	}
 
 	for _, conf := range confs {
-		if len(conf) <1 {
+		if len(conf) < 1 {
 			continue
 		}
 		if conf[0] == '{' {
@@ -134,14 +130,14 @@ func Init() {
 		}
 	}
 
-	if !configflag {
+	/*	if !configflag {
 		data, _ := os.ReadFile(DefaultConfigFileName)
 		if data != nil {
 			data = []byte(shell.ReplaceEnvVars(string(data)))
 			configs = prepend(configs, data)
 			ConfigPath = DefaultConfigFileName
 		}
-	}
+	}*/
 
 	if ConfigPath != "" {
 		if !filepath.IsAbs(ConfigPath) {
@@ -151,9 +147,6 @@ func Init() {
 		}
 		Info["config_path"] = ConfigPath
 	}
-
-	Info["revision"] = revision
-
 	var cfg struct {
 		Mod map[string]string `yaml:"log"`
 	}
@@ -163,6 +156,8 @@ func Init() {
 	log.Logger = NewLogger(cfg.Mod["format"], cfg.Mod["level"])
 
 	modules = cfg.Mod
+
+	revision, vcsTime := readRevisionTime()
 
 	platform := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
 	log.Info().Str("version", Version).Str("platform", platform).Str("revision", revision).Msg("go2rtc")
@@ -236,23 +231,6 @@ var configs [][]byte
 func GetVersionString() string {
 
 	revision, vcsTime := readRevisionTime()
-
-	if info, ok := debug.ReadBuildInfo(); ok {
-		for _, setting := range info.Settings {
-			switch setting.Key {
-			case "vcs.revision":
-				revision = setting.Value
-				if len(revision) > 7 {
-					revision = revision[:7]
-				}
-				revision = "(" + revision + ")"
-			case "vcs.time":
-				if parsedTime, err := time.Parse(time.RFC3339, setting.Value); err == nil {
-					vcsTime = parsedTime.Local()
-				}
-			}
-		}
-	}
 
 	return fmt.Sprintf("%s%s: %s %s/%s", Version, revision, vcsTime, runtime.GOOS, runtime.GOARCH)
 }
