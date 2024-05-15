@@ -1,4 +1,4 @@
-//go:build darwin || freebsd || openbsd
+//go:build darwin || ios || freebsd || openbsd || netbsd || dragonfly
 
 package mdns
 

@@ -31,6 +31,13 @@ var (
 	}
 )
 
+const usage = `Usage of go2rtc:
+
+  -c, --config   Path to config file or config string as YAML or JSON, support multiple
+  -d, --daemon   Run in background
+  -v, --version  Print version and exit
+`
+
 func Init() {
 	var confs Config
 	var daemon bool
@@ -71,12 +78,19 @@ func Init() {
 
 	flag.Parse()
 
+
+
 	if version {
 		fmt.Println("go2rtc version " + GetVersionString())
 		os.Exit(0)
 	}
 
 	if daemon {
+		if runtime.GOOS == "windows" {
+			fmt.Println("Daemon not supported on Windows")
+			os.Exit(1)
+		}
+
 		args := os.Args[1:]
 		for i, arg := range args {
 			if arg == "-daemon" {
@@ -97,28 +111,26 @@ func Init() {
 	}
 
 	for _, conf := range confs {
-		if len(conf) < 1 {
+		if len(conf) <1 {
 			continue
 		}
-		if conf[0] != '{' {
-
-			data, err := os.ReadFile(conf)
-			if data == nil {
-				continue
+		if conf[0] == '{' {
+			// config as raw YAML or JSON
+			configs = append(configs, []byte(conf))
+		} else if data := parseConfString(conf); data != nil {
+			configs = append(configs, data)
+		} else {
+			// config as file
+			if ConfigPath == "" {
+				ConfigPath = conf
 			}
-			if err == nil {
-				configflag = true
-				// config as file
-				if ConfigPath == "" {
-					ConfigPath = conf
-				}
+
+			if data, _ = os.ReadFile(conf); data == nil {
+				continue
 			}
 
 			data = []byte(shell.ReplaceEnvVars(string(data)))
 			configs = append(configs, data)
-		} else {
-			// config as raw YAML
-			configs = append(configs, []byte(conf))
 		}
 	}
 
@@ -140,6 +152,8 @@ func Init() {
 		Info["config_path"] = ConfigPath
 	}
 
+	Info["revision"] = revision
+
 	var cfg struct {
 		Mod map[string]string `yaml:"log"`
 	}
@@ -151,8 +165,8 @@ func Init() {
 	modules = cfg.Mod
 
 	platform := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
-	log.Info().Str("version", Version).Str("platform", platform).Msg("go2rtc")
-	log.Debug().Str("version", runtime.Version()).Msg("build")
+	log.Info().Str("version", Version).Str("platform", platform).Str("revision", revision).Msg("go2rtc")
+	log.Debug().Str("version", runtime.Version()).Str("vcs.time", vcsTime).Msg("build")
 
 	if ConfigPath != "" {
 		log.Info().Str("path", ConfigPath).Msg("config")
@@ -220,18 +234,18 @@ func (c *Config) Set(value string) error {
 var configs [][]byte
 
 func GetVersionString() string {
-	var vcsRevision string
-	vcsTime := time.Now()
+
+	revision, vcsTime := readRevisionTime()
 
 	if info, ok := debug.ReadBuildInfo(); ok {
 		for _, setting := range info.Settings {
 			switch setting.Key {
 			case "vcs.revision":
-				vcsRevision = setting.Value
-				if len(vcsRevision) > 7 {
-					vcsRevision = vcsRevision[:7]
+				revision = setting.Value
+				if len(revision) > 7 {
+					revision = revision[:7]
 				}
-				vcsRevision = "(" + vcsRevision + ")"
+				revision = "(" + revision + ")"
 			case "vcs.time":
 				if parsedTime, err := time.Parse(time.RFC3339, setting.Value); err == nil {
 					vcsTime = parsedTime.Local()
@@ -240,5 +254,49 @@ func GetVersionString() string {
 		}
 	}
 
-	return fmt.Sprintf("%s%s: %s %s/%s", Version, vcsRevision, vcsTime.String(), runtime.GOOS, runtime.GOARCH)
+	return fmt.Sprintf("%s%s: %s %s/%s", Version, revision, vcsTime, runtime.GOOS, runtime.GOARCH)
+}
+
+func readRevisionTime() (revision, vcsTime string) {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			switch setting.Key {
+			case "vcs.revision":
+				if len(setting.Value) > 7 {
+					revision = setting.Value[:7]
+				} else {
+					revision = setting.Value
+				}
+			case "vcs.time":
+				vcsTime = setting.Value
+			case "vcs.modified":
+				if setting.Value == "true" {
+					revision = "mod." + revision
+				}
+			}
+		}
+	}
+	return
+}
+
+func parseConfString(s string) []byte {
+	i := strings.IndexByte(s, '=')
+	if i < 0 {
+		return nil
+	}
+
+	items := strings.Split(s[:i], ".")
+	if len(items) < 2 {
+		return nil
+	}
+
+	// `log.level=trace` => `{log: {level: trace}}`
+	var pre string
+	var suf = s[i+1:]
+	for _, item := range items {
+		pre += "{" + item + ": "
+		suf += "}"
+	}
+
+	return []byte(pre + suf)
 }
