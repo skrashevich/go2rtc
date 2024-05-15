@@ -57,6 +57,10 @@ func (c *Client) Dial() (err error) {
 			"video_codecs=h264&format=ws-fmp4",
 	)
 
+	if err != nil {
+		return err
+	}
+
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err

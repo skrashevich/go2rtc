@@ -23,7 +23,7 @@ type Response struct {
 	Request    *Request
 }
 
-func (r Response) String() string {
+func (r *Response) String() string {
 	s := r.Proto + " " + r.Status + EndLine
 	for k, v := range r.Header {
 		s += k + ": " + v[0] + EndLine

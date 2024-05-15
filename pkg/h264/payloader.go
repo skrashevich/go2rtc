@@ -186,10 +186,3 @@ func (p *Payloader) Payload(mtu uint16, payload []byte) [][]byte {
 
 	return payloads
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

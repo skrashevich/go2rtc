@@ -263,7 +263,7 @@ func (p *Payloader) Payload(mtu uint16, payload []byte) [][]byte {
 				out[0] = (out[0] & 0b10000001) | h265NaluFragmentationUnitType<<1
 
 				// write the fragment header
-				out[2] = byte(H265FragmentationUnitHeader(naluHeader.Type()))
+				out[2] = naluHeader.Type()
 				if len(nalu) == fullNALUSize {
 					// Set start bit
 					out[2] |= 1 << 7
