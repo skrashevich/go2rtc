@@ -91,7 +91,7 @@ func TestCircularBuffer_Bytes(t *testing.T) {
 		{
 			name: "empty buffer",
 			buffer: &circularBuffer{
-				chunks: make([]([]byte), 5),
+				chunks: make([][]byte, 5),
 				r:      0,
 				w:      0,
 			},
@@ -129,7 +129,7 @@ func TestCircularBuffer_Bytes(t *testing.T) {
 // BenchmarkCircularBuffer_Bytes benchmarks the Bytes method of circularBuffer.
 func BenchmarkCircularBuffer_Bytes(b *testing.B) {
 	buffer := &circularBuffer{
-		chunks: make([]([]byte), 1024), // Assuming a buffer capacity of 1024 chunks
+		chunks: make([][]byte, 1024), // Assuming a buffer capacity of 1024 chunks
 		r:      0,
 		w:      512, // Assuming the buffer is half full for this benchmark
 	}
