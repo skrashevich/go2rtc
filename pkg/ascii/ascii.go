@@ -76,6 +76,11 @@ func NewWriter(w io.Writer, foreground, background, text, width, height string) 
 			text = ` .::--~~==++**##%%$@` // default for empty text
 		case "block":
 			text = " ░░▒▒▓▓█" // https://en.wikipedia.org/wiki/Block_Elements
+		case "braille":
+			text = ""
+			for i := 0x2800; i <= 0x28FF; i++ {
+				text += string(rune(i))
+			}
 		}
 
 		if runes := []rune(text); len(runes) != len(text) {
