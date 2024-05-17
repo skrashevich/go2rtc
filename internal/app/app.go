@@ -4,19 +4,20 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/AlexxIT/go2rtc/pkg/shell"
-	"github.com/AlexxIT/go2rtc/pkg/yaml"
-	"github.com/rs/zerolog/log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strings"
+
+	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/AlexxIT/go2rtc/pkg/yaml"
+	"github.com/rs/zerolog/log"
 )
 
 var (
-	Version               = "1.9.1.3"
+	Version               = "1.9.2.0"
 	UserAgent             = "go2rtc/" + Version
 	FFmpegVersion         = ""
 	DefaultConfigFileName = "go2rtc.yaml"
@@ -229,7 +230,6 @@ func (c *Config) Set(value string) error {
 var configs [][]byte
 
 func GetVersionString() string {
-
 	revision, vcsTime := readRevisionTime()
 
 	return fmt.Sprintf("%s%s: %s %s/%s", Version, revision, vcsTime, runtime.GOOS, runtime.GOARCH)
@@ -270,7 +270,7 @@ func parseConfString(s string) []byte {
 
 	// `log.level=trace` => `{log: {level: trace}}`
 	var pre string
-	var suf = s[i+1:]
+	suf := s[i+1:]
 	for _, item := range items {
 		pre += "{" + item + ": "
 		suf += "}"
