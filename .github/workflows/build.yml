@@ -21,96 +21,80 @@ jobs:
         uses: actions/setup-go@v5
         with: { go-version: '1.22' }
 
-      - name: Build go2rtc_win64
-        env: { GOOS: windows, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_win64
+      - name: Debug PATH
+        run: echo $PATH
+
+      - name: Check Go version
+        run: go version
+
+      - name: Build binaries
+        run: bash ./scripts/build.sh
+
+      - name: Upload Windows amd64
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_win64, path: go2rtc.exe }
+        with: 
+          name: go2rtc_win64
+          path: './.tmp/go2rtc_win64.zip'
 
-      - name: Build go2rtc_win32
-        env: { GOOS: windows, GOARCH: 386 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_win32
+      - name: Upload Windows 386
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_win32, path: go2rtc.exe }
+        with: 
+          name: go2rtc_win32
+          path: './.tmp/go2rtc_win32.zip'
 
-      - name: Build go2rtc_win_arm64
-        env: { GOOS: windows, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_win_arm64
+      - name: Upload Windows arm64
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_win_arm64, path: go2rtc.exe }
+        with: 
+          name: go2rtc_win_arm64
+          path: './.tmp/go2rtc_win_arm64.zip'
 
-      - name: Build go2rtc_linux_amd64
-        env: { GOOS: linux, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_amd64
+      - name: Upload Linux amd64
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_amd64, path: go2rtc }
+        with: 
+          name: go2rtc_linux_amd64
+          path: './.tmp/go2rtc_linux_amd64'
 
-      - name: Build go2rtc_linux_i386
-        env: { GOOS: linux, GOARCH: 386 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_i386
+      - name: Upload Linux 386
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_i386, path: go2rtc }
+        with: 
+          name: go2rtc_linux_i386
+          path: './.tmp/go2rtc_linux_i386'
 
-      - name: Build go2rtc_linux_arm64
-        env: { GOOS: linux, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_arm64
+      - name: Upload Linux arm64
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_arm64, path: go2rtc }
+        with: 
+          name: go2rtc_linux_arm64
+          path: './.tmp/go2rtc_linux_arm64'
 
-      - name: Build go2rtc_linux_arm
-        env: { GOOS: linux, GOARCH: arm, GOARM: 7 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_arm
+      - name: Upload Linux arm v7
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_arm, path: go2rtc }
+        with: 
+          name: go2rtc_linux_arm
+          path: './.tmp/go2rtc_linux_arm'
 
-      - name: Build go2rtc_linux_armv6
-        env: { GOOS: linux, GOARCH: arm, GOARM: 6 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_armv6
+      - name: Upload Linux arm v6
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_armv6, path: go2rtc }
+        with: 
+          name: go2rtc_linux_armv6
+          path: './.tmp/go2rtc_linux_armv6'
 
-      - name: Build go2rtc_linux_mipsel
-        env: { GOOS: linux, GOARCH: mipsle }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_linux_mipsel
+      - name: Upload Linux mipsle
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_linux_mipsel, path: go2rtc }
+        with: 
+          name: go2rtc_linux_mipsel
+          path: './.tmp/go2rtc_linux_mipsel'
 
-      - name: Build go2rtc_mac_amd64
-        env: { GOOS: darwin, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_mac_amd64
+      - name: Upload macOS amd64
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_mac_amd64, path: go2rtc }
+        with: 
+          name: go2rtc_mac_amd64
+          path: './.tmp/go2rtc_mac_amd64.zip'
 
-      - name: Build go2rtc_mac_arm64
-        env: { GOOS: darwin, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_mac_arm64
+      - name: Upload macOS arm64
         uses: actions/upload-artifact@v4
-        with: { name: go2rtc_mac_arm64, path: go2rtc }
-
-      - name: Build go2rtc_freebsd_amd64
-        env: { GOOS: freebsd, GOARCH: amd64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_freebsd_amd64
-        uses: actions/upload-artifact@v3
-        with: { name: go2rtc_freebsd_amd64, path: go2rtc }
-
-      - name: Build go2rtc_freebsd_arm64
-        env: { GOOS: freebsd, GOARCH: arm64 }
-        run: go build -ldflags "-s -w" -trimpath
-      - name: Upload go2rtc_freebsd_arm64
-        uses: actions/upload-artifact@v3
-        with: { name: go2rtc_freebsd_arm64, path: go2rtc }
+        with: 
+          name: go2rtc_mac_arm64
+          path: './.tmp/go2rtc_mac_arm64.zip'
 
   docker-master:
     name: Build docker master

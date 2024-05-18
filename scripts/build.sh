@@ -13,70 +13,72 @@ check_command go
 check_command 7z
 check_command upx
 
+mkdir -p .tmp
+
 # Windows amd64
 export GOOS=windows
 export GOARCH=amd64
 FILENAME="go2rtc_win64.zip"
-go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc.exe
+go build -ldflags "-s -w" -trimpath -o .tmp/ && 7z a -mx9 -bso0 -sdel .tmp/$FILENAME .tmp/go2rtc.exe
 
 # Windows 386
 export GOOS=windows
 export GOARCH=386
 FILENAME="go2rtc_win32.zip"
-go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc.exe
+go build -ldflags "-s -w" -trimpath -o .tmp/ && 7z a -mx9 -bso0 -sdel .tmp/$FILENAME .tmp/go2rtc.exe
 
 # Windows arm64
 export GOOS=windows
 export GOARCH=arm64
 FILENAME="go2rtc_win_arm64.zip"
-go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc.exe
+go build -ldflags "-s -w" -trimpath -o .tmp/ && 7z a -mx9 -bso0 -sdel .tmp/$FILENAME .tmp/go2rtc.exe
 
 # Linux amd64
 export GOOS=linux
 export GOARCH=amd64
 FILENAME="go2rtc_linux_amd64"
-go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+go build -ldflags "-s -w" -trimpath -o .tmp/$FILENAME && upx --lzma --force-overwrite -q --no-progress .tmp/$FILENAME
 
 # Linux 386
 export GOOS=linux
 export GOARCH=386
 FILENAME="go2rtc_linux_i386"
-go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+go build -ldflags "-s -w" -trimpath -o .tmp/$FILENAME && upx --lzma --force-overwrite -q --no-progress .tmp/$FILENAME
 
 # Linux arm64
 export GOOS=linux
 export GOARCH=arm64
 FILENAME="go2rtc_linux_arm64"
-go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+go build -ldflags "-s -w" -trimpath -o .tmp/$FILENAME && upx --lzma --force-overwrite -q --no-progress .tmp/$FILENAME
 
 # Linux arm v7
 export GOOS=linux
 export GOARCH=arm
 export GOARM=7
 FILENAME="go2rtc_linux_arm"
-go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+go build -ldflags "-s -w" -trimpath -o .tmp/$FILENAME && upx --lzma --force-overwrite -q --no-progress .tmp/$FILENAME
 
 # Linux arm v6
 export GOOS=linux
 export GOARCH=arm
 export GOARM=6
 FILENAME="go2rtc_linux_armv6"
-go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+go build -ldflags "-s -w" -trimpath -o .tmp/$FILENAME && upx --lzma --force-overwrite -q --no-progress .tmp/$FILENAME
 
 # Linux mipsle
 export GOOS=linux
 export GOARCH=mipsle
 FILENAME="go2rtc_linux_mipsel"
-go build -ldflags "-s -w" -trimpath -o $FILENAME && upx --lzma --force-overwrite -q --no-progress $FILENAME
+go build -ldflags "-s -w" -trimpath -o .tmp/$FILENAME && upx --lzma --force-overwrite -q --no-progress .tmp/$FILENAME
 
 # Darwin amd64
 export GOOS=darwin
 export GOARCH=amd64
 FILENAME="go2rtc_mac_amd64.zip"
-go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc
+go build -ldflags "-s -w" -trimpath -o .tmp/ && 7z a -mx9 -bso0 -sdel .tmp/$FILENAME .tmp/go2rtc
 
 # Darwin arm64
 export GOOS=darwin
 export GOARCH=arm64
 FILENAME="go2rtc_mac_arm64.zip"
-go build -ldflags "-s -w" -trimpath && 7z a -mx9 -bso0 -sdel $FILENAME go2rtc
+go build -ldflags "-s -w" -trimpath -o .tmp/ && 7z a -mx9 -bso0 -sdel .tmp/$FILENAME .tmp/go2rtc
