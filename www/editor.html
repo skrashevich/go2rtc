@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>go2rtc - File Editor</title>
     <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
@@ -13,6 +14,7 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="msapplication-config" content="https://skrashevich.github.io/go2rtc/icons/browserconfig.xml">
     <script src="https://unpkg.com/ace-builds@1.33.1/src-min/ace.js"></script>
+    <script src="https://unpkg.com/ace-builds@1.33.1/src-min/ext-language_tools.js"></script>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -23,56 +25,171 @@
             flex-direction: column;
         }
 
-        html, body, #config {
+        html,
+        body,
+        #config {
             width: 100%;
             height: 100%;
         }
     </style>
 </head>
+
 <body>
-<script src="main.js"></script>
-<div>
-    <button id="save">Save & Restart</button>
-</div>
-<br>
-<div id="config"></div>
-<script>
-    let dump;
+    <script src="main.js"></script>
+    <div>
+        <button id="save">Save & Restart</button>
+    </div>
+    <br>
+    <div id="config"></div>
+    <script>
+        let dump;
 
-    ace.config.set('basePath', 'https://unpkg.com/ace-builds@1.33.1/src-min/');
-    const editor = ace.edit('config', {
-        mode: 'ace/mode/yaml',
-    });
+        ace.config.set('basePath', 'https://unpkg.com/ace-builds@1.33.1/src-min/');
+        const editor = ace.edit('config', {
+            mode: 'ace/mode/yaml',
+        });
 
-    document.getElementById('save').addEventListener('click', async () => {
-        let r = await fetch('api/config', {cache: 'no-cache'});
-        if (r.ok && dump !== await r.text()) {
-            alert('Config was changed from another place. Refresh the page and make changes again');
-            return;
-        }
+        editor.setOptions({
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true
+        });
 
-        r = await fetch('api/config', {method: 'POST', body: editor.getValue()});
-        if (r.ok) {
-            alert('OK');
-            await fetch('api/restart', {method: 'POST'});
-        } else {
-            alert(await r.text());
-        }
-    });
+        // Define the completions
+        var completions = {
+            "api": [
+                { caption: "listen", value: "listen: ", meta: "property", docText: "HTTP API port (default \":1984\", \"\" to disable)" },
+                { caption: "username", value: "username: ", meta: "property", docText: "Basic auth username for WebUI (default: \"\")" },
+                { caption: "password", value: "password: ", meta: "property", docText: "Basic auth password for WebUI (default: \"\")" },
+                { caption: "base_path", value: "base_path: ", meta: "property", docText: "API prefix for serving on suburl (/api => /rtc/api, default: \"\")" },
+                { caption: "static_dir", value: "static_dir: ", meta: "property", docText: "Folder for static files (custom web interface, default: \"\")" },
+                { caption: "origin", value: "origin: ", meta: "property", docText: "Allow CORS requests (only \"*\" supported, default: \"\")" },
+                { caption: "tls_listen", value: "tls_listen: ", meta: "property", docText: "Enable HTTPS server (default: \"\")" },
+                { caption: "tls_cert", value: "tls_cert: |", meta: "property", docText: "PEM-encoded fullchain certificate for HTTPS (default: \"\")" },
+                { caption: "tls_key", value: "tls_key: |", meta: "property", docText: "PEM-encoded private key for HTTPS (default: \"\")" },
+                { caption: "unix_listen", value: "unix_listen: ", meta: "property", docText: "Unix socket listener for API (default: \"\")" }
+            ],
+            "rtsp": [
+                { caption: "listen", value: "listen: ", meta: "property", docText: "RTSP Server TCP port (default: 8554)" },
+                { caption: "username", value: "username: ", meta: "property", docText: "RTSP username (optional, default: disabled)" },
+                { caption: "password", value: "password: ", meta: "property", docText: "RTSP password (optional, default: disabled)" },
+                { caption: "default_query", value: "default_query: ", meta: "property", docText: "Default codec filters (optional)" }
+            ],
+            "webrtc": [
+                { caption: "listen", value: "listen: ", meta: "property", docText: "WebRTC server port (default: 8555, TCP/UDP)" },
+                { caption: "candidates", value: "candidates:", meta: "property", docText: "List of external candidates (optional)" },
+                { caption: "stun", value: "- stun:", meta: "property", docText: "Example dynamic public IP using STUN" }
+            ],
+            "ffmpeg": [
+                { caption: "bin", value: "bin: ", meta: "property", docText: "Path to ffmpeg binary" },
+                { caption: "h264", value: "h264: ", meta: "property", docText: "FFmpeg arguments for H264 codec" },
+                { caption: "mycodec", value: "mycodec: ", meta: "property", docText: "FFmpeg arguments for custom codec" },
+                { caption: "myinput", value: "myinput: ", meta: "property", docText: "FFmpeg input arguments" },
+                { caption: "myraw", value: "myraw: ", meta: "property", docText: "FFmpeg raw arguments" }
+            ],
+            "ngrok": [
+                { caption: "command", value: "command: ", meta: "property", docText: "Ngrok start command" }
+            ],
+            "webtorrent": [
+                { caption: "shares", value: "shares:", meta: "property", docText: "WebTorrent shares configuration" },
+                { caption: "super-secret-share", value: "super-secret-share:", meta: "property", docText: "Share name, should be unique" },
+                { caption: "pwd", value: "  pwd: ", meta: "property", docText: "Password for the share" },
+                { caption: "src", value: "  src: ", meta: "property", docText: "Stream name from streams section" }
+            ],
+            "log": [
+                { caption: "level", value: "level: ", meta: "property", docText: "Log level (default: \"info\")" },
+                { caption: "file", value: "file: ", meta: "property", docText: "Log file path (optional)" }
+            ],
+            "mp4": [],
+            "hls": [],
+            "mjpeg": [],
+            "streams": [
+                { caption: "camera1", value: "camera1: ", meta: "property", docText: "RTSP camera stream" },
+                { caption: "camera2", value: "camera2: ", meta: "property", docText: "File source with video transcoding to H264" },
+                { caption: "camera3", value: "camera3:", meta: "property", docText: "Multiple sources for a single stream" },
+                { caption: "homekit_camera", value: "homekit_camera:", meta: "property", docText: "HomeKit camera source" }
+            ],
+            "hass": [
+                { caption: "config", value: "config: ", meta: "property", docText: "Path to Home Assistant config folder (default: \"\")" }
+            ],
+            "homekit": [
+                { caption: "dahua1", value: "dahua1:", meta: "property", docText: "Stream ID from streams section" },
+                { caption: "pin", value: "pin: ", meta: "property", docText: "Custom PIN (default: 19550224)" },
+                { caption: "name", value: "name: ", meta: "property", docText: "Custom camera name (default: generated from stream ID)" },
+                { caption: "device_id", value: "device_id: ", meta: "property", docText: "Custom device ID (default: generated from stream ID)" },
+                { caption: "device_private", value: "device_private: ", meta: "property", docText: "Custom key (default: generated from stream ID)" }
+            ],
+            "rtmp": [
+                { caption: "listen", value: "listen: ", meta: "property", docText: "RTMP Server TCP port (default: disabled)" }
+            ],
+            "publish": [
+                { caption: "tplink_tapo", value: "tplink_tapo: ", meta: "property", docText: "Publish stream to Telegram" },
+                { caption: "other_camera", value: "other_camera:", meta: "property", docText: "Other camera publishing streams" }
+            ],
+            "dvrip": [
+                { caption: "only_stream", value: "only_stream: ", meta: "property", docText: "DVRIP stream URL" },
+                { caption: "only_tts", value: "only_tts: ", meta: "property", docText: "DVRIP TTS URL" },
+                { caption: "two_way_audio", value: "two_way_audio:", meta: "property", docText: "Two-way audio configuration" }
+            ]
+        };
 
-    window.addEventListener('load', async () => {
-        const r = await fetch('api/config', {cache: 'no-cache'});
-        if (r.status === 410) {
-            alert('Config file is not set');
-        } else if (r.status === 404) {
-            editor.setValue(''); // config file not exist
-        } else if (r.ok) {
-            dump = await r.text();
-            editor.setValue(dump);
-        } else {
-            alert(`Unknown error: ${r.statusText} (${r.status})`);
-        }
-    });
-</script>
+        // Define a custom completer
+        var yamlCompleter = {
+            getCompletions: function (editor, session, pos, prefix, callback) {
+                var line = session.getLine(pos.row);
+                var section = null;
+
+                // Iterate through the lines above the current line to determine the current section
+                for (var row = pos.row; row >= 0; row--) {
+                    var currentLine = session.getLine(row).trim();
+                    if (currentLine.endsWith(":") && !currentLine.startsWith("-")) {
+                        section = currentLine.slice(0, -1);
+                        break;
+                    }
+                }
+                // If we are in a known section, provide relevant completions
+                if (section && completions[section]) {
+                    callback(null, completions[section]);
+                } else {
+                    // If not in a specific section, provide top-level sections
+                    callback(null, Object.keys(completions).map(function (key) {
+                        return { caption: key, value: key + ":", meta: "section" };
+                    }));
+                }
+            }
+        };
+        // Register the completer
+        ace.require("ace/ext/language_tools").addCompleter(yamlCompleter);
+
+        document.getElementById('save').addEventListener('click', async () => {
+            let r = await fetch('api/config', { cache: 'no-cache' });
+            if (r.ok && dump !== await r.text()) {
+                alert('Config was changed from another place. Refresh the page and make changes again');
+                return;
+            }
+
+            r = await fetch('api/config', { method: 'POST', body: editor.getValue() });
+            if (r.ok) {
+                alert('OK');
+                await fetch('api/restart', { method: 'POST' });
+            } else {
+                alert(await r.text());
+            }
+        });
+
+        window.addEventListener('load', async () => {
+            const r = await fetch('api/config', { cache: 'no-cache' });
+            if (r.status === 410) {
+                alert('Config file is not set');
+            } else if (r.status === 404) {
+                editor.setValue(''); // config file not exist
+            } else if (r.ok) {
+                dump = await r.text();
+                editor.setValue(dump);
+            } else {
+                alert(`Unknown error: ${r.statusText} (${r.status})`);
+            }
+        });
+    </script>
 </body>
+
 </html>
