@@ -36,8 +36,7 @@
 <body>
 <script src="main.js"></script>
 <div>
-    <button id="saveRestart">Save & Restart</button>
-    <button id="save">Save</button>
+    <button id="save">Save & Restart</button>
 </div>
 <br>
 <div id="config"></div>
@@ -67,31 +66,21 @@
             }
         });
 
-        async function saveConfig(restart = false) {
-            try {
-                let r = await fetch('api/config', { cache: 'no-cache' });
-                if (r.ok && dump !== await r.text()) {
-                    alert('Config was changed from another place. Refresh the page and make changes again');
-                    return;
-                }
-
-                r = await fetch('api/config', { method: 'POST', body: editor.getValue() });
-                if (r.ok) {
-                    alert('OK');
-                    if (restart) {
-                        await fetch('api/restart', { method: 'POST' });
-                    }
-                } else {
-                    alert(await r.text());
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+        document.getElementById('save').addEventListener('click', async () => {
+            let r = await fetch('api/config', {cache: 'no-cache'});
+            if (r.ok && dump !== await r.text()) {
+                alert('Config was changed from another place. Refresh the page and make changes again');
+                return;
             }
-        }
 
-        document.getElementById('saveRestart').addEventListener('click', () => saveConfig(true));
-        document.getElementById('save').addEventListener('click', () => saveConfig(false));
+            r = await fetch('api/config', {method: 'POST', body: editor.getValue()});
+            if (r.ok) {
+                alert('OK');
+                await fetch('api/restart', {method: 'POST'});
+            } else {
+                alert(await r.text());
+            }
+        });
     });
 </script>
 </body>
