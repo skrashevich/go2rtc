@@ -95,6 +95,16 @@ jobs:
         with: 
           name: go2rtc_mac_arm64
           path: './.tmp/go2rtc_mac_arm64.zip'
+      
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref,'refs/tags/')
+        with:
+          generate_release_notes: true
+          files: |
+            ./.tmp/*
+
+  
 
   docker-master:
     name: Build docker master
