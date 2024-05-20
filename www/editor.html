@@ -34,7 +34,6 @@
     </style>
 </head>
 <body>
-<script src="main.js"></script>
 <div>
     <button id="saveRestart">Save & Restart</button>
     <button id="save">Save</button>
@@ -42,57 +41,68 @@
 <br>
 <div id="config"></div>
 <script>
-    let dump;
-    let editor;
+    (function() {
+        let dump;
+        let editor;
 
-    // Load Monaco Editor
-    require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.48.0/min/vs' }});
-    require(['vs/editor/editor.main'], function() {
-        editor = monaco.editor.create(document.getElementById('config'), {
-            language: 'yaml',
-            theme: document.body.classList.contains('dark-mode') ? 'vs-dark' : 'vs-light' // 🩼
-        });
+        // Load Monaco Editor
+        require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@0.48.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            editor = monaco.editor.create(document.getElementById('config'), {
+                language: 'yaml',
+                theme: document.body.classList.contains('dark-mode') ? 'vs-dark' : 'vs-light' // 🩼
+            });
 
-        window.addEventListener('load', async () => {
-            const r = await fetch('api/config', {cache: 'no-cache'});
-            if (r.status === 410) {
-                alert('Config file is not set');
-            } else if (r.status === 404) {
-                editor.setValue(''); // config file not exist
-            } else if (r.ok) {
-                dump = await r.text();
-                editor.setValue(dump);
-            } else {
-                alert(`Unknown error: ${r.statusText} (${r.status})`);
-            }
-        });
-
-        async function saveConfig(restart = false) {
-            try {
-                let r = await fetch('api/config', { cache: 'no-cache' });
-                if (r.ok && dump !== await r.text()) {
-                    alert('Config was changed from another place. Refresh the page and make changes again');
-                    return;
-                }
-
-                r = await fetch('api/config', { method: 'POST', body: editor.getValue() });
-                if (r.ok) {
-                    alert('OK');
-                    if (restart) {
-                        await fetch('api/restart', { method: 'POST' });
+            window.addEventListener('load', async () => {
+                try {
+                    const r = await fetch('api/config', {cache: 'no-cache'});
+                    if (r.status === 410) {
+                        alert('Config file is not set');
+                    } else if (r.status === 404) {
+                        editor.setValue(''); // config file not exist
+                    } else if (r.ok) {
+                        dump = await r.text();
+                        editor.setValue(dump);
+                    } else {
+                        alert(`Unknown error: ${r.statusText} (${r.status})`);
                     }
-                } else {
-                    alert(await r.text());
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching the config.');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-            }
-        }
+            });
 
-        document.getElementById('saveRestart').addEventListener('click', () => saveConfig(true));
-        document.getElementById('save').addEventListener('click', () => saveConfig(false));
-    });
+            async function saveConfig(restart = false) {
+                try {
+                    let r = await fetch('api/config', { cache: 'no-cache' });
+                    if (r.ok && dump !== await r.text()) {
+                        alert('Config was changed from another place. Refresh the page and make changes again');
+                        return;
+                    }
+
+                    r = await fetch('api/config', { method: 'POST', body: editor.getValue() });
+                    if (r.ok) {
+                        alert('OK');
+                        if (restart) {
+                            await fetch('api/restart', { method: 'POST' });
+                        }
+                    } else {
+                        alert(await r.text());
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                }
+            }
+
+            document.getElementById('saveRestart').addEventListener('click', () => saveConfig(true));
+            document.getElementById('save').addEventListener('click', () => saveConfig(false));
+        }, function(err) {
+            console.error('Failed to load Monaco Editor:', err);
+            alert('Failed to load Monaco Editor. Please try again later.');
+        });
+    })();
 </script>
+<script src="main.js"></script>
 </body>
 </html>
