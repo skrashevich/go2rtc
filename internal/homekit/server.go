@@ -34,6 +34,12 @@ type server struct {
 	streams  map[string]*homekit.Consumer
 	consumer *homekit.Consumer
 }
+type PairingInfo struct {
+	Name     string `yaml:"name"`
+	DeviceID string `yaml:"device_id"`
+	Pin      string `yaml:"pin"`
+	Status   string `yaml:"status"`
+}
 
 func (s *server) UpdateStatus() {
 	// true status is important, or device may be offline in Apple Home
@@ -190,6 +196,19 @@ func (s *server) GetPair(conn net.Conn, id string) []byte {
 	return nil
 }
 
+func (s *server) GetPairInfo() PairingInfo {
+	status := "unpaired"
+	if len(s.pairings) > 0 {
+		status = "paired"
+	}
+	return PairingInfo{
+		Name:     s.mdns.Name,
+		DeviceID: s.hap.DeviceID,
+		Pin:      s.hap.Pin,
+		Status:   status,
+	}
+}
+
 func (s *server) AddPair(conn net.Conn, id string, public []byte, permissions byte) {
 	log.Trace().Msgf("[homekit] %s: add pair id=%s public=%x perm=%d", conn.RemoteAddr(), id, public, permissions)
 
@@ -214,7 +233,12 @@ func (s *server) DelPair(conn net.Conn, id string) {
 			continue
 		}
 
-		s.pairings = append(s.pairings[:i], s.pairings[i+1:]...)
+		if strings.Contains(pairing, "permissions=1") {
+			s.pairings = []string{}
+			break
+		} else {
+			s.pairings = append(s.pairings[:i], s.pairings[i+1:]...)
+		}
 		s.UpdateStatus()
 		s.PatchConfig()
 		break

@@ -87,7 +87,6 @@ func discovery() ([]*api.Source, error) {
 		}
 		return false
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -136,4 +135,29 @@ func findHomeKitURLs() map[string]*url.URL {
 		}
 	}
 	return urls
+}
+
+func apiPairingHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		pairingInfo := map[string]PairingInfo{}
+		for _, s := range servers {
+			pairingInfo[s.stream] = s.GetPairInfo()
+		}
+		api.ResponseJSON(w, pairingInfo)
+
+	case "DELETE":
+		query := r.URL.Query()
+		name := query.Get("name")
+		stream := query.Get("stream")
+		device_id := query.Get("device_id")
+		for _, s := range servers {
+			if name == s.mdns.Name || stream == s.stream || device_id == s.hap.DeviceID {
+				s.pairings = nil
+				s.UpdateStatus()
+				s.PatchConfig()
+				break
+			}
+		}
+	}
 }
