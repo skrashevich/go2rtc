@@ -2,6 +2,7 @@ package ffmpeg
 
 import (
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -30,7 +31,13 @@ func Init() {
 	}
 
 	streams.RedirectFunc("ffmpeg", func(url string) (string, error) {
+		if _, err := Version(); err != nil {
+			return "", err
+		}
 		args := parseArgs(url[7:])
+		if slices.Contains(args.Codecs, "auto") {
+			return "", nil // force call streams.HandleFunc("ffmpeg")
+		}
 		return "exec:" + args.String(), nil
 	})
 
@@ -52,6 +59,7 @@ func Init() {
 			log.Trace().Str("filter_thread", maxThreadsStr).Str("preset", key).Msg("[ffmpeg] modify defaults")
 		}
 	}
+	streams.HandleFunc("ffmpeg", NewProducer)
 
 	device.Init(defaults["bin"])
 	hardware.Init(defaults["bin"])
@@ -63,7 +71,7 @@ var defaults = map[string]string{
 	"global":  "-hide_banner",
 
 	// inputs
-	"file": "-re -i {input}",
+	"file": "-re -readrate_initial_burst 0.001 -i {input}",
 	"http": "-fflags nobuffer -flags low_delay -i {input}",
 	"rtsp": "-fflags nobuffer -flags low_delay -timeout 5000000 -user_agent go2rtc/ffmpeg -rtsp_flags prefer_tcp -i {input}",
 
@@ -72,6 +80,8 @@ var defaults = map[string]string{
 	// output
 	"output":       "-user_agent ffmpeg/go2rtc -rtsp_transport tcp -f rtsp {output}",
 	"output/mjpeg": "-f mjpeg -",
+	"output/aac":   "-f adts -",
+	"output/wav":   "-f wav -",
 
 	// `-preset superfast` - we can't use ultrafast because it doesn't support `-profile main -level 4.1`
 	// `-tune zerolatency` - for minimal latency
@@ -211,16 +221,14 @@ func parseArgs(s string) *ffmpeg.Args {
 			s += "?video&audio"
 		}
 		args.Input = inputTemplate("rtsp", s, query)
-	} else if strings.HasPrefix(s, "device?") {
-		var err error
-		args.Input, err = device.GetInput(s)
-		if err != nil {
-			return nil
-		}
-	} else if strings.HasPrefix(s, "virtual?") {
-		var err error
-		if args.Input, err = virtual.GetInput(s[8:]); err != nil {
-			return nil
+	} else if i = strings.Index(s, "?"); i > 0 {
+		switch s[:i] {
+		case "device":
+			args.Input = device.GetInput(s[i+1:])
+		case "virtual":
+			args.Input = virtual.GetInput(s[i+1:])
+		case "tts":
+			args.Input = virtual.GetInputTTS(s[i+1:])
 		}
 	} else {
 		args.Input = inputTemplate("file", s, query)
@@ -338,11 +346,25 @@ func parseArgs(s string) *ffmpeg.Args {
 		args.AddCodec("-an")
 	}
 
-	// transcoding to only mjpeg
-	if (args.Video == 1 && args.Audio == 0 && query.Get("video") == "mjpeg") ||
-		// no transcoding from mjpeg input
-		(args.Video == 0 && args.Audio == 0 && strings.Contains(args.Input, " mjpeg ")) {
-		args.Output = defaults["output/mjpeg"]
+	// change otput from RTSP to some other pipe format
+	switch {
+	case args.Video == 0 && args.Audio == 0:
+		// no transcoding from mjpeg input (ffmpeg device with support output as raw MJPEG)
+		if strings.Contains(args.Input, " mjpeg ") {
+			args.Output = defaults["output/mjpeg"]
+		}
+	case args.Video == 1 && args.Audio == 0:
+		if query.Get("video") == "mjpeg" {
+			args.Output = defaults["output/mjpeg"]
+		}
+	case args.Video == 0 && args.Audio == 1:
+		codec, _, _ := strings.Cut(query.Get("audio"), "/")
+		switch codec {
+		case "aac":
+			args.Output = defaults["output/aac"]
+		case "pcma", "pcmu", "pcml":
+			args.Output = defaults["output/wav"]
+		}
 	}
 
 	return args
