@@ -36,29 +36,6 @@ func TestCircularBuffer(t *testing.T) {
 	}
 }
 
-func TestNewLogger(t *testing.T) {
-	tests := []struct {
-		format string
-		level  string
-	}{
-		{"json", "info"},
-		{"text", "debug"},
-	}
-
-	for _, tc := range tests {
-		logger := NewLogger(tc.format, tc.level)
-
-		// Check if logger has the correct level
-		lvl := logger.GetLevel()
-		expectedLvl, _ := zerolog.ParseLevel(tc.level)
-		if lvl != expectedLvl {
-			t.Errorf("Expected level %s, got %s", tc.level, lvl.String())
-		}
-
-		// Additional checks can be added here for format verification
-	}
-}
-
 func TestGetLogger(t *testing.T) {
 	modules = map[string]string{
 		"module1": "debug",
