@@ -13,6 +13,7 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/shell"
 	"github.com/AlexxIT/go2rtc/pkg/yaml"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -152,9 +153,16 @@ func Init() {
 		Mod map[string]string `yaml:"log"`
 	}
 
+	cfg.Mod = map[string]string{
+		"format": "color",
+		"level":  "info",
+		"output": "stdout", // TODO: change to stderr someday
+		"time":   zerolog.TimeFormatUnixMs,
+	}
+
 	LoadConfig(&cfg)
 
-	log.Logger = NewLogger(cfg.Mod["format"], cfg.Mod["level"])
+	log.Logger = NewLogger(cfg.Mod)
 
 	modules = cfg.Mod
 
