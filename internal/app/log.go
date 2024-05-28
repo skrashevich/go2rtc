@@ -13,10 +13,14 @@ import (
 
 var MemoryLog = newBuffer(16)
 
+// NewLogger support:
+// - output: empty (only to memory), stderr, stdout
+// - format: empty (autodetect color support), color, json, text
+// - time:   empty (disable timestamp), UNIXMS, UNIXMICRO, UNIXNANO
+// - level:  disabled, trace, debug, info, warn, error...
 func NewLogger(config map[string]string) zerolog.Logger {
 	var writer io.Writer
 
-	// support output only to memory
 	switch config["output"] {
 	case "stderr":
 		writer = os.Stderr
@@ -27,8 +31,20 @@ func NewLogger(config map[string]string) zerolog.Logger {
 	timeFormat := config["time"]
 
 	if writer != nil {
-		switch format := config["format"]; format {
-		case "color", "text":
+		if format := config["format"]; format != "json" {
+			console := &zerolog.ConsoleWriter{Out: writer}
+
+			switch format {
+			case "text":
+				console.NoColor = true
+			case "color":
+				console.NoColor = false // useless, but anyway
+			default:
+				// autodetection if output support color
+				// go-isatty - dependency for go-colorable - dependency for ConsoleWriter
+				console.NoColor = !shell.IsInteractive(writer.(*os.File).Fd())
+			}
+
 			if timeFormat != "" {
 				writer = &zerolog.ConsoleWriter{
 					Out:        writer,
@@ -46,7 +62,8 @@ func NewLogger(config map[string]string) zerolog.Logger {
 					},
 				}
 			}
-		case "json": // none
+
+			writer = console
 		}
 
 		writer = zerolog.MultiLevelWriter(writer, MemoryLog)
