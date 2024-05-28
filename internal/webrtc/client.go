@@ -28,6 +28,8 @@ func streamsHandler(rawURL string) (core.Producer, error) {
 	if i := strings.IndexByte(rawURL, '#'); i > 0 {
 		query = streams.ParseQuery(rawURL[i+1:])
 		rawURL = rawURL[:i]
+	} else {
+		query = make(url.Values)
 	}
 
 	rawURL = rawURL[7:] // remove webrtc:
