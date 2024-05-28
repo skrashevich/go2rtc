@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/AlexxIT/go2rtc/pkg/shell"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -17,7 +18,7 @@ func NewLogger(format string, level string) zerolog.Logger {
 
 	if format != "json" {
 		writer = zerolog.ConsoleWriter{
-			Out: writer, TimeFormat: "15:04:05.000", NoColor: format == "text",
+			Out: writer, TimeFormat: "15:04:05.000", NoColor: (format == "text" || !shell.IsInteractive(os.Stdout.Fd())),
 		}
 	}
 
