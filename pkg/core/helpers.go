@@ -38,16 +38,18 @@ const symbols = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-
 
 // RandString base10 - numbers, base16 - hex, base36 - digits+letters
 // base64 - URL safe symbols, base0 - crypto random
-func RandString(size, base byte) string {
+func RandString(size int, base byte) string {
 	b := make([]byte, size)
 	if _, err := rand.Read(b); err != nil {
-		panic(err)
+		panic(err) // or handle the error appropriately
 	}
 	if base == 0 {
 		return string(b)
 	}
-	for i := byte(0); i < size; i++ {
-		b[i] = symbols[b[i]%base]
+
+	symbolsLen := len(symbols)
+	for i := 0; i < size; i++ {
+		b[i] = symbols[int(b[i])%symbolsLen]
 	}
 	return string(b)
 }
@@ -60,17 +62,18 @@ func Before(s, sep string) string {
 }
 
 func Between(s, sub1, sub2 string) string {
-	i := strings.Index(s, sub1)
-	if i < 0 {
+	start := strings.Index(s, sub1)
+	if start < 0 {
 		return ""
 	}
-	s = s[i+len(sub1):]
+	start += len(sub1)
 
-	if i = strings.Index(s, sub2); i >= 0 {
-		return s[:i]
+	end := strings.Index(s[start:], sub2)
+	if end < 0 {
+		return ""
 	}
 
-	return s
+	return s[start : start+end]
 }
 
 func Atoi(s string) (i int) {

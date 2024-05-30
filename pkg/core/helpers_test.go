@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"runtime"
 	"testing"
@@ -27,6 +28,33 @@ func TestMaxCPUThreads(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := MaxCPUThreads(1); got != tt.want {
 				t.Errorf("NumCPU() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBetween(t *testing.T) {
+	tests := []struct {
+		name     string
+		s        string
+		sub1     string
+		sub2     string
+		expected string
+	}{
+		{"Basic case", "hello [world]!", "[", "]", "world"},
+		{"No sub1", "hello world!", "[", "]", ""},
+		{"No sub2", "hello [world!", "[", "]", ""},
+		{"Empty string", "", "[", "]", ""},
+		{"Sub1 and Sub2 are the same", "hello [world[!", "[", "[", "world"},
+		{"Multiple sub1", "hello [world] and [universe]!", "[", "]", "world"},
+		{"Sub1 after sub2", "hello ]world[!", "]", "[", "world"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Between(tt.s, tt.sub1, tt.sub2)
+			if result != tt.expected {
+				t.Errorf("Between(%q, %q, %q) = %q; want %q", tt.s, tt.sub1, tt.sub2, result, tt.expected)
 			}
 		})
 	}
@@ -91,6 +119,32 @@ func TestCompareVersions(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkBetween(b *testing.B) {
+	testCases := []struct {
+		name string
+		s    string
+		sub1 string
+		sub2 string
+	}{
+		{"Basic case", "hello [world]!", "[", "]"},
+		{"No sub1", "hello world!", "[", "]"},
+		{"No sub2", "hello [world!", "[", "]"},
+		{"Empty string", "", "[", "]"},
+		{"Sub1 and Sub2 are the same", "hello [world[!", "[", "["},
+		{"Multiple sub1", "hello [world] and [universe]!", "[", "]"},
+		{"Sub1 after sub2", "hello ]world[!", "]", "["},
+	}
+
+	for _, tc := range testCases {
+		b.Run(tc.name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				Between(tc.s, tc.sub1, tc.sub2)
+			}
+		})
+	}
+}
+
 func TestGetRAMUsage(t *testing.T) {
 	vMemStat, err := GetRAMUsage()
 	require.NoError(t, err)
@@ -114,4 +168,19 @@ func TestGetHostInfo(t *testing.T) {
 	require.NotEmpty(t, hostInfo.Platform, "Platform should not be empty")
 	require.NotEmpty(t, hostInfo.Family, "Family should not be empty")
 	require.NotEmpty(t, hostInfo.Version, "Version should not be empty")
+}
+
+func BenchmarkRandString(b *testing.B) {
+	sizes := []int{8, 16, 32, 64, 128}
+	bases := []byte{10, 16, 36, 64, 0}
+
+	for _, size := range sizes {
+		for _, base := range bases {
+			b.Run(fmt.Sprintf("Size%d_Base%d", size, base), func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					RandString(size, base)
+				}
+			})
+		}
+	}
 }
