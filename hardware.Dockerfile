@@ -18,9 +18,9 @@ ADD https://nightly.link/skrashevich/FFmpeg-Builds/workflows/build/master/ffmpeg
 RUN apk add --no-cache unzip && \
     mkdir -p /opt/ffmpeg/bin && cd /root && \
     unzip ffmpeg-linux64-nonfree-7.0.zip -d extracted && \
-    tar -xf extracted/ffmpeg-n7.0-*-linux64-nonfree-7.0.tar.xz -C extracted && \
-    mv extracted/ffmpeg-n7.0-*-linux64-nonfree-7.0/bin/ffmpeg /opt/ffmpeg/bin/ && \
-    mv extracted/ffmpeg-n7.0-*-linux64-nonfree-7.0/bin/ffprobe /opt/ffmpeg/bin/ && \
+    tar -xf extracted/ffmpeg-n7*-linux64-nonfree-7.0.tar.xz -C extracted && \
+    mv extracted/ffmpeg-n7*-linux64-nonfree-7.0/bin/ffmpeg /opt/ffmpeg/bin/ && \
+    mv extracted/ffmpeg-n7*-linux64-nonfree-7.0/bin/ffprobe /opt/ffmpeg/bin/ && \
     rm -rf extracted ffmpeg-linux64-nonfree-7.0.zip
 
 # 1. Build go2rtc binary
