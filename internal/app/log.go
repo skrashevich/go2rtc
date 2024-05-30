@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/AlexxIT/go2rtc/pkg/shell"
+	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -42,19 +42,19 @@ func NewLogger(config map[string]string) zerolog.Logger {
 			default:
 				// autodetection if output support color
 				// go-isatty - dependency for go-colorable - dependency for ConsoleWriter
-				console.NoColor = !shell.IsInteractive(writer.(*os.File).Fd())
+				console.NoColor = !isatty.IsTerminal(writer.(*os.File).Fd())
 			}
 
 			if timeFormat != "" {
 				writer = &zerolog.ConsoleWriter{
 					Out:        writer,
-					NoColor:    format == "text" || !shell.IsInteractive(os.Stdout.Fd()),
+					NoColor:    format == "text" || !isatty.IsTerminal(os.Stdout.Fd()),
 					TimeFormat: "15:04:05.000",
 				}
 			} else {
 				writer = &zerolog.ConsoleWriter{
 					Out:     writer,
-					NoColor: format == "text" || !shell.IsInteractive(os.Stdout.Fd()),
+					NoColor: format == "text" || !isatty.IsTerminal(os.Stdout.Fd()),
 					PartsOrder: []string{
 						zerolog.LevelFieldName,
 						zerolog.CallerFieldName,
