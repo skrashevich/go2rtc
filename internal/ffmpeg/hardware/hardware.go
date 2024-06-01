@@ -8,8 +8,6 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/api"
 	"github.com/AlexxIT/go2rtc/internal/ffmpeg/helpers"
 	"github.com/AlexxIT/go2rtc/pkg/ffmpeg"
-
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -153,7 +151,6 @@ var cache = map[string]string{}
 
 func run(bin string, args string) bool {
 	err := exec.Command(bin, strings.Split(args, " ")...).Run()
-	log.Printf("%v %v", args, err)
 	return err == nil
 }
 
