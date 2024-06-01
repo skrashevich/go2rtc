@@ -3,7 +3,7 @@ package mdns
 import (
 	"net"
 
-	"github.com/miekg/dns"
+	"github.com/AlexxIT/go2rtc/pkg/dns"
 )
 
 // ClassCacheFlush https://datatracker.ietf.org/doc/html/rfc6762#section-10.2

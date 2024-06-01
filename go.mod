@@ -3,10 +3,9 @@ module github.com/AlexxIT/go2rtc
 go 1.21
 
 require (
-	github.com/asticode/go-astits v1.13.0
 	github.com/expr-lang/expr v1.16.5
 	github.com/gorilla/websocket v1.5.1
-	github.com/miekg/dns v1.1.59
+	github.com/mattn/go-isatty v0.0.20
 	github.com/pion/ice/v2 v2.3.24
 	github.com/pion/interceptor v0.1.29
 	github.com/pion/rtcp v1.2.14
@@ -25,12 +24,10 @@ require (
 )
 
 require (
-	github.com/asticode/go-astikit v0.30.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pion/datachannel v1.5.6 // indirect
 	github.com/pion/dtls/v2 v2.2.11 // indirect
 	github.com/pion/logging v0.2.2 // indirect
@@ -40,9 +37,6 @@ require (
 	github.com/pion/transport/v2 v2.2.5 // indirect
 	github.com/pion/turn/v2 v2.1.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/tools v0.20.0 // indirect
 )

@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/miekg/dns" // awesome library for parsing mDNS records
+	"github.com/AlexxIT/go2rtc/pkg/dns"
 )
 
 const ServiceHAP = "_hap._tcp.local." // HomeKit Accessory Protocol
@@ -66,8 +66,10 @@ var MulticastAddr = &net.UDPAddr{
 	Port: 5353,
 }
 
-const sendTimeout = time.Millisecond * 505
-const respTimeout = time.Second * 3
+const (
+	sendTimeout = time.Millisecond * 505
+	respTimeout = time.Second * 3
+)
 
 // BasicDiscovery - default golang Multicast UDP listener.
 // Does not work well with multiple interfaces.
