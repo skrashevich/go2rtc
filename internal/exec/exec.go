@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/AlexxIT/go2rtc/internal/app"
 	"github.com/AlexxIT/go2rtc/internal/rtsp"
@@ -194,19 +195,15 @@ func (l *logWriter) Write(p []byte) (n int, err error) {
 
 func trimSpace(b []byte) []byte {
 	start := 0
-	stop := len(b)
-	for ; start < stop; start++ {
-		if b[start] >= ' ' {
-			break // trim all ASCII before 0x20
-		}
+	end := len(b)
+
+	for start < end && unicode.IsSpace(rune(b[start])) {
+		start++
 	}
-	for ; ; stop-- {
-		if stop == start {
-			return nil // skip empty output
-		}
-		if b[stop-1] > ' ' {
-			break // trim all ASCII before 0x21
-		}
+
+	for start < end && unicode.IsSpace(rune(b[end-1])) {
+		end--
 	}
-	return b[start:stop]
+
+	return b[start:end]
 }
