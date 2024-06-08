@@ -46,7 +46,7 @@ func initLogger() {
 	case "stdout":
 		writer = os.Stdout
 	case "file":
-		filePath := config["file"]
+		filePath := modules["file"]
 		if filePath == "" {
 			filePath = "go2rtc.log"
 		}
