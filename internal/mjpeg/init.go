@@ -37,8 +37,9 @@ var keyframeCache = struct {
 	cache: make(map[string]CacheEntry),
 }
 
-// Cache duration (configurable)
-var cacheDuration = 5 * time.Minute // default to 5 minutes
+// Cache duration
+// TODO: Make it configurable
+var cacheDuration = 1 * time.Minute
 
 func Init() {
 	api.HandleFunc("api/frame.jpeg", handlerKeyframe)
@@ -48,7 +49,6 @@ func Init() {
 
 	ws.HandleFunc("mjpeg", handlerWS)
 
-	// Start cache cleanup goroutine
 	go cleanupCache()
 	log = app.GetLogger("mjpeg")
 }
