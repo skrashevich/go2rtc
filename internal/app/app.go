@@ -18,6 +18,14 @@ var (
 )
 
 /*const usage = `Usage of go2rtc:
+	Version    string
+	UserAgent  string
+	ConfigPath string
+	FFmpegVersion string
+	Info       = make(map[string]any)
+)
+
+const usage = `Usage of go2rtc:
 
   -c, --config   Path to config file or config string as YAML or JSON, support multiple
   -d, --daemon   Run in background
@@ -76,7 +84,7 @@ func Init() {
 
 		args := os.Args[1:]
 		for i, arg := range args {
-			if arg == "-daemon" {
+			if arg == "-daemon" || arg == "-d" {
 				args[i] = ""
 			}
 		}
