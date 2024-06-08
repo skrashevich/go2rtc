@@ -100,9 +100,6 @@ func Init() {
 
 	UserAgent = "go2rtc/" + Version
 
-	Info["version"] = Version
-	Info["revision"] = revision
-
 	initConfig(config)
 	initLogger()
 
@@ -137,4 +134,9 @@ func readRevisionTime() (revision, vcsTime string) {
 		}
 	}
 	return
+}
+func GetVersionString() string {
+	revision, vcsTime := readRevisionTime()
+
+	return fmt.Sprintf("%s%s: %s %s/%s", Version, revision, vcsTime, runtime.GOOS, runtime.GOARCH)
 }

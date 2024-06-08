@@ -3,8 +3,6 @@ module github.com/AlexxIT/go2rtc
 go 1.22
 
 require (
-	github.com/expr-lang/expr v1.16.5
-	github.com/asticode/go-astits v1.13.0
 	github.com/expr-lang/expr v1.16.9
 	github.com/gorilla/websocket v1.5.1
 	github.com/mattn/go-isatty v0.0.20
@@ -17,9 +15,8 @@ require (
 	github.com/pion/srtp/v2 v2.0.18
 	github.com/pion/stun v0.6.1
 	github.com/pion/webrtc/v3 v3.2.40
-	github.com/rs/zerolog v1.32.0
-	github.com/shirou/gopsutil/v4 v4.24.0-alpha.1
 	github.com/rs/zerolog v1.33.0
+	github.com/shirou/gopsutil/v4 v4.24.0-alpha.1
 	github.com/sigurn/crc16 v0.0.0-20240131213347-83fcde1e29d1
 	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
 	github.com/stretchr/testify v1.9.0
@@ -55,8 +52,6 @@ require (
 	github.com/pion/turn/v2 v2.1.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/unascribed/FlexVer/go/flexver v1.0.0
-	golang.org/x/mod v0.17.0 // indirect
-	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect

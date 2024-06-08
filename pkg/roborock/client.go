@@ -3,6 +3,7 @@ package roborock
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/rpc"
