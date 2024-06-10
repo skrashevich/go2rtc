@@ -33,6 +33,7 @@ func Init() {
 			TLSListen  string `yaml:"tls_listen"`
 			TLSCert    string `yaml:"tls_cert"`
 			TLSKey     string `yaml:"tls_key"`
+			PProf      bool   `yaml:"pprof"`
 			UnixListen string `yaml:"unix_listen"`
 		} `yaml:"api"`
 	}
@@ -57,6 +58,12 @@ func Init() {
 	HandleFunc("api/exit", exitHandler)
 	HandleFunc("api/restart", restartHandler)
 	HandleFunc("api/log", logHandler)
+
+	if cfg.Mod.PProf {
+		// HandleFunc("api/pprof", pprof.Profile)
+		log.Info().Msgf("[api] pgo started")
+		app.StartProfiling("")
+	}
 
 	Handler = http.DefaultServeMux // 4th
 
