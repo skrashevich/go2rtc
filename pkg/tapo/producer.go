@@ -5,7 +5,6 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
-	"github.com/goccy/go-json"
 )
 
 func (c *Client) GetMedias() []*core.Media {

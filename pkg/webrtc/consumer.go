@@ -2,7 +2,6 @@ package webrtc
 
 import (
 	"errors"
-	"github.com/goccy/go-json"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/h264"
