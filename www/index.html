@@ -78,12 +78,80 @@
             const url = new URL('stream.html', location.href);
             const iframe = document.getElementById('streamFrame');
 
-            const streams = document.querySelectorAll('#streams input[type="checkbox"]:checked');
-            if (streams.length === 0) {
-                iframe.style.display = 'none';
-                return;
-            } else {
-                iframe.style.display = '';
+            const streams = document.querySelectorAll('#streams input');
+            streams.forEach(i => {
+                if (i.checked) url.searchParams.append('src', i.name);
+            });
+
+            if (!url.searchParams.has('src')) return;
+
+            let mode = document.querySelectorAll('.controls input');
+            mode = Array.from(mode).filter(i => i.checked).map(i => i.name).join(',');
+
+            window.location.href = `${url}&mode=${mode}`;
+        });
+
+    const tbody = document.getElementById('streams');
+    tbody.addEventListener('click', async ev => {
+        if (ev.target.innerText !== 'delete') return;
+
+        ev.preventDefault();
+
+        const src = decodeURIComponent(ev.target.dataset.name);
+
+        const message = `Please type the name of the stream "${src}" to confirm its deletion from the configuration. This action is irreversible.`;
+        if (prompt(message) !== src) {
+            alert('Stream name does not match. Deletion cancelled.');
+            return;
+        }
+
+        const url = new URL('api/streams', location.href);
+        url.searchParams.set('src', src);
+
+        try {
+            await fetch(url, {method: 'DELETE'});
+            reload();
+        } catch (error) {
+            console.error('Failed to delete the stream:', error);
+        }
+    });
+
+    document.getElementById('selectall').addEventListener('change', ev => {
+        document.querySelectorAll('#streams input').forEach(el => {
+            el.checked = ev.target.checked;
+        });
+    });
+
+    function reload() {
+        const url = new URL('api/streams', location.href);
+        const checkboxStates = {};
+        tbody.querySelectorAll('input[type="checkbox"][name]').forEach(checkbox => {
+            checkboxStates[checkbox.name] = checkbox.checked;
+        });
+        fetch(url, {cache: 'no-cache'}).then(r => r.json()).then(data => {
+            const existingIds = Array.from(tbody.querySelectorAll('tr')).map(tr => tr.dataset['id']);
+            const fetchedIds = [];
+
+            for (const [key, value] of Object.entries(data)) {
+                const name = key.replace(/[<">]/g, ''); // sanitize
+                fetchedIds.push(name);
+
+                let tr = tbody.querySelector(`tr[data-id="${name}"]`);
+                const online = value && value.consumers ? value.consumers.length : 0;
+                const src = encodeURIComponent(name);
+                const links = templates.map(link => link.replace('{name}', src)).join(' ');
+
+                if (!tr) {
+                    tr = document.createElement('tr');
+                    tr.dataset['id'] = name;
+                    tbody.appendChild(tr);
+                }
+
+                const isChecked = checkboxStates[name] ? 'checked' : '';
+                tr.innerHTML =
+                    `<td><label><input type="checkbox" name="${name}" ${isChecked}>${name}</label></td>` +
+                    `<td><a href="api/streams?src=${src}">${online} / info</a> / <a href="api/streams?src=${src}&video=all&audio=all&microphone">probe</a> / <a href="network.html?src=${src}">net</a></td>` +
+                    `<td>${links}</td>`;
             }
 
             streams.forEach(i => {

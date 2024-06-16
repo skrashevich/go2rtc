@@ -1,6 +1,8 @@
 package tapo
 
 import (
+	"encoding/json"
+
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
 	"github.com/goccy/go-json"
@@ -74,15 +76,20 @@ func (c *Client) Stop() error {
 }
 
 func (c *Client) MarshalJSON() ([]byte, error) {
-	info := &core.Info{
-		Type:      "Tapo active producer",
-		Medias:    c.medias,
-		Recv:      c.recv,
-		Receivers: c.receivers,
-		Send:      c.send,
+	info := &core.Connection{
+		ID:         core.ID(c),
+		FormatName: "tapo",
+		Protocol:   "http",
+		Medias:     c.medias,
+		Recv:       c.recv,
+		Receivers:  c.receivers,
+		Send:       c.send,
 	}
 	if c.sender != nil {
 		info.Senders = []*core.Sender{c.sender}
+	}
+	if c.conn1 != nil {
+		info.RemoteAddr = c.conn1.RemoteAddr().String()
 	}
 	return json.Marshal(info)
 }

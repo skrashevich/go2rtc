@@ -6,7 +6,6 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/api"
 	"github.com/AlexxIT/go2rtc/internal/app"
 	"github.com/AlexxIT/go2rtc/pkg/probe"
-	"github.com/AlexxIT/go2rtc/pkg/tcp"
 )
 
 func apiStreams(w http.ResponseWriter, r *http.Request) {
@@ -30,8 +29,7 @@ func apiStreams(w http.ResponseWriter, r *http.Request) {
 
 		cons := probe.NewProbe(query)
 		if len(cons.Medias) != 0 {
-			cons.RemoteAddr = tcp.RemoteAddr(r)
-			cons.UserAgent = r.UserAgent()
+			cons.WithRequest(r)
 			if err := stream.AddConsumer(cons); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -102,4 +100,25 @@ func apiStreams(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
+}
+
+func apiStreamsDOT(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	dot := make([]byte, 0, 1024)
+	dot = append(dot, "digraph {\n"...)
+	if query.Has("src") {
+		for _, name := range query["src"] {
+			if stream := streams[name]; stream != nil {
+				dot = AppendDOT(dot, stream)
+			}
+		}
+	} else {
+		for _, stream := range streams {
+			dot = AppendDOT(dot, stream)
+		}
+	}
+	dot = append(dot, '}')
+
+	api.Response(w, dot, "text/vnd.graphviz")
 }

@@ -1,6 +1,8 @@
 package ivideon
 
 import (
+	"encoding/json"
+
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/goccy/go-json"
 )
@@ -32,11 +34,16 @@ func (c *Client) Stop() error {
 }
 
 func (c *Client) MarshalJSON() ([]byte, error) {
-	info := &core.Info{
-		Type:   "Ivideon active producer",
-		URL:    c.ID,
-		Medias: c.medias,
-		Recv:   c.recv,
+	info := &core.Connection{
+		ID:         core.ID(c),
+		FormatName: "ivideon",
+		Protocol:   "ws",
+		URL:        c.ID,
+		Medias:     c.medias,
+		Recv:       c.recv,
+	}
+	if c.conn != nil {
+		info.RemoteAddr = c.conn.RemoteAddr().String()
 	}
 	if c.receiver != nil {
 		info.Receivers = []*core.Receiver{c.receiver}
