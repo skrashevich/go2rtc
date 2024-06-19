@@ -93,12 +93,19 @@ func MakeHardware(args *ffmpeg.Args, engine string, defaults map[string]string) 
 
 			// CUDA doesn't support hardware transpose
 			// https://github.com/AlexxIT/go2rtc/issues/389
-			if !args.HasFilters("drawtext=", "transpose=") {
+			if !args.HasFilters("drawtext=") {
 				args.Input = "-hwaccel cuda -hwaccel_output_format cuda " + args.Input
 
 				for i, filter := range args.Filters {
 					if strings.HasPrefix(filter, "scale=") {
 						args.Filters[i] = "scale_cuda=" + filter[6:]
+					}
+					if strings.HasPrefix(filter, "transpose=") {
+						if filter == "transpose=1,transpose=1" { // 180 degrees half-turn
+							args.Filters[i] = "transpose_npp=4" // reversal
+						} else {
+							args.Filters[i] = "transpose_npp=" + filter[10:]
+						}
 					}
 				}
 			} else {
