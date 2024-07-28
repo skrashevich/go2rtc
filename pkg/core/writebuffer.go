@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
@@ -27,6 +28,9 @@ func NewWriteBuffer(wr io.Writer) *WriteBuffer {
 }
 
 func (w *WriteBuffer) Write(p []byte) (n int, err error) {
+	if w == nil || w.Writer == nil {
+		return 0, errors.New("WriteBuffer or its Writer is nil")
+	}
 	w.mu.Lock()
 	if w.err != nil {
 		err = w.err
