@@ -3,6 +3,7 @@ package app
 import (
 	"io"
 	"os"
+	"sync"
 
 	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
@@ -104,6 +105,7 @@ const chunkSize = 1 << 16
 type circularBuffer struct {
 	chunks [][]byte
 	r, w   int
+	mu     sync.Mutex
 }
 
 func newBuffer(chunks int) *circularBuffer {
@@ -114,6 +116,8 @@ func newBuffer(chunks int) *circularBuffer {
 }
 
 func (b *circularBuffer) Write(p []byte) (n int, err error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	n = len(p)
 
 	// check if chunk has size
