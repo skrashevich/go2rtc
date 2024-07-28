@@ -72,25 +72,32 @@ func FindParent(src []byte, path ...string) (*yaml.Node, error) {
 
 // FindChild - search and return YAML key/value pair for current Node
 func FindChild(node *yaml.Node, name string) (key, value *yaml.Node) {
+	if node == nil || node.Content == nil {
+		return nil, nil
+	}
+
 	for i, child := range node.Content {
 		if child.Value != name {
 			continue
 		}
-		return child, node.Content[i+1]
+		if i+1 < len(node.Content) {
+			return child, node.Content[i+1]
+		}
+		return child, nil
 	}
 
 	return nil, nil
 }
 
 func FirstChild(node *yaml.Node) *yaml.Node {
-	if node.Content == nil {
+	if node == nil || node.Content == nil {
 		return node
 	}
 	return node.Content[0]
 }
 
 func LastChild(node *yaml.Node) *yaml.Node {
-	if node.Content == nil {
+	if node == nil || node.Content == nil {
 		return node
 	}
 	return LastChild(node.Content[len(node.Content)-1])
@@ -147,6 +154,11 @@ func AddOrReplace(src []byte, key string, value any, nodeParent *yaml.Node) ([]b
 func AddToEnd(src []byte, key string, value any, path ...string) ([]byte, error) {
 	if len(path) > 1 || value == nil {
 		return nil, errors.New("config: path not exist")
+	}
+
+	// Ensure path[0] is accessed safely
+	if len(path) == 0 {
+		return nil, errors.New("config: path not provided")
 	}
 
 	v := map[string]map[string]any{

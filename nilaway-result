@@ -1,0 +1,727 @@
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/yaml/yaml.go:96:19: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- yaml/yaml.go:82:14: literal `nil` returned from `FindChild()` in position 1
+	- yaml/yaml.go:110:35: result 1 of `FindChild()` passed as arg `node` to `LastChild()` via the assignment(s):
+		- `FindChild(...)` to `nodeValue` at yaml/yaml.go:106:14
+	- yaml/yaml.go:96:19: function parameter `node` accessed field `Content`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/yaml/yaml.go:153:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- yaml/yaml.go:153:3: read directly from variadic parameter `path` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/yaml/yaml.go:144:21: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- app/config.go:29:23: result 0 of `ReadFile()` lacking guarding; passed as arg `src` to `Patch()` via the assignment(s):
+		- `os.ReadFile(...)` to `b` at app/config.go:27:2
+	- yaml/yaml.go:36:27: function parameter `src` passed as arg `src` to `AddOrReplace()`
+	- yaml/yaml.go:144:21: function parameter `src` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/api/config.go:97:4: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- api/config.go:77:18: unassigned variable `config1` passed as arg `dst` to `merge()`
+	- api/config.go:97:4: function parameter `dst` written to at an index
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/streams/producer.go:161:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/producer.go:43:10: uninitialized field `conn` escaped out of our analysis scope (presumed nilable)
+	- streams/add_consumer.go:105:3: field `conn` field `conn` of method receiver `p`
+	- streams/producer.go:157:14: field `conn` passed as arg `conn` to `worker()`
+	- streams/producer.go:161:12: function parameter `conn` called `Start()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/backchannel.go:21:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- dvrip/dvrip.go:7:12: uninitialized field `conn` escaped out of our analysis scope (presumed nilable)
+	- dvrip/backchannel.go:21:12: field `conn` called `SetReadDeadline()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/backchannel.go:27:16: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- dvrip/dvrip.go:7:12: uninitialized field `rd` escaped out of our analysis scope (presumed nilable)
+	- dvrip/backchannel.go:27:16: field `rd` called `Read()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/client.go:111:29: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- dvrip/dvrip.go:21:13: nilable value field `client` of method receiver `c`
+	- dvrip/producer.go:96:12: field `client` used as receiver to call `Play()`
+	- dvrip/client.go:111:29: read by method receiver `c` accessed field `session`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/client.go:168:26: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- dvrip/dvrip.go:21:13: nilable value field `client` of method receiver `c`
+	- dvrip/producer.go:128:18: field `client` used as receiver to call `ReadPacket()`
+	- dvrip/client.go:181:15: read by method receiver `c` used as receiver to call `ReadChunk()`
+	- dvrip/client.go:168:26: read by method receiver `c` accessed field `rd`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/dvrip.go:15:15: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- dvrip/client.go:36:7: result 0 of `DialTimeout()` lacking guarding; assigned to field `conn` of method receiver `c` via the assignment(s):
+		- `net.DialTimeout(...)` to `c.conn` at dvrip/client.go:47:2
+	- dvrip/dvrip.go:15:15: field `conn` called `RemoteAddr()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/producer.go:100:27: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- dvrip/dvrip.go:21:13: nilable value field `client` of method receiver `c`
+	- dvrip/producer.go:100:27: field `client` accessed field `rd`
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "dvrip/producer.go:107:2".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/dvrip/producer.go:189:73: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- dvrip/producer.go:150:26: result 0 of `EncodeToAVCC()` passed as arg `payload` to `addVideoTrack()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `payload` at dvrip/producer.go:149:4
+	- dvrip/producer.go:189:73: function parameter `payload` sliced into
+
+(Same nil source could also cause potential nil panic(s) at 2 other place(s): "dvrip/producer.go:191:73", and "dvrip/producer.go:193:73".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h264/h264.go:134:70: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- dvrip/producer.go:150:26: result 0 of `EncodeToAVCC()` passed as arg `payload` to `addVideoTrack()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `payload` at dvrip/producer.go:149:4
+	- dvrip/producer.go:173:34: function parameter `payload` passed as arg `avc` to `GetFmtpLine()`
+	- h264/h264.go:134:70: function parameter `avc` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h265/helper.go:23:10: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- dvrip/producer.go:150:26: result 0 of `EncodeToAVCC()` passed as arg `payload` to `addVideoTrack()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `payload` at dvrip/producer.go:149:4
+	- dvrip/producer.go:187:25: function parameter `payload` passed as arg `b` to `NALUType()`
+	- h265/helper.go:23:10: function parameter `b` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/y4m/producer.go:59:18: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:168:9: uninitialized field `Codecs` escaped out of our analysis scope (presumed nilable)
+	- y4m/producer.go:59:18: field `Codecs` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/client.go:115:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/conn.go:172:31: uninitialized field `Header` escaped out of our analysis scope (presumed nilable)
+	- rtsp/client.go:115:12: field `Header` called `Get()` via the assignment(s):
+		- `c.Do(req)` to `res` at rtsp/client.go:110:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/client.go:115:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/server.go:97:29: uninitialized field `Header` escaped out of our analysis scope (presumed nilable)
+	- rtsp/client.go:115:12: field `Header` called `Get()` via the assignment(s):
+		- `c.Do(req)` to `res` at rtsp/client.go:110:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/client.go:115:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/server.go:110:28: uninitialized field `Header` escaped out of our analysis scope (presumed nilable)
+	- rtsp/client.go:115:12: field `Header` called `Get()` via the assignment(s):
+		- `c.Do(req)` to `res` at rtsp/client.go:110:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/client.go:115:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/server.go:187:26: uninitialized field `Header` escaped out of our analysis scope (presumed nilable)
+	- rtsp/client.go:115:12: field `Header` called `Get()` via the assignment(s):
+		- `c.Do(req)` to `res` at rtsp/client.go:110:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/client.go:115:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/server.go:193:24: uninitialized field `Header` escaped out of our analysis scope (presumed nilable)
+	- rtsp/client.go:115:12: field `Header` called `Get()` via the assignment(s):
+		- `c.Do(req)` to `res` at rtsp/client.go:110:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/server.go:43:18: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/client.go:110:19: uninitialized field `Header` escaped out of our analysis scope (presumed nilable)
+	- rtsp/server.go:43:18: field `Header` called `Get()` via the assignment(s):
+		- `c.ReadRequest()` to `req` at rtsp/server.go:36:3
+
+(Same nil source could also cause potential nil panic(s) at 2 other place(s): "rtsp/server.go:75:7", and "rtsp/server.go:144:10".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/server.go:88:38: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:168:9: uninitialized field `Codecs` escaped out of our analysis scope (presumed nilable)
+	- rtsp/server.go:88:38: field `Codecs` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtsp/server.go:205:5: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- rtsp/client.go:261:19: nilable value field `URL` escaped out of our analysis scope (presumed nilable)
+	- rtsp/server.go:157:25: field `URL` field `URL` of argument 0 to `reqTrackID()` via the assignment(s):
+		- `c.ReadRequest()` to `req` at rtsp/server.go:36:3
+	- rtsp/server.go:205:5: field `URL` accessed field `RawQuery`
+
+(Same nil source could also cause potential nil panic(s) at 2 other place(s): "rtsp/server.go:206:7", and "rtsp/server.go:208:7".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/rtsp/rtsp.go:103:22: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- rtsp/rtsp.go:103:22: result 0 of `ParseQuery()` called `Get()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at rtsp/rtsp.go:102:3
+
+(Same nil source could also cause potential nil panic(s) at 3 other place(s): "rtsp/rtsp.go:104:16", "rtsp/rtsp.go:105:28", and "rtsp/rtsp.go:106:20".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/flv/producer.go:86:25: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- aac/producer.go:69:27: nilable value field `Payload` escaped out of our analysis scope (presumed nilable)
+	- flv/producer.go:86:25: field `Payload` sliced into via the assignment(s):
+		- `c.readPacket()` to `pkt` at flv/producer.go:77:3
+
+(Same nil source could also cause potential nil panic(s) at 20 other place(s): "flv/producer.go:91:18", "flv/producer.go:100:26", "flv/producer.go:103:20", "flv/producer.go:106:20", "flv/producer.go:111:12", "flv/producer.go:114:20", "flv/producer.go:160:8", "flv/producer.go:162:15", "flv/producer.go:163:8", "flv/producer.go:164:8", "flv/producer.go:165:8", "flv/producer.go:171:7", "flv/producer.go:175:31", "flv/producer.go:187:15", "flv/producer.go:191:22", "flv/producer.go:195:32", "flv/producer.go:197:9", "flv/producer.go:199:19", "flv/producer.go:203:22", and "flv/producer.go:207:32".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/flv/producer.go:290:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- aac/producer.go:69:27: nilable value field `Payload` escaped out of our analysis scope (presumed nilable)
+	- flv/producer.go:99:18: field `Payload` passed as arg `data` to `isExHeader()` via the assignment(s):
+		- `c.readPacket()` to `pkt` at flv/producer.go:77:3
+	- flv/producer.go:290:9: function parameter `data` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h264/avcc.go:92:54: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- bitstream/producer.go:35:28: result 0 of `EncodeToAVCC()` passed as arg `avcc` to `AVCCToCodec()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `buf` at bitstream/producer.go:28:2
+	- h264/avcc.go:92:54: function parameter `avcc` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h264/h264.go:23:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- bitstream/producer.go:34:21: result 0 of `EncodeToAVCC()` passed as arg `b` to `NALUType()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `buf` at bitstream/producer.go:28:2
+	- h264/h264.go:23:9: function parameter `b` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h265/avcc.go:39:54: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- bitstream/producer.go:38:28: result 0 of `EncodeToAVCC()` passed as arg `avcc` to `AVCCToCodec()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `buf` at bitstream/producer.go:28:2
+	- h265/avcc.go:39:54: function parameter `avcc` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h265/helper.go:23:10: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- bitstream/producer.go:37:21: result 0 of `EncodeToAVCC()` passed as arg `b` to `NALUType()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `buf` at bitstream/producer.go:28:2
+	- h265/helper.go:23:10: function parameter `b` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/magic/bitstream/producer.go:41:81: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- bitstream/producer.go:41:81: result 0 of `EncodeToAVCC()` sliced into via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `buf` at bitstream/producer.go:28:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/magic/mjpeg/producer.go:70:13: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mjpeg/producer.go:70:13: unassigned variable `buf` sliced into
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "mjpeg/producer.go:76:9".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/aac/rtp.go:141:21: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- aac/producer.go:69:27: nilable value field `Payload` escaped out of our analysis scope (presumed nilable)
+	- mpegts/producer.go:118:28: field `Payload` passed as arg `b` to `RTPToCodec()` via the assignment(s):
+		- `rd.ReadPacket(...)` to `pkt` at mpegts/producer.go:78:3
+	- aac/rtp.go:141:21: function parameter `b` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h264/avcc.go:92:54: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- aac/producer.go:69:27: nilable value field `Payload` escaped out of our analysis scope (presumed nilable)
+	- mpegts/producer.go:100:30: field `Payload` passed as arg `avcc` to `AVCCToCodec()` via the assignment(s):
+		- `rd.ReadPacket(...)` to `pkt` at mpegts/producer.go:78:3
+	- h264/avcc.go:92:54: function parameter `avcc` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h265/avcc.go:39:54: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- aac/producer.go:69:27: nilable value field `Payload` escaped out of our analysis scope (presumed nilable)
+	- mpegts/producer.go:109:30: field `Payload` passed as arg `avcc` to `AVCCToCodec()` via the assignment(s):
+		- `rd.ReadPacket(...)` to `pkt` at mpegts/producer.go:78:3
+	- h265/avcc.go:39:54: function parameter `avcc` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:48:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:48:9: deep read from field `pes` lacking guarding; accessed field `StreamType` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:53:5: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:53:5: deep read from field `pes` lacking guarding; accessed field `Timestamp` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+(Same nil source could also cause potential nil panic(s) at 2 other place(s): "mpegts/muxer.go:54:26", and "mpegts/muxer.go:56:2".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:54:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:54:3: deep read from field `pes` lacking guarding; accessed field `PTS` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "mpegts/muxer.go:76:19".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:64:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:64:9: deep read from field `pes` lacking guarding; accessed field `StreamID` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:78:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:78:2: deep read from field `pes` lacking guarding; accessed field `Payload` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "mpegts/muxer.go:87:10".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:79:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:79:2: deep read from field `pes` lacking guarding; accessed field `Size` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "mpegts/muxer.go:90:3".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:81:5: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:81:5: deep read from field `pes` lacking guarding; accessed field `wr` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+(Same nil source could also cause potential nil panic(s) at 4 other place(s): "mpegts/muxer.go:82:3", "mpegts/muxer.go:84:3", "mpegts/muxer.go:88:14", and "mpegts/muxer.go:93:9".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:89:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:89:3: deep read from field `pes` lacking guarding; accessed field `Sequence` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/muxer.go:153:5: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/muxer.go:88:27: deep read from field `pes` lacking guarding; passed as arg `pes` to `writePES()` via the assignment(s):
+		- `m.pes[pid]` to `pes` at mpegts/muxer.go:46:2
+	- mpegts/muxer.go:153:5: function parameter `pes` accessed field `Size`
+
+(Same nil source could also cause potential nil panic(s) at 7 other place(s): "mpegts/muxer.go:159:18", "mpegts/muxer.go:161:17", "mpegts/muxer.go:169:17", "mpegts/muxer.go:170:3", "mpegts/muxer.go:174:17", "mpegts/muxer.go:175:3", and "mpegts/muxer.go:175:17".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/producer.go:37:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/producer.go:37:2: result 0 of `GetTrack()` lacking guarding; accessed field `ID` via the assignment(s):
+		- `c.Connection.GetTrack(...)` to `receiver` at mpegts/producer.go:36:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/exec/exec.go:72:22: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- shell/shell.go:23:12: literal `nil` returned from `QuoteSplit()` in position 0
+	- exec/exec.go:72:22: result 0 of `QuoteSplit()` sliced into via the assignment(s):
+		- `shell.QuoteSplit(...)` to `args` at exec/exec.go:71:2
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "exec/exec.go:72:31".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/exec/exec.go:78:5: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- exec/exec.go:78:5: result 0 of `ParseQuery()` called `Get()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at exec/exec.go:55:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/expr/expr.go:32:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- expr/expr.go:32:9: read directly from variadic parameter `params` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/device/device_darwin.go:32:32: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:19:17: unassigned variable `value` assigned into a map of deeply nonnil type `Values`
+	- device/device_darwin.go:32:32: index of a map of type `Values` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ffmpeg/ffmpeg.go:225:41: unassigned variable `query` passed as arg `query` to `inputTemplate()`
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ffmpeg/ffmpeg.go:198:42: unassigned variable `query` passed as arg `query` to `inputTemplate()`
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- ffmpeg/ffmpeg.go:198:42: result 0 of `ParseQuery()` passed as arg `query` to `inputTemplate()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at ffmpeg/ffmpeg.go:185:3
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- ffmpeg/ffmpeg.go:211:43: result 0 of `ParseQuery()` passed as arg `query` to `inputTemplate()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at ffmpeg/ffmpeg.go:185:3
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- ffmpeg/ffmpeg.go:236:41: result 0 of `ParseQuery()` passed as arg `query` to `inputTemplate()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at ffmpeg/ffmpeg.go:185:3
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- ffmpeg/ffmpeg.go:225:41: result 0 of `ParseQuery()` passed as arg `query` to `inputTemplate()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at ffmpeg/ffmpeg.go:185:3
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ffmpeg/ffmpeg.go:236:41: unassigned variable `query` passed as arg `query` to `inputTemplate()`
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:166:14: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ffmpeg/ffmpeg.go:211:43: unassigned variable `query` passed as arg `query` to `inputTemplate()`
+	- ffmpeg/ffmpeg.go:166:14: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:359:22: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ffmpeg/ffmpeg.go:359:22: unassigned variable `query` called `Get()`
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "ffmpeg/ffmpeg.go:366:22".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/ffmpeg.go:359:22: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- ffmpeg/ffmpeg.go:359:22: result 0 of `ParseQuery()` called `Get()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at ffmpeg/ffmpeg.go:185:3
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "ffmpeg/ffmpeg.go:366:22".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/jpeg.go:28:22: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- shell/shell.go:23:12: literal `nil` returned from `QuoteSplit()` in position 0
+	- ffmpeg/jpeg.go:28:22: result 0 of `QuoteSplit()` sliced into via the assignment(s):
+		- `shell.QuoteSplit(...)` to `cmdArgs` at ffmpeg/jpeg.go:27:2
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "ffmpeg/jpeg.go:28:34".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/ffmpeg/producer.go:66:42: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:168:9: uninitialized field `Codecs` escaped out of our analysis scope (presumed nilable)
+	- ffmpeg/producer.go:66:42: field `Codecs` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/webrtc/helpers.go:168:10: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- webrtc/helpers.go:222:9: uninitialized returned from `GetPublicIP()` in position 0
+	- webrtc/helpers.go:240:9: result 0 of `GetPublicIP()` returned from `GetCachedPublicIP()` in position 0 via the assignment(s):
+		- `GetPublicIP()` to `newIP` at webrtc/helpers.go:231:3,
+		- `newIP` to `cachedIP` at webrtc/helpers.go:233:4
+	- webrtc/helpers.go:168:10: result 0 of `GetCachedPublicIP()` called `String()` via the assignment(s):
+		- `GetCachedPublicIP()` to `ip` at webrtc/helpers.go:164:3
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/webrtc/helpers.go:168:10: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- webrtc/helpers.go:222:9: uninitialized returned from `GetPublicIP()` in position 0
+	- webrtc/helpers.go:233:15: result 0 of `GetPublicIP()` assigned into global variable `cachedIP` via the assignment(s):
+		- `GetPublicIP()` to `newIP` at webrtc/helpers.go:231:3
+	- webrtc/helpers.go:240:9: global variable `cachedIP` returned from `GetCachedPublicIP()` in position 0
+	- webrtc/helpers.go:168:10: result 0 of `GetCachedPublicIP()` called `String()` via the assignment(s):
+		- `GetCachedPublicIP()` to `ip` at webrtc/helpers.go:164:3
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/webrtc/server.go:110:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- webrtc/server.go:110:8: uninitialized sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/roborock/api.go:48:27: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- roborock/api.go:48:27: result 0 of `Do()` lacking guarding; accessed field `Body` via the assignment(s):
+		- `client.Do(req)` to `res` at roborock/api.go:39:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/roborock/api.go:79:27: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- roborock/api.go:79:27: result 0 of `Do()` lacking guarding; accessed field `Body` via the assignment(s):
+		- `client.Do(req)` to `res` at roborock/api.go:72:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/webrtc/client.go:36:13: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- webrtc/client.go:36:13: result 0 of `ParseQuery()` called `Get()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at webrtc/client.go:29:3
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/webrtc/client.go:36:13: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- webrtc/client.go:36:13: unassigned variable `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/webrtc/kinesis.go:47:10: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- webrtc/client.go:44:34: result 0 of `ParseQuery()` passed as arg `query` to `kinesisClient()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at webrtc/client.go:29:3
+	- webrtc/kinesis.go:47:10: function parameter `query` called `Get()`
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "webrtc/kinesis.go:78:13".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/webrtc/milestone.go:97:46: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- webrtc/client.go:53:36: result 0 of `ParseQuery()` passed as arg `query` to `milestoneClient()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at webrtc/client.go:29:3
+	- webrtc/milestone.go:201:16: function parameter `query` field `query` of method receiver `m`
+	- webrtc/milestone.go:97:46: field `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/webrtc/openipc.go:25:10: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- webrtc/client.go:46:34: result 0 of `ParseQuery()` passed as arg `query` to `openIPCClient()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at webrtc/client.go:29:3
+	- webrtc/openipc.go:25:10: function parameter `query` called `Get()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/webrtc/consumer.go:71:4: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:54:15: literal `nil` returned from `MatchMedia()` in position 1
+	- streams/add_consumer.go:60:40: result 1 of `MatchMedia()` passed as arg `codec` to `AddTrack()` via the assignment(s):
+		- `prodMedia.MatchMedia(...)` to `consCodec` at streams/add_consumer.go:42:16
+	- webrtc/consumer.go:17:16: passed as parameter `codec` to `Conn.AddTrack()` (implementing `Consumer.AddTrack()`)
+	- webrtc/consumer.go:71:4: function parameter `codec` accessed field `ClockRate`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/webrtc/helpers.go:253:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:54:15: literal `nil` returned from `MatchMedia()` in position 1
+	- streams/add_consumer.go:69:63: result 1 of `MatchMedia()` passed as arg `codec` to `GetTrack()` via the assignment(s):
+		- `prodMedia.MatchMedia(...)` to `consCodec` at streams/add_consumer.go:42:16
+	- webrtc/producer.go:8:16: passed as parameter `codec` to `Conn.GetTrack()` (implementing `Producer.GetTrack()`)
+	- webrtc/producer.go:22:25: function parameter `codec` passed as arg `codec` to `MimeType()`
+	- webrtc/helpers.go:253:9: function parameter `codec` accessed field `Name`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/iso/iso.go:32:29: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- iso/iso.go:41:7: read directly from variadic parameter `b` assigned to field `b` of method receiver `m` via the assignment(s):
+		- `append(...)` to `m.b` at iso/iso.go:42:2
+	- iso/codecs.go:168:2: field `b` field `b` of method receiver `m`
+	- iso/iso.go:32:29: field `b` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/tlv8/tlv8.go:138:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- tlv8/tlv8.go:50:23: literal `nil` passed as arg `b` to `appendStruct()`
+	- tlv8/tlv8.go:77:9: function parameter `b` returned from `appendStruct()` in position 0
+	- tlv8/tlv8.go:138:3: result 0 of `appendStruct()` sliced into via the assignment(s):
+		- `appendStruct(...)` to `b` at tlv8/tlv8.go:135:6
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mdns/client.go:239:11: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mdns/client.go:91:9: nilable value field `Recv` of method receiver `b`
+	- mdns/client.go:239:11: field `Recv` called `SetDeadline()`
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "mdns/client.go:259:19".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mdns/server.go:27:19: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mdns/client.go:166:7: result 0 of `ListenPacket()` lacking guarding; assigned to field `Recv` of method receiver `b` via the assignment(s):
+		- `lc2.ListenPacket(...)` to `b.Recv` at mdns/client.go:222:2
+	- mdns/server.go:19:9: field `Recv` field `Recv` of method receiver `b`
+	- mdns/server.go:27:19: field `Recv` called `ReadFrom()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:68:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/helpers.go:84:9: result 1 of `GenerateKey()` lacking guarding; returned from `GenerateKey()` in position 0 via the assignment(s):
+		- `ed25519.GenerateKey(nil)` to `key` at hap/helpers.go:83:5
+	- hap/client_pairing.go:40:11: result 0 of `GenerateKey()` field `ClientPrivate` of method receiver `c` via the assignment(s):
+		- `GenerateKey()` to `c.ClientPrivate` at hap/client_pairing.go:37:3
+	- hap/client_pairing.go:198:22: field `ClientPrivate` field `ClientPrivate` of method receiver `c`
+	- hap/client.go:68:9: field `ClientPrivate` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:311:15: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/client.go:302:9: uninitialized returned from `GetCharacters()` in position 0
+	- hap/client.go:311:15: result 0 of `GetCharacters()` sliced into via the assignment(s):
+		- `c.GetCharacters(...)` to `chars` at hap/client.go:307:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/camera/stream.go:145:15: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- camera/stream.go:145:15: uninitialized sliced into
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "camera/stream.go:153:15".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/character.go:114:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:125:12: result 0 of `GetCharacter()` used as receiver to call `Write()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:124:2
+	- hap/character.go:114:3: read by method receiver `c` accessed field `Value`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/character.go:114:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:161:12: result 0 of `GetCharacter()` used as receiver to call `Write()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:160:2
+	- hap/character.go:114:3: read by method receiver `c` accessed field `Value`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/character.go:114:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:180:12: result 0 of `GetCharacter()` used as receiver to call `Write()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:179:2
+	- hap/character.go:114:3: read by method receiver `c` accessed field `Value`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/character.go:129:30: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:136:12: result 0 of `GetCharacter()` used as receiver to call `ReadTLV8()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:124:2
+	- hap/character.go:129:30: read by method receiver `c` accessed field `Value`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:311:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:133:34: result 0 of `GetCharacter()` passed as arg `char` to `GetCharacter()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:124:2
+	- hap/client.go:311:2: function parameter `char` accessed field `Value`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:311:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:168:31: result 0 of `GetCharacter()` passed as arg `char` to `GetCharacter()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:160:2
+	- hap/client.go:311:2: function parameter `char` accessed field `Value`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:320:11: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:128:35: result 0 of `GetCharacter()` passed as arg `characters` to `PutCharacters()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:124:2
+	- hap/client.go:320:11: index of variadic parameter `characters` accessed field `IID`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:320:11: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:164:35: result 0 of `GetCharacter()` passed as arg `characters` to `PutCharacters()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:160:2
+	- hap/client.go:320:11: index of variadic parameter `characters` accessed field `IID`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/hap/client.go:320:11: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/accessory.go:111:9: literal `nil` returned from `GetCharacter()` in position 0
+	- camera/stream.go:183:32: result 0 of `GetCharacter()` passed as arg `characters` to `PutCharacters()` via the assignment(s):
+		- `s.service.GetCharacter(...)` to `char` at camera/stream.go:179:2
+	- hap/client.go:320:11: index of variadic parameter `characters` accessed field `IID`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/homekit/consumer.go:116:43: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/helpers.go:100:9: uninitialized field `RTPParams` escaped out of our analysis scope (presumed nilable)
+	- homekit/consumer.go:116:43: field `RTPParams` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/homekit/consumer.go:120:43: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/helpers.go:135:9: uninitialized field `RTPParams` escaped out of our analysis scope (presumed nilable)
+	- homekit/consumer.go:120:43: field `RTPParams` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/homekit/producer.go:60:16: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/producer.go:60:16: uninitialized called `RemoteAddr()`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/srtp/session.go:125:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/producer.go:147:20: uninitialized field `Remote` escaped out of our analysis scope (presumed nilable)
+	- srtp/server.go:84:5: field `Remote` field `Remote` of method receiver `s`
+	- srtp/session.go:125:12: field `Remote` accessed field `srtp`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/srtp/session.go:125:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/producer.go:141:82: uninitialized field `Remote` escaped out of our analysis scope (presumed nilable)
+	- srtp/server.go:84:5: field `Remote` field `Remote` of method receiver `s`
+	- srtp/session.go:125:12: field `Remote` accessed field `srtp`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/srtp/session.go:125:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/producer.go:146:20: uninitialized field `Remote` escaped out of our analysis scope (presumed nilable)
+	- srtp/server.go:84:5: field `Remote` field `Remote` of method receiver `s`
+	- srtp/session.go:125:12: field `Remote` accessed field `srtp`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/srtp/session.go:125:12: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- homekit/producer.go:141:66: uninitialized field `Remote` escaped out of our analysis scope (presumed nilable)
+	- srtp/server.go:84:5: field `Remote` field `Remote` of method receiver `s`
+	- srtp/session.go:125:12: field `Remote` accessed field `srtp`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/homekit/homekit.go:145:33: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/helpers.go:10:10: literal `nil` returned from `ParseQuery()` in position 0
+	- homekit/homekit.go:145:33: result 0 of `ParseQuery()` called `Get()` via the assignment(s):
+		- `streams.ParseQuery(...)` to `query` at homekit/homekit.go:144:3
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/streams/add_consumer.go:101:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/streams.go:46:9: deep read from global variable `streams` lacking guarding; returned from `Get()` in position 0
+	- homekit/server.go:128:14: result 0 of `Get()` used as receiver to call `AddConsumer()` via the assignment(s):
+		- `streams.Get(...)` to `stream` at homekit/server.go:127:4
+	- streams/add_consumer.go:101:2: read by method receiver `s` accessed field `mu`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/streams/add_consumer.go:101:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/streams.go:46:9: deep read from global variable `streams` lacking guarding; returned from `Get()` in position 0
+	- homekit/server.go:148:12: result 0 of `Get()` used as receiver to call `AddConsumer()` via the assignment(s):
+		- `streams.Get(...)` to `stream` at homekit/server.go:145:2
+	- streams/add_consumer.go:101:2: read by method receiver `s` accessed field `mu`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/streams/stream.go:67:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- streams/streams.go:46:9: deep read from global variable `streams` lacking guarding; returned from `Get()` in position 0
+	- homekit/server.go:156:2: result 0 of `Get()` used as receiver to call `RemoveConsumer()` via the assignment(s):
+		- `streams.Get(...)` to `stream` at homekit/server.go:145:2
+	- streams/stream.go:67:2: read by method receiver `s` accessed field `mu`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/homekit/consumer.go:156:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:54:15: literal `nil` returned from `MatchMedia()` in position 1
+	- streams/add_consumer.go:60:40: result 1 of `MatchMedia()` passed as arg `codec` to `AddTrack()` via the assignment(s):
+		- `prodMedia.MatchMedia(...)` to `consCodec` at streams/add_consumer.go:42:16
+	- homekit/consumer.go:129:20: passed as parameter `codec` to `Consumer.AddTrack()` (implementing `Consumer.AddTrack()`)
+	- homekit/consumer.go:156:9: function parameter `codec` accessed field `Name`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/ivideon/client.go:66:26: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ivideon/client.go:66:26: result 0 of `Get()` lacking guarding; accessed field `Body` via the assignment(s):
+		- `http.Get(...)` to `resp` at ivideon/client.go:60:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/ivideon/client.go:217:40: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ivideon/client.go:217:40: uninitialized sliced into
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "ivideon/client.go:218:12".)
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/core/connection.go:123:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mjpeg/init.go:137:2: result 0 of `Open()` lacking guarding; used as receiver to call `WithRequest()` via the assignment(s):
+		- `mpjpeg.Open(...)` to `prod` at mjpeg/init.go:136:2
+	- core/connection.go:123:2: read by method receiver `c` accessed field `UserAgent`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpjpeg/producer.go:55:3: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mjpeg/init.go:141:12: result 0 of `Open()` lacking guarding; used as receiver to call `Start()` via the assignment(s):
+		- `mpjpeg.Open(...)` to `prod` at mjpeg/init.go:136:2
+	- mpjpeg/producer.go:55:3: read by method receiver `c` accessed field `Recv`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/streams/producer.go:94:6: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- mpegts/producer.go:38:9: result 0 of `GetTrack()` lacking guarding; returned from `GetTrack()` in position 0 via the assignment(s):
+		- `c.Connection.GetTrack(...)` to `receiver` at mpegts/producer.go:36:2
+	- core/core.go:51:2: returned as result 0 from interface method `Producer.GetTrack()` (implemented by `Producer.GetTrack()`)
+	- streams/producer.go:221:22: result 0 of `GetTrack()` assigned deeply into field `receivers` via the assignment(s):
+		- `conn.GetTrack(...)` to `track` at streams/producer.go:215:5
+	- streams/producer.go:94:6: deep read from field `receivers` accessed field `Codec`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/mpegts/producer.go:145:9: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- core/media.go:54:15: literal `nil` returned from `MatchMedia()` in position 1
+	- streams/add_consumer.go:69:63: result 1 of `MatchMedia()` passed as arg `codec` to `GetTrack()` via the assignment(s):
+		- `prodMedia.MatchMedia(...)` to `consCodec` at streams/add_consumer.go:42:16
+	- mpegts/producer.go:35:20: passed as parameter `codec` to `Producer.GetTrack()` (implementing `Producer.GetTrack()`)
+	- mpegts/producer.go:37:27: function parameter `codec` passed as arg `codec` to `StreamType()`
+	- mpegts/producer.go:145:9: function parameter `codec` accessed field `Name`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/core/listener.go:11:20: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- ngrok/ngrok.go:34:2: result 0 of `NewNgrok()` lacking guarding; used as receiver to call `Listen()` via the assignment(s):
+		- `ngrok.NewNgrok(...)` to `ngr` at ngrok/ngrok.go:29:2
+	- core/listener.go:11:20: read by method receiver `l` accessed field `events`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/conn.go:249:46: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `b` at rtmp/conn.go:244:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/conn.go:272:46: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `b` at rtmp/conn.go:271:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/conn.go:268:46: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `b` at rtmp/conn.go:267:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/conn.go:279:46: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `b` at rtmp/conn.go:278:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/conn.go:300:46: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `b` at rtmp/conn.go:299:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/conn.go:319:46: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `b` at rtmp/conn.go:318:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/server.go:129:44: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `payload` at rtmp/server.go:124:3
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/server.go:133:44: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `payload` at rtmp/server.go:132:3
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/server.go:137:44: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `payload` at rtmp/server.go:136:3
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/rtmp/conn.go:198:8: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- amf/amf.go:238:9: uninitialized field `buf` of method receiver `a`
+	- amf/amf.go:152:9: field `buf` returned from `Bytes()` in position 0
+	- amf/amf.go:238:9: result 0 of `Bytes()` returned from `EncodeItems()` in position 0 via the assignment(s):
+		- `&AMF{}` to `a` at amf/amf.go:221:2
+	- rtmp/server.go:161:43: result 0 of `EncodeItems()` passed as arg `payload` to `writeMessage()` via the assignment(s):
+		- `amf.EncodeItems(...)` to `payload` at rtmp/server.go:160:2
+	- rtmp/conn.go:198:8: function parameter `payload` sliced into via the assignment(s):
+		- `payload` to `b` at rtmp/conn.go:191:2
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/internal/streams/producer.go:94:6: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- flv/producer.go:72:9: result 0 of `GetTrack()` lacking guarding; returned from `GetTrack()` in position 0 via the assignment(s):
+		- `c.Connection.GetTrack(...)` to `receiver` at flv/producer.go:66:2
+	- core/core.go:51:2: returned as result 0 from interface method `Producer.GetTrack()` (implemented by `Producer.GetTrack()`)
+	- streams/producer.go:221:22: result 0 of `GetTrack()` assigned deeply into field `receivers` via the assignment(s):
+		- `conn.GetTrack(...)` to `track` at streams/producer.go:215:5
+	- streams/producer.go:94:6: deep read from field `receivers` accessed field `Codec`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/h264/avcc.go:92:54: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- annexb/annexb.go:24:10: literal `nil` returned from `EncodeToAVCC()` in position 0
+	- kasa/producer.go:172:30: result 0 of `EncodeToAVCC()` passed as arg `avcc` to `AVCCToCodec()` via the assignment(s):
+		- `annexb.EncodeToAVCC(...)` to `body` at kasa/producer.go:171:4
+	- h264/avcc.go:92:54: function parameter `avcc` sliced into
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/webtorrent/server.go:58:2: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- webtorrent/init.go:89:5: nilable value assigned into global variable `srv`
+	- webtorrent/init.go:106:12: global variable `srv` used as receiver to call `GetSharePwd()`
+	- webtorrent/server.go:58:2: read by method receiver `s` accessed field `mu`
+
+/Users/svk/Documents/GitHub.nosync/go2rtc/pkg/tapo/client.go:124:17: Potential nil panic detected. Observed nil flow from source to dereference point: 
+	- hap/character.go:94:11: uninitialized field `Request` escaped out of our analysis scope (presumed nilable)
+	- tapo/client.go:98:18: field `Request` field `Request` of argument 0 to `newDectypter()` via the assignment(s):
+		- `dial(req)` to `res` at tapo/client.go:88:8
+	- tapo/client.go:124:17: field `Request` accessed field `URL`
+
+(Same nil source could also cause potential nil panic(s) at 1 other place(s): "tcp/request.go:130:3".)
+
