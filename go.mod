@@ -21,7 +21,7 @@ require (
 	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
 	github.com/stretchr/testify v1.9.0
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9
-	golang.org/x/crypto v0.24.0
+	golang.org/x/crypto v0.31.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -55,6 +55,6 @@ require (
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 )
