@@ -5,22 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>config - go2rtc</title>
     <script src="https://unpkg.com/ace-builds@1.33.1/src-min/ace.js"></script>
+    <link rel="stylesheet" href="main.css">
     <style>
-        html, body, #config {
-            height: 100%;
+        .page-config main.container--full {
+            padding: 16px;
+            gap: 12px;
+        }
+
+        .page-config #config {
+            flex: 1;
+            min-height: 0;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            background: var(--surface);
         }
     </style>
 </head>
-<body>
+<body class="app page-config">
 
 <script src="main.js"></script>
 
-<main>
-    <div>
-        <button id="save">Save & Restart</button>
+<main class="container container--full">
+    <div class="toolbar">
+        <button class="btn btn-primary" id="save">Save & Restart</button>
+        <span class="muted">Edits config and restarts go2rtc</span>
     </div>
+    <div id="config"></div>
 </main>
-<div id="config"></div>
 
 <script>
     /* global ace */
