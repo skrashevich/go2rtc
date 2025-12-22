@@ -16,11 +16,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Fetch tags
-        run: git fetch --tags origin
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
 
         
       - name: Setup Go
