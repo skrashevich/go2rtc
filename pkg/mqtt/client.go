@@ -107,6 +107,7 @@ func (c *Client) Read() (string, []byte, error) {
 }
 
 func (c *Client) Close() error {
-	// TODO: Teardown
+	// send DISCONNECT packet for clean session teardown
+	_, _ = c.conn.Write([]byte{DISCONNECT, 0})
 	return c.conn.Close()
 }

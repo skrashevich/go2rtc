@@ -10,13 +10,14 @@ type Message struct {
 
 // https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html
 const (
-	CONNECT   = 0x10
-	CONNACK   = 0x20
-	PUBLISH   = 0x30
-	PUBACK    = 0x40
-	SUBSCRIBE = 0x82
-	SUBACK    = 0x90
-	QOS1      = 0x02
+	CONNECT    = 0x10
+	CONNACK    = 0x20
+	PUBLISH    = 0x30
+	PUBACK     = 0x40
+	SUBSCRIBE  = 0x82
+	SUBACK     = 0x90
+	DISCONNECT = 0xE0
+	QOS1       = 0x02
 )
 
 func (m *Message) WriteByte(b byte) {
