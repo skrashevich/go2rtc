@@ -40,7 +40,7 @@ fi
 # Build master branch
 echo -e "${BLUE}Building master branch...${NC}"
 git checkout master --quiet 2>/dev/null
-go build -o "$MASTER_BIN" . 2>&1 | grep -i "error" && {
+go build -ldflags "-s -w" -trimpath -o "$MASTER_BIN" . 2>&1 | grep -i "error" && {
     echo -e "${RED}Build failed on master!${NC}"
     git checkout "$ORIGINAL_BRANCH" --quiet
     exit 1
@@ -51,7 +51,7 @@ MASTER_SIZE_MB=$(echo "scale=2; $MASTER_SIZE / 1048576" | bc)
 # Build current branch
 echo -e "${BLUE}Building ${ORIGINAL_BRANCH} branch...${NC}"
 git checkout "$ORIGINAL_BRANCH" --quiet 2>/dev/null
-go build -o "$CURRENT_BIN" . 2>&1 | grep -i "error" && {
+go build -ldflags "-s -w" -trimpath -o "$CURRENT_BIN" . 2>&1 | grep -i "error" && {
     echo -e "${RED}Build failed on ${ORIGINAL_BRANCH}!${NC}"
     exit 1
 }
