@@ -99,10 +99,15 @@ func (c *Client) Dial() (err error) {
 		return false
 	})
 
-	// TODO: close conn on error
 	if c.Conn, err = net.DialTimeout("tcp", c.DeviceAddress, ConnDialTimeout); err != nil {
 		return
 	}
+	defer func() {
+		if err != nil {
+			_ = c.Conn.Close()
+			c.Conn = nil
+		}
+	}()
 
 	c.reader = bufio.NewReader(c.Conn)
 
