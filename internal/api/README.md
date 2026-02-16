@@ -6,7 +6,9 @@ The HTTP API is described in [OpenAPI](../../website/api/openapi.yaml) format. I
 
 The project's static HTML and JS files are located in the [www](../../www/README.md) folder. An external developer can use them as a basis for integrating go2rtc into their project or for developing a custom web interface for go2rtc.
 
-The contents of `www` folder are built into go2rtc when building, but you can use configuration to specify an external folder as the source of static files.
+The contents of `www` folder are built into go2rtc when building, but you can use configuration to specify an external folder or a remote HTTP/HTTPS URL as the source of static files.
+
+**Note:** When using a remote HTTP/HTTPS URL for `static_dir`, the proxy sets the `Host` header to match the target host (e.g., `raw.githubusercontent.com`). This is required for services that validate the `Host` header, such as GitHub raw URLs. The original host is preserved in `X-Original-Host` and `X-Forwarded-Host` headers.
 
 ## Configuration
 
@@ -25,7 +27,10 @@ api:
   password: "pass"   # default "", Basic auth for WebUI
   local_auth: true   # default false, Enable auth check for localhost requests
   base_path: "/rtc"  # default "", API prefix for serving on suburl (/api => /rtc/api)
-  static_dir: "www"  # default "", folder for static files (custom web interface)
+  static_dir: "www"  # default "", folder for static files or remote HTTP/HTTPS URL (custom web interface)
+                       # Examples:
+                       #   static_dir: "www"                    # local folder
+                       #   static_dir: "https://example.com/ui" # remote HTTP resource
   origin: "*"        # default "", allow CORS requests (only * supported)
   tls_listen: ":443" # default "", enable HTTPS server
   tls_cert: |        # default "", PEM-encoded fullchain certificate for HTTPS
