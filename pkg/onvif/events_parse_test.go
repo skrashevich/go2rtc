@@ -56,7 +56,7 @@ func TestParseEvents_AxisObjectAnalytics(t *testing.T) {
 	}
 
 	// Selecting the scenario by topic picks it up; "active" is a default item.
-	motion, found := ParseEvents([]byte(axisAOA), "ObjectAnalytics/Device1Scenario1", nil)
+	motion, found := ParseEvents([]byte(axisAOA), []string{"ObjectAnalytics/Device1Scenario1"}, nil)
 	if !found || !motion {
 		t.Fatalf("found=%v motion=%v, want both true", found, motion)
 	}
@@ -67,22 +67,46 @@ func TestParseEvents_TopicSelectsOneOfSeveral(t *testing.T) {
 	// happens to come last.
 	both := axisMotionAlarm + axisAOA
 
-	motion, found := ParseEvents([]byte(both), "ObjectAnalytics/Device1Scenario1", nil)
+	motion, found := ParseEvents([]byte(both), []string{"ObjectAnalytics/Device1Scenario1"}, nil)
 	if !found || !motion {
 		t.Fatalf("AOA: found=%v motion=%v, want both true", found, motion)
 	}
 
-	motion, found = ParseEvents([]byte(both), "MotionAlarm", nil)
+	motion, found = ParseEvents([]byte(both), []string{"MotionAlarm"}, nil)
 	if !found || !motion {
 		t.Fatalf("MotionAlarm: found=%v motion=%v, want both true", found, motion)
 	}
 }
 
 func TestParseEvents_ExplicitItemName(t *testing.T) {
-	if _, found := ParseEvents([]byte(axisAOA), "ObjectAnalytics", []string{"IsMotion"}); found {
+	if _, found := ParseEvents([]byte(axisAOA), []string{"ObjectAnalytics"}, []string{"IsMotion"}); found {
 		t.Fatal("should not match: AOA has no IsMotion item")
 	}
-	if _, found := ParseEvents([]byte(axisAOA), "ObjectAnalytics", []string{"active"}); !found {
+	if _, found := ParseEvents([]byte(axisAOA), []string{"ObjectAnalytics"}, []string{"active"}); !found {
 		t.Fatal("should match on the named item")
+	}
+}
+
+// A camera can expose a dedicated person detector alongside plain motion.
+// Listing both means either one triggers, which is what a doorbell wants:
+// a person walking up, or anything else moving.
+func TestParseEvents_MultipleTopics(t *testing.T) {
+	person := `<wsnt:NotificationMessage><wsnt:Topic>tns1:RuleEngine/MyRuleDetector/PeopleDetect</wsnt:Topic><wsnt:Message><tt:Message><tt:Data><tt:SimpleItem Name="State" Value="%s"/></tt:Data></tt:Message></wsnt:Message></wsnt:NotificationMessage>`
+	cell := `<wsnt:NotificationMessage><wsnt:Topic>tns1:RuleEngine/CellMotionDetector/Motion</wsnt:Topic><wsnt:Message><tt:Message><tt:Data><tt:SimpleItem Value="%s" Name="IsMotion"/></tt:Data></tt:Message></wsnt:Message></wsnt:NotificationMessage>`
+
+	want := []string{"MyRuleDetector/PeopleDetect", "CellMotionDetector"}
+
+	// Person only.
+	if motion, found := ParseEvents([]byte(fmt.Sprintf(person, "true")), want, nil); !found || !motion {
+		t.Fatalf("person alone: found=%v motion=%v", found, motion)
+	}
+	// Plain motion only.
+	if motion, found := ParseEvents([]byte(fmt.Sprintf(cell, "true")), want, nil); !found || !motion {
+		t.Fatalf("motion alone: found=%v motion=%v", found, motion)
+	}
+	// An unrelated topic must still be ignored.
+	other := `<wsnt:NotificationMessage><wsnt:Topic>tns1:Device/HardwareFailure/PowerSupplyFailure</wsnt:Topic><wsnt:Message><tt:Message><tt:Data><tt:SimpleItem Name="State" Value="true"/></tt:Data></tt:Message></wsnt:Message></wsnt:NotificationMessage>`
+	if _, found := ParseEvents([]byte(other), want, nil); found {
+		t.Fatal("unrelated topic must not match")
 	}
 }

@@ -230,19 +230,21 @@ var DefaultMotionItems = []string{"IsMotion", "State", "active"}
 //   - tns1:VideoSource/MotionAlarm (State property)
 //   - tns1:RuleEngine/MotionRegionDetector/Motion
 func ParseMotionEvents(b []byte) (motion bool, found bool) {
-	return ParseEvents(b, "", nil)
+	return ParseEvents(b, nil, nil)
 }
 
 // ParseEvents extracts a boolean state from a PullMessages response.
 //
-// topicMatch selects which notifications count: a case-insensitive substring
-// of the event topic. Empty means the built-in motion topics, which is what
-// ParseMotionEvents uses. Naming a topic is how a camera's own analytics get
-// used instead, e.g. "ObjectAnalytics/Device1Scenario1" on an Axis.
+// topics selects which notifications count: each is a case-insensitive
+// substring of the event topic, and a notification matching any of them
+// counts. Empty means the built-in motion topics, which is what
+// ParseMotionEvents uses. Naming topics is how a camera's own analytics get
+// used instead, e.g. "ObjectAnalytics/Device1Scenario1" on an Axis, or
+// several at once to trigger on a person or plain motion.
 //
 // items are the SimpleItem names that carry the state; nil means
 // DefaultMotionItems.
-func ParseEvents(b []byte, topicMatch string, items []string) (motion bool, found bool) {
+func ParseEvents(b []byte, topics []string, items []string) (motion bool, found bool) {
 	s := string(b)
 
 	if len(items) == 0 {
@@ -251,14 +253,14 @@ func ParseEvents(b []byte, topicMatch string, items []string) (motion bool, foun
 
 	reTopic := regexp.MustCompile(`(?s)<[^>]*Topic[^>]*>([^<]*)</`)
 
-	topics := reTopic.FindAllStringSubmatch(s, -1)
-	if len(topics) == 0 {
+	seen := reTopic.FindAllStringSubmatch(s, -1)
+	if len(seen) == 0 {
 		log.Trace().Msg("[onvif] parse: no topics found in response")
 		return false, false
 	}
 
-	log.Trace().Int("topic_count", len(topics)).Msg("[onvif] parse: topics found")
-	for i, t := range topics {
+	log.Trace().Int("topic_count", len(seen)).Msg("[onvif] parse: topics found")
+	for i, t := range seen {
 		if len(t) >= 2 {
 			log.Trace().Int("idx", i).Str("topic", t[1]).Msg("[onvif] parse: topic")
 		}
@@ -277,7 +279,7 @@ func ParseEvents(b []byte, topicMatch string, items []string) (motion bool, foun
 		}
 		topic := topicNode[1]
 
-		if !matchTopic(topic, topicMatch) {
+		if !matchTopic(topic, topics) {
 			log.Trace().Str("topic", topic).Msg("[onvif] parse: topic not selected, skipping")
 			continue
 		}
@@ -340,13 +342,20 @@ func findSimpleItem(msg string, want []string) (name, value string, ok bool) {
 }
 
 // matchTopic reports whether a notification topic is one we care about.
-// An empty match falls back to the built-in motion topics.
-func matchTopic(topic, match string) bool {
+// A notification matching any of the wanted topics counts, so several can be
+// combined: a person detector plus plain motion, say. No wanted topics falls
+// back to the built-in motion topics.
+func matchTopic(topic string, want []string) bool {
 	topic = strings.ToLower(topic)
-	if match != "" {
-		return strings.Contains(topic, strings.ToLower(match))
+	if len(want) == 0 {
+		return isMotionTopic(topic)
 	}
-	return isMotionTopic(topic)
+	for _, w := range want {
+		if w != "" && strings.Contains(topic, strings.ToLower(w)) {
+			return true
+		}
+	}
+	return false
 }
 
 // isMotionTopic checks if a topic string relates to motion detection.

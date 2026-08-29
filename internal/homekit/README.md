@@ -228,6 +228,23 @@ be narrowed to exactly one without touching the camera's configuration:
                                               # Package, FaceDetect, Visitor
 ```
 
+A list triggers on any one of several topics, which is how to combine a
+person detector with plain motion so neither is missed:
+
+```yaml
+    onvif_topic:
+      - MyRuleDetector/PeopleDetect
+      - CellMotionDetector
+```
+
+An Axis with a PIR sensor can use that instead of anything video-based. It
+detects body heat, so it is unaffected by a noisy scene or by the gradual
+brightness change at dawn and dusk:
+
+```yaml
+    onvif_topic: Sensor/PIR
+```
+
 **Finding a camera's topics: watch it, do not ask it.** Set `log: onvif:
 trace` and read the `[onvif] parse: topic` lines, which print every topic
 received. Do *not* rely on the topic list the camera advertises through

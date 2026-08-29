@@ -1,6 +1,7 @@
 package homekit
 
 import (
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/hksv"
 	"github.com/AlexxIT/go2rtc/pkg/onvif"
 	"github.com/rs/zerolog"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -18,6 +20,32 @@ const (
 	onvifMinReconnectDelay   = 5 * time.Second
 	onvifMaxReconnectDelay   = 60 * time.Second
 )
+
+// multiString is a config value that accepts either one entry or a list, so
+// a camera needing a single topic does not have to be written as a list.
+type multiString []string
+
+func (m *multiString) UnmarshalYAML(node *yaml.Node) error {
+	switch node.Kind {
+	case yaml.ScalarNode:
+		var s string
+		if err := node.Decode(&s); err != nil {
+			return err
+		}
+		if s != "" {
+			*m = multiString{s}
+		}
+		return nil
+	case yaml.SequenceNode:
+		var ss []string
+		if err := node.Decode(&ss); err != nil {
+			return err
+		}
+		*m = ss
+		return nil
+	}
+	return errors.New("expected a string or a list of strings")
+}
 
 type onvifPullPoint interface {
 	PullMessages(timeout time.Duration, limit int) ([]byte, error)
@@ -35,9 +63,9 @@ type onvifMotionWatcher struct {
 	holdTime time.Duration
 	log      zerolog.Logger
 
-	// topic selects which event topic drives motion (substring match).
-	// Empty uses the built-in motion topics.
-	topic string
+	// topics select which event topics drive motion (substring match, any
+	// one matching counts). Empty uses the built-in motion topics.
+	topics []string
 	// items are the SimpleItem names carrying the state; nil uses the defaults.
 	items []string
 
@@ -52,12 +80,12 @@ type onvifMotionWatcher struct {
 	once sync.Once
 }
 
-func newOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, topic string, items []string, log zerolog.Logger) *onvifMotionWatcher {
+func newOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, topics []string, items []string, log zerolog.Logger) *onvifMotionWatcher {
 	return &onvifMotionWatcher{
 		srv:                 srv,
 		onvifURL:            onvifURL,
 		holdTime:            holdTime,
-		topic:               topic,
+		topics:              topics,
 		items:               items,
 		log:                 log,
 		now:                 time.Now,
@@ -71,8 +99,8 @@ func newOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Dura
 }
 
 // startOnvifMotionWatcher creates and starts a new ONVIF motion watcher.
-func startOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, topic string, items []string, log zerolog.Logger) *onvifMotionWatcher {
-	w := newOnvifMotionWatcher(srv, onvifURL, holdTime, topic, items, log)
+func startOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, topics []string, items []string, log zerolog.Logger) *onvifMotionWatcher {
+	w := newOnvifMotionWatcher(srv, onvifURL, holdTime, topics, items, log)
 	go w.run()
 	return w
 }
@@ -207,7 +235,7 @@ func (w *onvifMotionWatcher) connectAndPoll() error {
 			l.Str("body", string(b)).Msg("[homekit] onvif motion: raw response")
 		}
 
-		motion, found := onvif.ParseEvents(b, w.topic, w.items)
+		motion, found := onvif.ParseEvents(b, w.topics, w.items)
 
 		w.log.Trace().Bool("found", found).Bool("motion", motion).
 			Bool("active", motionActive).Msg("[homekit] onvif motion: parse result")
