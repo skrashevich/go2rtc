@@ -14,11 +14,37 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// WS-Addressing action URIs for the subscription manager operations. Some
+// cameras (Reolink) reject a request to the subscription manager that does
+// not carry wsa:To and wsa:Action, answering 400 with an empty fault.
+const (
+	actionPullMessages = "http://www.onvif.org/ver10/events/wsdl/PullPointSubscription/PullMessagesRequest"
+	actionRenew        = "http://docs.oasis-open.org/wsn/bw-2/SubscriptionManager/RenewRequest"
+	actionUnsubscribe  = "http://docs.oasis-open.org/wsn/bw-2/SubscriptionManager/UnsubscribeRequest"
+)
+
 // EventSubscription holds state for an ONVIF PullPoint event subscription.
 type EventSubscription struct {
 	client *Client
 	// address is the PullPoint subscription manager URL (from CreatePullPointSubscription response).
 	address string
+	// rawAddress is the address exactly as the camera reported it, used for
+	// wsa:To. The camera matches this against what it issued, so the
+	// reachability rewrite applied to `address` must not leak into it.
+	rawAddress string
+	// refParams is the inner XML of the subscription's ReferenceParameters,
+	// echoed back as SOAP headers on every subsequent request. Axis puts the
+	// subscription's identity here (a SubscriptionId) and returns the same
+	// URL for every subscription, so dropping this makes the camera unable
+	// to tell which subscription is being polled, answering 400.
+	refParams string
+}
+
+// headers builds the SOAP headers a subscription-manager request needs.
+func (s *EventSubscription) headers(action string) string {
+	return s.refParams +
+		`<wsa:To s:mustUnderstand="1">` + s.rawAddress + `</wsa:To>` +
+		`<wsa:Action s:mustUnderstand="1">` + action + `</wsa:Action>`
 }
 
 // CreatePullPointSubscription creates an ONVIF PullPoint subscription on the camera's event service.
@@ -61,10 +87,29 @@ func (c *Client) CreatePullPointSubscription(timeout time.Duration) (*EventSubsc
 
 	log.Debug().Str("resolved_address", resolved).Msg("[onvif] subscription address resolved")
 
+	refParams := findReferenceParameters(b)
+	if refParams != "" {
+		log.Debug().Str("ref_params", refParams).Msg("[onvif] subscription reference parameters")
+	}
+
 	return &EventSubscription{
-		client:  c,
-		address: resolved,
+		client:     c,
+		address:    resolved,
+		rawAddress: addr,
+		refParams:  refParams,
 	}, nil
+}
+
+var reRefParams = regexp.MustCompile(`(?s)<([a-zA-Z0-9]+:)?ReferenceParameters[^>]*>(.*?)</([a-zA-Z0-9]+:)?ReferenceParameters>`)
+
+// findReferenceParameters returns the inner XML of the subscription's
+// ReferenceParameters, if the camera supplied any. Per WS-Addressing these
+// must be copied verbatim into the headers of messages sent to the endpoint.
+func findReferenceParameters(b []byte) string {
+	if m := reRefParams.FindSubmatch(b); m != nil {
+		return strings.TrimSpace(string(m[2]))
+	}
+	return ""
 }
 
 // PullMessages polls the camera for events. This is a long-poll: it blocks
@@ -83,7 +128,7 @@ func (s *EventSubscription) PullMessages(timeout time.Duration, limit int) ([]by
 		`<tev:MessageLimit>%d</tev:MessageLimit>`+
 		`</tev:PullMessages>`, secs, limit)
 
-	return s.client.EventRequest(s.address, body)
+	return s.client.eventRequest(s.address, s.headers(actionPullMessages), body)
 }
 
 // Renew extends the subscription lifetime by the specified duration.
@@ -97,24 +142,30 @@ func (s *EventSubscription) Renew(timeout time.Duration) error {
 		`<wsnt:TerminationTime>PT%dS</wsnt:TerminationTime>`+
 		`</wsnt:Renew>`, secs)
 
-	_, err := s.client.EventRequest(s.address, body)
+	_, err := s.client.eventRequest(s.address, s.headers(actionRenew), body)
 	return err
 }
 
 // Unsubscribe terminates the subscription on the camera (best-effort).
 func (s *EventSubscription) Unsubscribe() error {
 	log.Trace().Str("address", s.address).Msg("[onvif] unsubscribing")
-	_, err := s.client.EventRequest(s.address, `<wsnt:Unsubscribe/>`)
+	_, err := s.client.eventRequest(s.address, s.headers(actionUnsubscribe), `<wsnt:Unsubscribe/>`)
 	return err
 }
 
 // EventRequest sends a SOAP request with event-specific namespaces.
 func (c *Client) EventRequest(reqURL, body string) ([]byte, error) {
+	return c.eventRequest(reqURL, "", body)
+}
+
+// eventRequest sends a SOAP request, optionally with extra SOAP headers
+// alongside the security header (WS-Addressing, reference parameters).
+func (c *Client) eventRequest(reqURL, extraHeaders, body string) ([]byte, error) {
 	if reqURL == "" {
 		return nil, errors.New("onvif: unsupported service")
 	}
 
-	e := NewEventEnvelopeWithUser(c.url.User)
+	e := NewEventEnvelopeWithHeaders(c.url.User, extraHeaders)
 	e.Append(body)
 
 	log.Trace().Str("url", reqURL).Msg("[onvif] event request sending")
@@ -164,28 +215,52 @@ func (c *Client) resolveEventAddress(addr string) string {
 	return u.String()
 }
 
-// ParseMotionEvents extracts motion state from a PullMessages response.
-// Returns (motionDetected, found). If no motion-related notification is present, found=false.
+// DefaultMotionItems are the SimpleItem names that carry a motion state.
+// "active" covers the Axis application topics (Object Analytics and other
+// ACAP scenarios), which report their state under that name rather than the
+// IsMotion/State the plain ONVIF motion topics use.
+var DefaultMotionItems = []string{"IsMotion", "State", "active"}
+
+// ParseMotionEvents extracts motion state from a PullMessages response using
+// the default motion topics and item names.
+// Returns (motionDetected, found). If no matching notification is present, found=false.
 //
 // Recognizes common ONVIF motion event topics:
 //   - tns1:RuleEngine/CellMotionDetector/Motion (IsMotion property)
 //   - tns1:VideoSource/MotionAlarm (State property)
 //   - tns1:RuleEngine/MotionRegionDetector/Motion
 func ParseMotionEvents(b []byte) (motion bool, found bool) {
+	return ParseEvents(b, nil, nil)
+}
+
+// ParseEvents extracts a boolean state from a PullMessages response.
+//
+// topics selects which notifications count: each is a case-insensitive
+// substring of the event topic, and a notification matching any of them
+// counts. Empty means the built-in motion topics, which is what
+// ParseMotionEvents uses. Naming topics is how a camera's own analytics get
+// used instead, e.g. "ObjectAnalytics/Device1Scenario1" on an Axis, or
+// several at once to trigger on a person or plain motion.
+//
+// items are the SimpleItem names that carry the state; nil means
+// DefaultMotionItems.
+func ParseEvents(b []byte, topics []string, items []string) (motion bool, found bool) {
 	s := string(b)
 
-	// Find notification messages containing motion-related topics.
-	reTopic := regexp.MustCompile(`(?s)<[^>]*Topic[^>]*>([^<]*)</`)
-	reValue := regexp.MustCompile(`SimpleItem[^>]+Name="(IsMotion|State)"[^>]+Value="(\w+)"`)
+	if len(items) == 0 {
+		items = DefaultMotionItems
+	}
 
-	topics := reTopic.FindAllStringSubmatch(s, -1)
-	if len(topics) == 0 {
+	reTopic := regexp.MustCompile(`(?s)<[^>]*Topic[^>]*>([^<]*)</`)
+
+	seen := reTopic.FindAllStringSubmatch(s, -1)
+	if len(seen) == 0 {
 		log.Trace().Msg("[onvif] parse: no topics found in response")
 		return false, false
 	}
 
-	log.Trace().Int("topic_count", len(topics)).Msg("[onvif] parse: topics found")
-	for i, t := range topics {
+	log.Trace().Int("topic_count", len(seen)).Msg("[onvif] parse: topics found")
+	for i, t := range seen {
 		if len(t) >= 2 {
 			log.Trace().Int("idx", i).Str("topic", t[1]).Msg("[onvif] parse: topic")
 		}
@@ -197,39 +272,90 @@ func ParseMotionEvents(b []byte) (motion bool, found bool) {
 	log.Trace().Int("message_count", len(messages)).Msg("[onvif] parse: notification messages")
 
 	for _, msg := range messages {
-		// Check if this message's topic is motion-related.
-		topicMatch := reTopic.FindStringSubmatch(msg)
-		if len(topicMatch) < 2 {
+		topicNode := reTopic.FindStringSubmatch(msg)
+		if len(topicNode) < 2 {
 			log.Trace().Msg("[onvif] parse: message has no topic, skipping")
 			continue
 		}
-		topic := topicMatch[1]
+		topic := topicNode[1]
 
-		if !isMotionTopic(topic) {
-			log.Trace().Str("topic", topic).Msg("[onvif] parse: non-motion topic, skipping")
+		if !matchTopic(topic, topics) {
+			log.Trace().Str("topic", topic).Msg("[onvif] parse: topic not selected, skipping")
 			continue
 		}
 
-		log.Trace().Str("topic", topic).Msg("[onvif] parse: motion topic found")
+		log.Trace().Str("topic", topic).Msg("[onvif] parse: topic selected")
 
-		// Extract the motion value from this message.
-		valueMatch := reValue.FindStringSubmatch(msg)
-		if len(valueMatch) < 3 {
-			log.Trace().Str("topic", topic).Msg("[onvif] parse: no IsMotion/State value in message")
+		name, val, ok := findSimpleItem(msg, items)
+		if !ok {
+			log.Trace().Str("topic", topic).Strs("wanted", items).
+				Msg("[onvif] parse: no state item in message")
 			continue
 		}
 
-		val := strings.ToLower(valueMatch[2])
+		val = strings.ToLower(strings.TrimSpace(val))
 		motion = val == "true" || val == "1"
 		found = true
 
-		log.Trace().Str("topic", topic).Str("name", valueMatch[1]).
-			Str("value", valueMatch[2]).Bool("motion", motion).
-			Msg("[onvif] parse: motion value extracted")
-		// Use the last motion event if multiple are present.
+		log.Trace().Str("topic", topic).Str("name", name).
+			Str("value", val).Bool("motion", motion).
+			Msg("[onvif] parse: state extracted")
+		// Use the last matching event if several are present.
 	}
 
 	return motion, found
+}
+
+var (
+	// A SimpleItem element, capturing its attribute list. Attributes are read
+	// separately rather than matched in order, because Name and Value appear
+	// in either order depending on the camera (Tapo sends Value first) and a
+	// single ordered pattern silently drops half of them.
+	reSimpleItem = regexp.MustCompile(`<[^>]*\bSimpleItem\b([^>]*)>`)
+	reAttribute  = regexp.MustCompile(`(\w+)\s*=\s*"([^"]*)"`)
+)
+
+// findSimpleItem returns the value of the first SimpleItem whose Name is one
+// of want, regardless of the order its attributes appear in.
+func findSimpleItem(msg string, want []string) (name, value string, ok bool) {
+	for _, item := range reSimpleItem.FindAllStringSubmatch(msg, -1) {
+		var n, v string
+		var haveValue bool
+		for _, attr := range reAttribute.FindAllStringSubmatch(item[1], -1) {
+			switch attr[1] {
+			case "Name":
+				n = attr[2]
+			case "Value":
+				v, haveValue = attr[2], true
+			}
+		}
+		if n == "" || !haveValue {
+			continue
+		}
+		for _, w := range want {
+			if strings.EqualFold(n, w) {
+				return n, v, true
+			}
+		}
+	}
+	return "", "", false
+}
+
+// matchTopic reports whether a notification topic is one we care about.
+// A notification matching any of the wanted topics counts, so several can be
+// combined: a person detector plus plain motion, say. No wanted topics falls
+// back to the built-in motion topics.
+func matchTopic(topic string, want []string) bool {
+	topic = strings.ToLower(topic)
+	if len(want) == 0 {
+		return isMotionTopic(topic)
+	}
+	for _, w := range want {
+		if w != "" && strings.Contains(topic, strings.ToLower(w)) {
+			return true
+		}
+	}
+	return false
 }
 
 // isMotionTopic checks if a topic string relates to motion detection.

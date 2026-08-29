@@ -21,7 +21,7 @@ func TestOnvifMotionWatcherConnectAndPollRenewsBeforeLeaseExpires(t *testing.T) 
 		pullErr:   stopErr,
 	}
 
-	w := newOnvifMotionWatcher(&hksv.Server{}, "onvif://camera", 30*time.Second, zerolog.Nop())
+	w := newOnvifMotionWatcher(&hksv.Server{}, "onvif://camera", 30*time.Second, nil, nil, zerolog.Nop())
 	w.now = func() time.Time { return now }
 	w.newPullPoint = func(rawURL string, timeout time.Duration) (onvifPullPoint, error) {
 		if rawURL != "onvif://camera" {

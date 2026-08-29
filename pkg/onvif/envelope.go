@@ -87,8 +87,20 @@ func NewEventEnvelope() *Envelope {
 }
 
 func NewEventEnvelopeWithUser(user *url.Userinfo) *Envelope {
+	return NewEventEnvelopeWithHeaders(user, "")
+}
+
+// NewEventEnvelopeWithHeaders builds an event envelope carrying the security
+// header plus any extra SOAP headers the request needs, such as WS-Addressing
+// or a subscription's reference parameters.
+func NewEventEnvelopeWithHeaders(user *url.Userinfo, extraHeaders string) *Envelope {
 	if user == nil {
-		return NewEventEnvelope()
+		if extraHeaders == "" {
+			return NewEventEnvelope()
+		}
+		e := &Envelope{buf: make([]byte, 0, 1024)}
+		e.Append(eventPrefix, `<s:Header>`, extraHeaders, `</s:Header>`, prefix2)
+		return e
 	}
 
 	nonce := core.RandString(16, 36)
@@ -108,12 +120,13 @@ func NewEventEnvelopeWithUser(user *url.Userinfo) *Envelope {
 			<wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">%s</wsse:Nonce>
 			<wsu:Created xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">%s</wsu:Created>
 		</wsse:UsernameToken>
-	</wsse:Security>
+	</wsse:Security>%s
 </s:Header>`,
 		user.Username(),
 		base64.StdEncoding.EncodeToString(h.Sum(nil)),
 		base64.StdEncoding.EncodeToString([]byte(nonce)),
-		created)
+		created,
+		extraHeaders)
 	e.Append(prefix2)
 	return e
 }
