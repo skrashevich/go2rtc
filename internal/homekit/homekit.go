@@ -39,7 +39,17 @@ func Init() {
 			MotionThreshold float64  `yaml:"motion_threshold"`
 			MotionHoldTime  float64  `yaml:"motion_hold_time"`
 			OnvifURL        string   `yaml:"onvif_url"`
-			Speaker         *bool    `yaml:"speaker"`
+			// OnvifTopic selects which ONVIF event drives motion, as a
+			// substring of the event topic. Empty uses the standard motion
+			// topics. Set this to use a camera's own analytics instead, e.g.
+			// "ObjectAnalytics/Device1Scenario1" for an Axis AOA scenario.
+			OnvifTopic string `yaml:"onvif_topic"`
+			// OnvifItems are the SimpleItem names carrying the state. Empty
+			// uses IsMotion, State and active, which covers every camera
+			// tested; only needed for a device that reports under some other
+			// name.
+			OnvifItems []string `yaml:"onvif_items"`
+			Speaker    *bool    `yaml:"speaker"`
 		} `yaml:"homekit"`
 	}
 	app.LoadConfig(&cfg)
@@ -124,8 +134,9 @@ func Init() {
 					holdTime = 30 * time.Second
 				}
 				log.Info().Str("stream", id).Str("onvif_url", onvifURL).
-					Dur("hold_time", holdTime).Msg("[homekit] starting ONVIF motion watcher")
-				startOnvifMotionWatcher(srv, onvifURL, holdTime, log)
+					Dur("hold_time", holdTime).Str("topic", conf.OnvifTopic).
+					Msg("[homekit] starting ONVIF motion watcher")
+				startOnvifMotionWatcher(srv, onvifURL, holdTime, conf.OnvifTopic, conf.OnvifItems, log)
 			}
 		}
 

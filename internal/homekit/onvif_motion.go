@@ -35,6 +35,12 @@ type onvifMotionWatcher struct {
 	holdTime time.Duration
 	log      zerolog.Logger
 
+	// topic selects which event topic drives motion (substring match).
+	// Empty uses the built-in motion topics.
+	topic string
+	// items are the SimpleItem names carrying the state; nil uses the defaults.
+	items []string
+
 	now                 func() time.Time
 	newPullPoint        onvifPullPointFactory
 	subscriptionTimeout time.Duration
@@ -46,11 +52,13 @@ type onvifMotionWatcher struct {
 	once sync.Once
 }
 
-func newOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, log zerolog.Logger) *onvifMotionWatcher {
+func newOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, topic string, items []string, log zerolog.Logger) *onvifMotionWatcher {
 	return &onvifMotionWatcher{
 		srv:                 srv,
 		onvifURL:            onvifURL,
 		holdTime:            holdTime,
+		topic:               topic,
+		items:               items,
 		log:                 log,
 		now:                 time.Now,
 		newPullPoint:        newOnvifPullPoint,
@@ -63,8 +71,8 @@ func newOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Dura
 }
 
 // startOnvifMotionWatcher creates and starts a new ONVIF motion watcher.
-func startOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, log zerolog.Logger) *onvifMotionWatcher {
-	w := newOnvifMotionWatcher(srv, onvifURL, holdTime, log)
+func startOnvifMotionWatcher(srv *hksv.Server, onvifURL string, holdTime time.Duration, topic string, items []string, log zerolog.Logger) *onvifMotionWatcher {
+	w := newOnvifMotionWatcher(srv, onvifURL, holdTime, topic, items, log)
 	go w.run()
 	return w
 }
@@ -199,7 +207,7 @@ func (w *onvifMotionWatcher) connectAndPoll() error {
 			l.Str("body", string(b)).Msg("[homekit] onvif motion: raw response")
 		}
 
-		motion, found := onvif.ParseMotionEvents(b)
+		motion, found := onvif.ParseEvents(b, w.topic, w.items)
 
 		w.log.Trace().Bool("found", found).Bool("motion", motion).
 			Bool("active", motionActive).Msg("[homekit] onvif motion: parse result")
