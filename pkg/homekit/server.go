@@ -77,6 +77,7 @@ func ServerHandler(server Server) HandlerFunc {
 				}
 
 				var writeResponses []hap.JSONCharacter
+				hasError, hasResponse := false, false
 				findChar := func(aid uint8, iid uint64) *hap.Character {
 					accs := server.GetAccessories(conn)
 					for _, acc := range accs {
@@ -89,8 +90,15 @@ func ServerHandler(server Server) HandlerFunc {
 				}
 
 				for _, c := range v.Value {
+					status := 0
 					if c.Value != nil {
-						server.SetCharacteristic(conn, c.AID, c.IID, c.Value)
+						if checked, ok := server.(interface {
+							SetCharacteristicStatus(net.Conn, uint8, uint64, any) int
+						}); ok {
+							status = checked.SetCharacteristicStatus(conn, c.AID, c.IID, c.Value)
+						} else {
+							server.SetCharacteristic(conn, c.AID, c.IID, c.Value)
+						}
 					}
 					if c.Event != nil {
 						// subscribe/unsubscribe to events
@@ -102,21 +110,22 @@ func ServerHandler(server Server) HandlerFunc {
 							}
 						}
 					}
-					if c.R != nil && *c.R {
-						// write-response: return updated value
-						if char := findChar(c.AID, c.IID); char != nil {
-							writeResponses = append(writeResponses, hap.JSONCharacter{
-								AID:    c.AID,
-								IID:    c.IID,
-								Status: 0,
-								Value:  char.Value,
-							})
-						}
+					response := hap.JSONCharacter{AID: c.AID, IID: c.IID, Status: status}
+					if status != 0 {
+						hasError = true
 					}
+					if c.R != nil && *c.R && status == 0 {
+						hasResponse = true
+						response.Value = server.GetCharacteristic(conn, c.AID, c.IID)
+					}
+					writeResponses = append(writeResponses, response)
 				}
-
-				if len(writeResponses) > 0 {
-					return makeResponse(hap.MimeJSON, hap.JSONCharacters{Value: writeResponses})
+				if hasError || hasResponse {
+					res, err := makeResponse(hap.MimeJSON, hap.JSONCharacters{Value: writeResponses})
+					if err == nil && hasError {
+						res.StatusCode = http.StatusMultiStatus
+					}
+					return res, err
 				}
 
 				res := &http.Response{
@@ -133,11 +142,29 @@ func ServerHandler(server Server) HandlerFunc {
 				Width  int    `json:"image-width"`
 				Height int    `json:"image-height"`
 				Type   string `json:"resource-type"`
+				Reason *int   `json:"reason"`
 			}
 			if err := json.NewDecoder(req.Body).Decode(&v); err != nil {
 				return nil, err
 			}
 
+			if snapshots, ok := server.(interface {
+				GetImageWithReason(net.Conn, int, int, int) ([]byte, int)
+			}); ok {
+				reason := -1
+				if v.Reason != nil {
+					reason = *v.Reason
+				}
+				body, status := snapshots.GetImageWithReason(conn, v.Width, v.Height, reason)
+				if status != 0 {
+					res, err := makeResponse(hap.MimeJSON, map[string]int{"status": status})
+					if err == nil {
+						res.StatusCode = http.StatusBadRequest
+					}
+					return res, err
+				}
+				return makeResponse("image/jpeg", body)
+			}
 			body := server.GetImage(conn, v.Width, v.Height)
 			return makeResponse("image/jpeg", body)
 		}

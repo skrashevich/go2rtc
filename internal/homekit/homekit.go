@@ -28,19 +28,20 @@ import (
 func Init() {
 	var cfg struct {
 		Mod map[string]struct {
-			Pin             string   `yaml:"pin"`
-			Name            string   `yaml:"name"`
-			DeviceID        string   `yaml:"device_id"`
-			DevicePrivate   string   `yaml:"device_private"`
-			CategoryID      string   `yaml:"category_id"`
-			Pairings        []string `yaml:"pairings"`
-			HKSV            bool     `yaml:"hksv"`
-			Mode            string   `yaml:"mode"`
-			Motion          string   `yaml:"motion"`
-			MotionThreshold float64  `yaml:"motion_threshold"`
-			MotionHoldTime  float64  `yaml:"motion_hold_time"`
-			OnvifURL        string   `yaml:"onvif_url"`
-			Speaker         *bool    `yaml:"speaker"`
+			Pin             string               `yaml:"pin"`
+			Name            string               `yaml:"name"`
+			DeviceID        string               `yaml:"device_id"`
+			DevicePrivate   string               `yaml:"device_private"`
+			CategoryID      string               `yaml:"category_id"`
+			Pairings        []string             `yaml:"pairings"`
+			HKSV            bool                 `yaml:"hksv"`
+			Mode            string               `yaml:"mode"`
+			OperatingState  *hksv.OperatingState `yaml:"operating_state"`
+			Motion          string               `yaml:"motion"`
+			MotionThreshold float64              `yaml:"motion_threshold"`
+			MotionHoldTime  float64              `yaml:"motion_hold_time"`
+			OnvifURL        string               `yaml:"onvif_url"`
+			Speaker         *bool                `yaml:"speaker"`
 		} `yaml:"homekit"`
 	}
 	app.LoadConfig(&cfg)
@@ -92,6 +93,8 @@ func Init() {
 			ProxyURL:        proxyURL,
 			HKSV:            conf.HKSV,
 			Mode:            conf.Mode,
+			OperatingState:  conf.OperatingState,
+			StateStore:      &go2rtcPairingStore{},
 			MotionMode:      motionMode,
 			MotionThreshold: conf.MotionThreshold,
 			Speaker:         conf.Speaker,
@@ -177,6 +180,10 @@ type go2rtcPairingStore struct{}
 
 func (s *go2rtcPairingStore) SavePairings(name string, pairings []string) error {
 	return app.PatchConfig([]string{"homekit", name, "pairings"}, pairings)
+}
+
+func (s *go2rtcPairingStore) SaveOperatingState(name string, state hksv.OperatingState) error {
+	return app.PatchConfig([]string{"homekit", name, "operating_state"}, state)
 }
 
 // go2rtcSnapshotProvider implements hksv.SnapshotProvider

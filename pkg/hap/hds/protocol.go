@@ -19,6 +19,8 @@ const (
 	StatusSuccess = 0
 )
 
+var ErrNotAllowed = errors.New("hds: recording not allowed")
+
 // Message represents an HDS application-level message
 type Message struct {
 	Protocol string
@@ -36,8 +38,10 @@ type Session struct {
 	mu   sync.Mutex
 	id   int64
 
-	OnDataSendOpen  func(streamID int) error
-	OnDataSendClose func(streamID int) error
+	// CheckDataSendOpen validates policy before acknowledging an open request.
+	CheckDataSendOpen func() error
+	OnDataSendOpen    func(streamID int) error
+	OnDataSendClose   func(streamID int) error
 }
 
 func NewSession(conn *Conn) *Session {
@@ -245,6 +249,18 @@ func (s *Session) Run() error {
 
 		switch msg.Topic {
 		case TopicOpen:
+			if s.CheckDataSendOpen != nil {
+				if err := s.CheckDataSendOpen(); err != nil {
+					reason := 5 // unexpected failure
+					if errors.Is(err, ErrNotAllowed) {
+						reason = 1
+					}
+					if err = s.WriteResponse(ProtoDataSend, TopicOpen, msg.ID, 6, map[string]any{"status": reason}); err != nil {
+						return err
+					}
+					continue
+				}
+			}
 			streamID := int(opackInt(msg.Body["streamId"]))
 			// Acknowledge the open request
 			if err := s.WriteResponse(ProtoDataSend, TopicOpen, msg.ID, StatusSuccess, nil); err != nil {

@@ -26,6 +26,7 @@ func newTestHKSVSession(t *testing.T, streams *mockStreamProvider) (*hksvSession
 	}
 	srv := newTestServer(t, func(c *Config) {
 		c.Streams = streams
+		c.OperatingState = &OperatingState{CameraActive: true, StreamingActive: true, RecordingActive: true, RecordingAudioActive: true}
 	})
 
 	key := []byte(core.RandString(16, 0))
@@ -397,6 +398,7 @@ func TestServer_AcceptHDS_Lifecycle(t *testing.T) {
 	streams := newMockStreamProvider()
 	srv := newTestServer(t, func(c *Config) {
 		c.Streams = streams
+		c.OperatingState = &OperatingState{CameraActive: true, StreamingActive: true, RecordingActive: true, RecordingAudioActive: true}
 	})
 
 	key := []byte(core.RandString(16, 0))
@@ -440,6 +442,7 @@ func TestPrepareHKSVConsumer_Flow(t *testing.T) {
 	srv := newTestServer(t, func(c *Config) {
 		c.MotionMode = "continuous"
 		c.Streams = streams
+		c.OperatingState = &OperatingState{CameraActive: true, StreamingActive: true, RecordingActive: true, RecordingAudioActive: true}
 	})
 
 	done := make(chan struct{})
@@ -469,6 +472,7 @@ func TestPrepareHKSVConsumer_StreamError(t *testing.T) {
 	streams.addErr = errors.New("no stream")
 	srv := newTestServer(t, func(c *Config) {
 		c.Streams = streams
+		c.OperatingState = &OperatingState{CameraActive: true, StreamingActive: true, RecordingActive: true, RecordingAudioActive: true}
 	})
 
 	srv.prepareHKSVConsumer()
@@ -480,6 +484,7 @@ func TestPrepareHKSVConsumer_ReplacesOld(t *testing.T) {
 	streams := newMockStreamProvider()
 	srv := newTestServer(t, func(c *Config) {
 		c.Streams = streams
+		c.OperatingState = &OperatingState{CameraActive: true, StreamingActive: true, RecordingActive: true, RecordingAudioActive: true}
 	})
 
 	// Start first prepare

@@ -19,6 +19,7 @@ type hksvSession struct {
 
 	mu       sync.Mutex
 	consumer *HKSVConsumer
+	closed   bool
 }
 
 func newHKSVSession(srv *Server, hapConn *hap.Conn, hdsConn *hds.Conn) *hksvSession {
@@ -30,8 +31,22 @@ func newHKSVSession(srv *Server, hapConn *hap.Conn, hdsConn *hds.Conn) *hksvSess
 		session: session,
 		log:     srv.log,
 	}
+	session.CheckDataSendOpen = func() error {
+		srv.controlMu.Lock()
+		defer srv.controlMu.Unlock()
+		if !srv.state.allowsRecording() {
+			return hds.ErrNotAllowed
+		}
+		return nil
+	}
 	session.OnDataSendOpen = hs.handleOpen
 	session.OnDataSendClose = hs.handleClose
+	srv.mu.Lock()
+	if srv.recordingSessions == nil {
+		srv.recordingSessions = make(map[*hksvSession]bool)
+	}
+	srv.recordingSessions[hs] = true
+	srv.mu.Unlock()
 	return hs
 }
 
@@ -40,8 +55,14 @@ func (hs *hksvSession) Run() error {
 }
 
 func (hs *hksvSession) Close() {
+	// Unblock any in-flight HDS write before waiting for the consumer lock.
+	_ = hs.session.Close()
 	hs.mu.Lock()
 	defer hs.mu.Unlock()
+	hs.closed = true
+	hs.server.mu.Lock()
+	delete(hs.server.recordingSessions, hs)
+	hs.server.mu.Unlock()
 	if hs.consumer != nil {
 		hs.stopRecording()
 	}
@@ -49,10 +70,18 @@ func (hs *hksvSession) Close() {
 }
 
 func (hs *hksvSession) handleOpen(streamID int) error {
+	hs.server.controlMu.Lock()
+	defer hs.server.controlMu.Unlock()
+	if !hs.server.state.allowsRecording() {
+		return hds.ErrNotAllowed
+	}
 	hs.mu.Lock()
 	defer hs.mu.Unlock()
 
 	hs.log.Debug().Str("stream", hs.server.stream).Int("streamID", streamID).Msg("[hksv] dataSend open")
+	if hs.closed {
+		return hds.ErrNotAllowed
+	}
 
 	if hs.consumer != nil {
 		hs.stopRecording()
@@ -65,18 +94,17 @@ func (hs *hksvSession) handleOpen(streamID int) error {
 		hs.consumer = consumer
 		hs.server.AddConn(consumer)
 
-		// Activate: set the HDS session and send init + start streaming
-		if err := consumer.Activate(hs.session, streamID); err != nil {
-			hs.log.Error().Err(err).Str("stream", hs.server.stream).Msg("[hksv] activate failed")
-			hs.stopRecording()
-			return nil
-		}
+		go func() {
+			if err := consumer.Activate(hs.session, streamID); err != nil {
+				hs.log.Debug().Err(err).Msg("[hksv] activate stopped")
+			}
+		}()
 		return nil
 	}
 
 	// Fallback: create new consumer (will be slow ~3s)
 	hs.log.Debug().Str("stream", hs.server.stream).Msg("[hksv] no prepared consumer, creating new")
-	consumer = NewHKSVConsumer(hs.log)
+	consumer = hs.server.newRecordingConsumer()
 
 	if err := hs.server.streams.AddConsumer(hs.server.stream, consumer); err != nil {
 		hs.log.Error().Err(err).Str("stream", hs.server.stream).Msg("[hksv] add consumer failed")
@@ -111,7 +139,7 @@ func (hs *hksvSession) stopRecording() {
 	consumer := hs.consumer
 	hs.consumer = nil
 
-	hs.server.streams.RemoveConsumer(hs.server.stream, consumer)
 	_ = consumer.Stop()
+	hs.server.streams.RemoveConsumer(hs.server.stream, consumer)
 	hs.server.DelConn(consumer)
 }

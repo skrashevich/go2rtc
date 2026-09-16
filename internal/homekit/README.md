@@ -82,6 +82,36 @@ homekit:
     speaker: true           # enable 2-way audio (default: false, enable only if camera has a speaker)
 ```
 
+### Camera controls in Apple Home
+
+For cameras published by go2rtc (including `hksv: true`), Home's camera controls
+now affect the running media pipeline:
+
+- **Off** stops HomeKit live sessions and recordings, discards prepared recording
+  media, suppresses motion events, and rejects new live/snapshot/recording requests.
+- **Detect Activity** can report motion with live streaming disabled.
+- **Stream** allows live video while recording remains disabled. Recording starts
+  only after Home enables Recording Active.
+- **Record Audio** determines whether new recording clips contain an AAC track.
+  Changing it closes the current recording connection and discards prepared media;
+  the home hub must reconnect before recording another clip with the new setting.
+- Event snapshots (notifications) and periodic snapshots (preview tiles) obey their
+  respective switches. Older requests without a reason are rejected if either
+  class of snapshots is disabled.
+
+These settings are written automatically to `homekit.<stream>.operating_state`
+in `go2rtc.yaml` and restored on restart. Keep the configuration writable; a save
+failure is logged and returned to Home as an error, although the runtime restriction
+still takes effect. No re-pairing or new configuration flag is required. These
+controls govern HomeKit output; other go2rtc clients and the source camera's own
+recording are unaffected. An already displayed thumbnail may remain cached in Home.
+
+To check after installing this branch: open a live view, switch the camera off,
+verify that live view and fresh snapshots stop, then re-enable streaming. Check
+that Stream-only creates no new clips, and toggle Record Audio before recording
+another motion event. Finally restart go2rtc with the camera off and verify that
+it stays off. Real Apple-device verification is still required.
+
 ### iOS 27 Secure Video development
 
 The iOS 27 camera protocol is being implemented separately from classic HKSV.
@@ -92,16 +122,16 @@ gate, and motion-zone service metadata with version 2 encoding/decoding. Zone
 validation checks sensor bounds, UUIDs, degenerate polygons and self-intersections.
 It does **not** enable HEVC/4K HomeKit streaming or recording yet.
 
-`mode: legacy` is optional and preserves the existing behavior of `hksv: true`
-and `hksv: false`. The future `mode: secure_video` is reserved: selecting it
+`mode: legacy` is optional and uses the classic protocol for `hksv: true`
+and `hksv: false`, including the working controls described above. The future `mode: secure_video` is reserved: selecting it
 currently logs an explicit error and skips publishing that camera. Unknown modes
 are also rejected. Leave the mode unset for normal use.
 
 The new capabilities service must not be attached to a classic camera: it tells
 the home hub to use the new protocol. These service builders are not attached to
-published cameras. Request handlers still need to enforce admin-only and timed
-writes, persist state, stop streams when privacy controls change, and apply zones
-to motion processing. The next media steps are multi-tier HEVC RTP, HEVC recording
+published cameras. The new service handlers still need admin-only and timed-write enforcement
+and motion-zone processing. State persistence and media shutdown are implemented
+for the classic services described above; the new service IDs remain unpublished. The next media steps are multi-tier HEVC RTP, HEVC recording
 over HDS (including fragment timestamps), then WebRTC/SFrame and remote audio.
 CMAF direct upload is a separate follow-up. No automatic mode selection or
 migration of existing pairings is performed.

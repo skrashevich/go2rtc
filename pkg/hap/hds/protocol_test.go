@@ -3,7 +3,9 @@ package hds
 import (
 	"bytes"
 	"net"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/stretchr/testify/require"
@@ -482,5 +484,47 @@ func BenchmarkWriteMessage(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = acc.WriteMessage(header, body)
+	}
+}
+
+func TestDeniedOpenHasProtocolErrorAndConnectionSurvives(t *testing.T) {
+	acc, ctrl := newSessionPair(t)
+	var allowed atomic.Bool
+	opened := make(chan int, 1)
+	acc.CheckDataSendOpen = func() error {
+		if !allowed.Load() {
+			return ErrNotAllowed
+		}
+		return nil
+	}
+	acc.OnDataSendOpen = func(id int) error { opened <- id; return nil }
+	require.NoError(t, ctrl.conn.SetDeadline(time.Now().Add(3*time.Second)))
+	go func() { _ = acc.Run() }()
+	_, err := ctrl.WriteRequest(ProtoControl, TopicHello, nil)
+	require.NoError(t, err)
+	_, err = ctrl.ReadMessage()
+	require.NoError(t, err)
+	_, err = ctrl.WriteRequest(ProtoDataSend, TopicOpen, map[string]any{"streamId": 1})
+	require.NoError(t, err)
+	response, err := ctrl.ReadMessage()
+	require.NoError(t, err)
+	require.EqualValues(t, 6, response.Status)
+	require.EqualValues(t, 1, response.Body["status"])
+	select {
+	case <-opened:
+		t.Fatal("denied recording started")
+	default:
+	}
+	allowed.Store(true)
+	_, err = ctrl.WriteRequest(ProtoDataSend, TopicOpen, map[string]any{"streamId": 2})
+	require.NoError(t, err)
+	response, err = ctrl.ReadMessage()
+	require.NoError(t, err)
+	require.Zero(t, response.Status)
+	select {
+	case id := <-opened:
+		require.Equal(t, 2, id)
+	case <-time.After(time.Second):
+		t.Fatal("recording did not resume")
 	}
 }

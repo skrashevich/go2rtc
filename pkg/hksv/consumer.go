@@ -20,10 +20,11 @@ import (
 // It can be pre-started without an HDS session, buffering init data until activated.
 type HKSVConsumer struct {
 	core.Connection
-	muxer *mp4.Muxer
-	mu    sync.Mutex
-	done  chan struct{}
-	log   zerolog.Logger
+	muxer    *mp4.Muxer
+	mu       sync.Mutex
+	stopOnce sync.Once
+	done     chan struct{}
+	log      zerolog.Logger
 
 	// Set by Activate() when HDS session is available
 	session  *hds.Session
@@ -75,6 +76,13 @@ func NewHKSVConsumer(log zerolog.Logger) *HKSVConsumer {
 }
 
 func (c *HKSVConsumer) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	select {
+	case <-c.done:
+		return errors.New("hksv: consumer stopped")
+	default:
+	}
 	// Reject late tracks after init segment is built (can't modify fMP4 header)
 	select {
 	case <-c.initDone:
@@ -179,7 +187,10 @@ func (c *HKSVConsumer) Activate(session *hds.Session, streamID int) error {
 	// Wait for init to be ready (should already be done if consumer was pre-started)
 	select {
 	case <-c.initDone:
+	case <-c.done:
+		return errors.New("hksv: consumer stopped")
 	case <-time.After(5 * time.Second):
+		c.mu.Lock()
 		// Build init with whatever tracks we have (audio may be missing)
 		select {
 		case <-c.initDone:
@@ -188,11 +199,20 @@ func (c *HKSVConsumer) Activate(session *hds.Session, streamID int) error {
 				c.log.Warn().Int("tracks", len(c.Senders)).Msg("[hksv] init timeout, building with available tracks")
 				c.buildInit()
 			} else {
+				c.mu.Unlock()
 				return errors.New("hksv: no tracks connected after timeout")
 			}
 		}
+		c.mu.Unlock()
 	}
 
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	select {
+	case <-c.done:
+		return errors.New("hksv: consumer stopped")
+	default:
+	}
 	if c.initErr != nil {
 		return c.initErr
 	}
@@ -206,12 +226,10 @@ func (c *HKSVConsumer) Activate(session *hds.Session, streamID int) error {
 	c.log.Debug().Msg("[hksv] init segment sent OK")
 
 	// Enable live streaming (seqNum=2 because init used seqNum=1)
-	c.mu.Lock()
 	c.session = session
 	c.streamID = streamID
 	c.seqNum = 2
 	c.active = true
-	c.mu.Unlock()
 
 	return nil
 }
@@ -236,15 +254,15 @@ func (c *HKSVConsumer) WriteTo(io.Writer) (int64, error) {
 }
 
 func (c *HKSVConsumer) Stop() error {
-	select {
-	case <-c.done:
-	default:
+	c.stopOnce.Do(func() {
 		close(c.done)
-	}
-	c.mu.Lock()
-	c.active = false
-	c.mu.Unlock()
-	return c.Connection.Stop()
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.active = false
+		c.fragBuf = nil
+		_ = c.Connection.Stop()
+	})
+	return nil
 }
 
 // Done returns a channel that is closed when the consumer is stopped.

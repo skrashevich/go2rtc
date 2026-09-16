@@ -32,8 +32,29 @@ type Character struct {
 	//MinStep  any    `json:"minStep,omitempty"`
 	//ValidVal []any  `json:"valid-values,omitempty"`
 
+	valueMu     sync.RWMutex
 	listenersMu sync.Mutex
 	listeners   map[io.Writer]bool
+}
+
+// GetValue and SetValue synchronize runtime characteristic updates.
+func (c *Character) GetValue() any {
+	c.valueMu.RLock()
+	defer c.valueMu.RUnlock()
+	return c.Value
+}
+
+func (c *Character) SetValue(value any) {
+	c.valueMu.Lock()
+	c.Value = value
+	c.valueMu.Unlock()
+}
+
+func (c *Character) MarshalJSON() ([]byte, error) {
+	c.valueMu.RLock()
+	defer c.valueMu.RUnlock()
+	type character Character
+	return json.Marshal((*character)(c))
 }
 
 func (c *Character) AddListener(w io.Writer) {
@@ -92,7 +113,7 @@ func (c *Character) NotifyListeners(ignore io.Writer) error {
 func (c *Character) GenerateEvent() (data []byte, err error) {
 	v := JSONCharacters{
 		Value: []JSONCharacter{
-			{AID: DeviceAID, IID: c.IID, Value: c.Value},
+			{AID: DeviceAID, IID: c.IID, Value: c.GetValue()},
 		},
 	}
 	if data, err = json.Marshal(v); err != nil {
@@ -129,14 +150,18 @@ func (c *Character) Set(v any) (err error) {
 func (c *Character) Write(v any) (err error) {
 	switch c.Format {
 	case "tlv8":
-		c.Value, err = tlv8.MarshalBase64(v)
+		var value string
+		value, err = tlv8.MarshalBase64(v)
+		if err == nil {
+			c.SetValue(value)
+		}
 
 	case "bool":
 		switch v := v.(type) {
 		case bool:
-			c.Value = v
+			c.SetValue(v)
 		case float64:
-			c.Value = v != 0
+			c.SetValue(v != 0)
 		}
 	}
 	return
@@ -144,17 +169,17 @@ func (c *Character) Write(v any) (err error) {
 
 // ReadTLV8 value to right struct
 func (c *Character) ReadTLV8(v any) (err error) {
-	if s, ok := c.Value.(string); ok {
+	if s, ok := c.GetValue().(string); ok {
 		return tlv8.UnmarshalBase64(s, v)
 	}
 	return fmt.Errorf("hap: can't read value: %v", v)
 }
 
 func (c *Character) ReadBool() (bool, error) {
-	if v, ok := c.Value.(bool); ok {
+	if v, ok := c.GetValue().(bool); ok {
 		return v, nil
 	}
-	return false, fmt.Errorf("hap: can't read value: %v", c.Value)
+	return false, fmt.Errorf("hap: can't read value: %v", c.GetValue())
 }
 
 func (c *Character) String() string {

@@ -99,12 +99,14 @@ type Config struct {
 	Pairings        []string // pre-existing pairings
 	ProxyURL        string   // if set, acts as transparent proxy (no local accessory)
 	HKSV            bool
-	Mode            string  // "legacy" (default); "secure_video" reserved until transports are ready
-	MotionMode      string  // "api", "continuous", "detect"
-	MotionThreshold float64 // ratio threshold for "detect" mode (default 2.0)
-	Speaker         *bool   // include Speaker service for 2-way audio (default false)
-	UserAgent       string  // for mDNS TXTModel field
-	Version         string  // for accessory firmware version
+	OperatingState  *OperatingState     // restored Home camera controls
+	StateStore      OperatingStateStore // optional control persistence
+	Mode            string              // "legacy" (default); "secure_video" reserved until transports are ready
+	MotionMode      string              // "api", "continuous", "detect"
+	MotionThreshold float64             // ratio threshold for "detect" mode (default 2.0)
+	Speaker         *bool               // include Speaker service for 2-way audio (default false)
+	UserAgent       string              // for mDNS TXTModel field
+	Version         string              // for accessory firmware version
 
 	// Dependencies (injected by host)
 	Streams    StreamProvider
@@ -123,6 +125,12 @@ type Server struct {
 	mdns *mdns.ServiceEntry
 	log  zerolog.Logger
 
+	controlMu    sync.Mutex // serializes media starts and policy changes
+	motionMu     sync.Mutex
+	state        OperatingState
+	stateStore   OperatingStateStore
+	liveSessions map[string]*liveConnTracker
+
 	pairings []string
 	conns    []any
 	mu       sync.Mutex
@@ -140,12 +148,13 @@ type Server struct {
 	liveStream LiveStreamHandler
 
 	// HKSV fields
-	motionMode       string
-	motionThreshold  float64
-	motionDetector   *MotionDetector
-	hksvSession      *hksvSession
-	continuousMotion bool
-	preparedConsumer *HKSVConsumer
+	motionMode        string
+	motionThreshold   float64
+	motionDetector    *MotionDetector
+	hksvSession       *hksvSession
+	recordingSessions map[*hksvSession]bool
+	continuousMotion  bool
+	preparedConsumer  *HKSVConsumer
 }
 
 // NewServer creates a new HKSV server with the given configuration.
@@ -243,6 +252,7 @@ func NewServer(cfg Config) (*Server, error) {
 		srv.accessory.InitIID() // recalculate IIDs
 	}
 
+	srv.initOperatingState(cfg)
 	return srv, nil
 }
 
@@ -323,6 +333,7 @@ func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {
 
 		s.AddConn(controller)
 		defer s.DelConn(controller)
+		defer s.stopLiveStreams(controller)
 
 		// start motion on first Home Hub connection
 		switch s.motionMode {
@@ -483,58 +494,79 @@ func (s *Server) GetCharacteristic(conn net.Conn, aid uint8, iid uint64) any {
 		return nil
 	}
 
-	return char.Value
+	return char.GetValue()
 }
 
-func (s *Server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value any) {
+func (s *Server) writeCharacteristic(conn net.Conn, aid uint8, iid uint64, value any) int {
 	s.log.Trace().Str("stream", s.stream).Msgf("[hksv] set char aid=%d iid=0x%x value=%v", aid, iid, value)
 
+	if s.accessory == nil || aid != s.accessory.AID {
+		return homekit.StatusNotFound
+	}
 	char := s.accessory.GetCharacterByID(iid)
 	if char == nil {
 		s.log.Warn().Msgf("[hksv] set unknown characteristic: %d", iid)
-		return
+		return homekit.StatusNotFound
 	}
 
+	if !slices.Contains(char.Perms, "pw") {
+		return homekit.StatusReadOnly
+	}
+	if changed, status := s.setOperatingControl(char, value); changed {
+		return status
+	}
 	switch char.Type {
 	case camera.TypeSetupEndpoints:
+		if !s.state.allowsLive() {
+			return homekit.StatusNotAllowed
+		}
 		if s.liveStream == nil {
-			return
+			return homekit.StatusInvalidValue
 		}
 		var offer camera.SetupEndpointsRequest
 		if err := tlv8.UnmarshalBase64(value, &offer); err != nil {
-			return
+			return homekit.StatusInvalidValue
 		}
 		resp, err := s.liveStream.SetupEndpoints(conn, &offer)
 		if err != nil {
 			s.log.Error().Err(err).Msg("[hksv] setup endpoints failed")
-			return
+			return homekit.StatusInvalidValue
 		}
 		// Keep the latest response in characteristic value for write-response (r=true)
 		// and subsequent GET /characteristics reads.
-		char.Value = resp
+		char.SetValue(resp)
+		s.rememberLiveStream(offer.SessionID, conn)
 
 	case camera.TypeSelectedStreamConfiguration:
 		if s.liveStream == nil {
-			return
+			return homekit.StatusInvalidValue
 		}
 		var conf camera.SelectedStreamConfiguration
 		if err := tlv8.UnmarshalBase64(value, &conf); err != nil {
-			return
+			return homekit.StatusInvalidValue
 		}
 		s.log.Trace().Str("stream", s.stream).Msgf("[hksv] stream id=%x cmd=%d", conf.Control.SessionID, conf.Control.Command)
 
 		switch conf.Control.Command {
 		case camera.SessionCommandEnd:
 			_ = s.liveStream.StopStream(conf.Control.SessionID, s)
+			s.forgetLiveStream(conf.Control.SessionID)
 		case camera.SessionCommandStart:
-			_ = s.liveStream.StartStream(s.stream, &conf, s)
+			if !s.state.allowsLive() {
+				return homekit.StatusNotAllowed
+			}
+			tracker := s.rememberLiveStream(conf.Control.SessionID, conn)
+			if err := s.liveStream.StartStream(s.stream, &conf, tracker); err != nil {
+				s.forgetLiveStream(conf.Control.SessionID)
+				return homekit.StatusCommunicationFailure
+			}
 		}
 
 	case camera.TypeSetupDataStreamTransport:
 		var req camera.SetupDataStreamTransportRequest
 		if err := tlv8.UnmarshalBase64(value, &req); err != nil {
 			s.log.Error().Err(err).Str("stream", s.stream).Msg("[hksv] parse ch131 failed")
-			return
+			return homekit.StatusInvalidValue
 		}
 
 		s.log.Debug().Str("stream", s.stream).Uint8("cmd", req.SessionCommandType).
@@ -542,10 +574,13 @@ func (s *Server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value a
 
 		if req.SessionCommandType != 0 {
 			s.log.Debug().Str("stream", s.stream).Msg("[hksv] DataStream close request")
-			if s.hksvSession != nil {
-				s.hksvSession.Close()
+			s.mu.Lock()
+			session := s.hksvSession
+			s.mu.Unlock()
+			if session != nil {
+				session.Close()
 			}
-			return
+			return 0
 		}
 
 		accessoryKeySalt := core.RandString(32, 0)
@@ -554,7 +589,7 @@ func (s *Server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value a
 		ln, err := net.ListenTCP("tcp", nil)
 		if err != nil {
 			s.log.Error().Err(err).Str("stream", s.stream).Msg("[hksv] listen failed")
-			return
+			return homekit.StatusInvalidValue
 		}
 		port := ln.Addr().(*net.TCPAddr).Port
 
@@ -567,9 +602,9 @@ func (s *Server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value a
 		v, err := tlv8.MarshalBase64(resp)
 		if err != nil {
 			ln.Close()
-			return
+			return homekit.StatusInvalidValue
 		}
-		char.Value = v
+		char.SetValue(v)
 
 		s.log.Debug().Str("stream", s.stream).Int("port", port).Msg("[hksv] listening for HDS")
 
@@ -578,7 +613,7 @@ func (s *Server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value a
 
 	case camera.TypeSelectedCameraRecordingConfiguration:
 		s.log.Debug().Str("stream", s.stream).Str("motion", s.motionMode).Msg("[hksv] selected recording config")
-		char.Value = value
+		char.SetValue(value)
 
 		switch s.motionMode {
 		case "continuous":
@@ -588,27 +623,24 @@ func (s *Server) SetCharacteristic(conn net.Conn, aid uint8, iid uint64, value a
 		}
 
 	default:
-		char.Value = value
+		char.SetValue(value)
 	}
+
+	return 0
 }
 
 func (s *Server) GetImage(conn net.Conn, width, height int) []byte {
-	s.log.Trace().Str("stream", s.stream).Msgf("[hksv] get image width=%d height=%d", width, height)
-
-	if s.snapshots == nil {
-		return nil
-	}
-
-	b, err := s.snapshots.GetSnapshot(s.stream, width, height)
-	if err != nil {
-		s.log.Error().Err(err).Msg("[hksv] snapshot failed")
-		return nil
-	}
-	return b
+	image, _ := s.GetImageWithReason(conn, width, height, -1)
+	return image
 }
 
 // SetMotionDetected triggers or clears the motion detected characteristic.
 func (s *Server) SetMotionDetected(detected bool) {
+	s.motionMu.Lock()
+	defer s.motionMu.Unlock()
+	if !s.cameraEnabled() {
+		detected = false
+	}
 	if s.accessory == nil {
 		s.log.Warn().Str("stream", s.stream).Msg("[hksv] SetMotionDetected: accessory is nil")
 		return
@@ -618,7 +650,7 @@ func (s *Server) SetMotionDetected(detected bool) {
 		s.log.Warn().Str("stream", s.stream).Msg("[hksv] SetMotionDetected: char 22 (MotionDetected) not found")
 		return
 	}
-	char.Value = detected
+	char.SetValue(detected)
 	listeners := char.ListenerCount()
 	err := char.NotifyListeners(nil)
 	s.log.Debug().Str("stream", s.stream).Bool("motion", detected).
@@ -634,7 +666,7 @@ func (s *Server) MotionDetected() bool {
 	if char == nil {
 		return false
 	}
-	v, _ := char.Value.(bool)
+	v, _ := char.GetValue().(bool)
 	return v
 }
 
@@ -647,7 +679,7 @@ func (s *Server) TriggerDoorbell() {
 	if char == nil {
 		return
 	}
-	char.Value = 0 // SINGLE_PRESS
+	char.SetValue(0) // SINGLE_PRESS
 	_ = char.NotifyListeners(nil)
 	s.log.Debug().Str("stream", s.stream).Msg("[hksv] doorbell")
 }
@@ -700,10 +732,16 @@ func (s *Server) acceptHDS(hapConn *hap.Conn, ln net.Listener, salt string) {
 
 // prepareHKSVConsumer pre-starts a consumer and adds it to the stream.
 func (s *Server) prepareHKSVConsumer() {
-	consumer := NewHKSVConsumer(s.log)
+	s.controlMu.Lock()
+	if !s.state.allowsRecording() || s.streams == nil {
+		s.controlMu.Unlock()
+		return
+	}
+	consumer := s.newRecordingConsumer()
 
 	if err := s.streams.AddConsumer(s.stream, consumer); err != nil {
 		s.log.Debug().Err(err).Str("stream", s.stream).Msg("[hksv] prepare consumer failed")
+		s.controlMu.Unlock()
 		return
 	}
 
@@ -720,6 +758,7 @@ func (s *Server) prepareHKSVConsumer() {
 	}
 	s.preparedConsumer = consumer
 	s.mu.Unlock()
+	s.controlMu.Unlock()
 
 	// Keep alive until used or timeout (60 seconds)
 	select {
@@ -748,6 +787,9 @@ func (s *Server) takePreparedConsumer() *HKSVConsumer {
 }
 
 func (s *Server) startMotionDetector() {
+	if !s.cameraEnabled() || s.streams == nil {
+		return
+	}
 	s.mu.Lock()
 	if s.motionDetector != nil {
 		s.mu.Unlock()

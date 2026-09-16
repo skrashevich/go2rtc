@@ -5,6 +5,7 @@ import (
 	"io"
 	"math/rand"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
@@ -20,7 +21,11 @@ type Consumer struct {
 	conn net.Conn
 	srtp *srtp.Server
 
-	deadline *time.Timer
+	deadline   *time.Timer
+	mu         sync.Mutex
+	stopped    bool
+	configured bool
+	done       chan struct{}
 
 	sessionID    string
 	videoSession *srtp.Session
@@ -61,8 +66,8 @@ func NewConsumer(conn net.Conn, server *srtp.Server) *Consumer {
 			Protocol:   "rtp",
 			RemoteAddr: conn.RemoteAddr().String(),
 			Medias:     medias,
-			Transport:  conn,
 		},
+		done: make(chan struct{}),
 		conn: conn,
 		srtp: server,
 	}
@@ -93,8 +98,12 @@ func (c *Consumer) SetOffer(offer *camera.SetupEndpointsRequest) {
 }
 
 func (c *Consumer) GetAnswer() *camera.SetupEndpointsResponse {
-	c.videoSession.Local = c.srtpEndpoint()
-	c.audioSession.Local = c.srtpEndpoint()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.videoSession.Local == nil {
+		c.videoSession.Local = c.srtpEndpoint()
+		c.audioSession.Local = c.srtpEndpoint()
+	}
 
 	return &camera.SetupEndpointsResponse{
 		SessionID: c.sessionID,
@@ -118,7 +127,9 @@ func (c *Consumer) GetAnswer() *camera.SetupEndpointsResponse {
 }
 
 func (c *Consumer) SetConfig(conf *camera.SelectedStreamConfiguration) bool {
-	if c.sessionID != conf.Control.SessionID {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.stopped || c.configured || c.sessionID != conf.Control.SessionID || len(conf.VideoCodec.RTPParams) == 0 || len(conf.AudioCodec.RTPParams) == 0 || len(conf.AudioCodec.CodecParams) == 0 || len(conf.AudioCodec.CodecParams[0].RTPTime) == 0 {
 		return false
 	}
 
@@ -135,6 +146,7 @@ func (c *Consumer) SetConfig(conf *camera.SelectedStreamConfiguration) bool {
 
 	c.srtp.AddSession(c.videoSession)
 	c.srtp.AddSession(c.audioSession)
+	c.configured = true
 
 	return true
 }
@@ -147,6 +159,11 @@ func (c *Consumer) GetTrack(media *core.Media, codec *core.Codec) (*core.Receive
 	c.backTrack = core.NewReceiver(media, codec)
 
 	c.audioSession.OnReadRTP = func(packet *rtp.Packet) {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.stopped {
+			return
+		}
 		c.backTrack.WriteRTP(packet)
 		c.Recv += len(packet.Payload)
 	}
@@ -160,6 +177,11 @@ func (c *Consumer) Start() error {
 }
 
 func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.stopped {
+		return fmt.Errorf("homekit: stream stopped")
+	}
 	var session *srtp.Session
 	if codec.Kind() == core.KindVideo {
 		session = c.videoSession
@@ -169,20 +191,22 @@ func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Re
 
 	sender := core.NewSender(media, track.Codec)
 
-	if c.deadline == nil {
+	resetDeadline := c.deadline == nil
+	if resetDeadline {
 		c.deadline = time.NewTimer(time.Second * 30)
-
-		sender.Handler = func(packet *rtp.Packet) {
-			c.deadline.Reset(core.ConnDeadline)
-			if n, err := session.WriteRTP(packet); err == nil {
-				c.Send += n
-			}
+	}
+	sender.Handler = func(packet *rtp.Packet) {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		// Sender.Close drains its queue; discard those packets once stopped.
+		if c.stopped {
+			return
 		}
-	} else {
-		sender.Handler = func(packet *rtp.Packet) {
-			if n, err := session.WriteRTP(packet); err == nil {
-				c.Send += n
-			}
+		if resetDeadline {
+			c.deadline.Reset(core.ConnDeadline)
+		}
+		if n, err := session.WriteRTP(packet); err == nil {
+			c.Send += n
 		}
 	}
 
@@ -204,16 +228,34 @@ func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Re
 }
 
 func (c *Consumer) WriteTo(io.Writer) (int64, error) {
-	if c.deadline != nil {
-		<-c.deadline.C
+	c.mu.Lock()
+	deadline := c.deadline
+	c.mu.Unlock()
+	if deadline != nil {
+		select {
+		case <-deadline.C:
+		case <-c.done:
+		}
 	}
 	return 0, nil
 }
 
 func (c *Consumer) Stop() error {
-	if c.deadline != nil {
-		c.deadline.Reset(0)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.stopped {
+		return nil
 	}
+	c.stopped = true
+	close(c.done)
+	if c.deadline != nil {
+		c.deadline.Stop()
+	}
+	if c.configured {
+		c.srtp.DelSession(c.videoSession)
+		c.srtp.DelSession(c.audioSession)
+	}
+	// The HAP control connection is shared with camera settings and other streams.
 	return c.Connection.Stop()
 }
 

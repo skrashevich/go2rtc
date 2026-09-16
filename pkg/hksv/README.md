@@ -15,6 +15,20 @@ Sergei "svk" Krashevich <svk@svk.su>
 - **Live Streaming** - Pluggable interface for RTP/SRTP live view (bring your own implementation)
 - **Zero internal dependencies** - Only depends on `pkg/` packages, never on `internal/`
 
+## Operating controls
+
+`Server` enforces HomeKit camera/streaming/recording controls before starting media.
+It stops active HomeKit streams and drops prepared recording data when disabled.
+Recording audio controls the AAC track in the MP4 init segment. Snapshot requests
+respect the periodic/event reason; rejected requests return HAP errors.
+
+For embedded use, restore `Config.OperatingState` and implement
+`Config.StateStore` (`SaveOperatingState`) to preserve Home's settings on restart.
+The go2rtc integration automatically stores this under `homekit.<stream>.operating_state`.
+Without a store, changes last for the server's lifetime. The zero recording defaults
+remain off until Home enables them. The source camera and non-HomeKit consumers
+are outside these controls.
+
 ## Architecture
 
 ```
