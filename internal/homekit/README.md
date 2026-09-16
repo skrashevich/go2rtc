@@ -82,6 +82,40 @@ homekit:
     speaker: true           # enable 2-way audio (default: false, enable only if camera has a speaker)
 ```
 
+### iOS 27 Secure Video development
+
+The iOS 27 camera protocol is being implemented separately from classic HKSV.
+The current foundation includes extended HAP type IDs, TLV8 fragmentation and
+boolean support, synchronized event subscriptions, and typed camera capabilities
+and stream-tier descriptions. It does **not** enable HEVC/4K HomeKit streaming or
+recording yet.
+
+`mode: legacy` is optional and preserves the existing behavior of `hksv: true`
+and `hksv: false`. The future `mode: secure_video` is reserved: selecting it
+currently logs an explicit error and skips publishing that camera. Unknown modes
+are also rejected. Leave the mode unset for normal use.
+
+The new capabilities service must not be attached to a classic camera: it tells
+the home hub to use the new protocol. The next steps are global operating mode
+and motion-zone services, multi-tier HEVC RTP, HEVC recording over HDS (including
+fragment timestamps), then WebRTC/SFrame and remote audio. CMAF direct upload is
+a separate follow-up. No automatic mode selection or migration of existing
+pairings is performed.
+
+Protocol reference: [Apple's HKSV Open Source Compatibility Guide](https://developer.apple.com/download/files/HomeKit-Secure-Video-Open-Source-Compatibility-Guide.pdf)
+(Developer Preview, June 3, 2026). Wire definitions are in
+`pkg/hap/camera/secure_video.go`; metadata is provided by callers, not inferred
+from a camera name or a fixed list of advertised resolutions.
+
+Foundation checks:
+
+```sh
+go test -race ./pkg/hap/... ./pkg/homekit/... ./pkg/hksv/... ./internal/homekit/...
+```
+
+These checks cover encoding and server behavior. They do not substitute for
+pairing, streaming, recording, and privacy tests on real iOS/tvOS 27 devices.
+
 ### HKSV (HomeKit Secure Video)
 
 go2rtc can expose any camera as a HomeKit Secure Video (HKSV) camera. This allows Apple Home to record video clips to iCloud when motion is detected.

@@ -99,6 +99,7 @@ type Config struct {
 	Pairings        []string // pre-existing pairings
 	ProxyURL        string   // if set, acts as transparent proxy (no local accessory)
 	HKSV            bool
+	Mode            string  // "legacy" (default); "secure_video" reserved until transports are ready
 	MotionMode      string  // "api", "continuous", "detect"
 	MotionThreshold float64 // ratio threshold for "detect" mode (default 2.0)
 	Speaker         *bool   // include Speaker service for 2-way audio (default false)
@@ -149,6 +150,15 @@ type Server struct {
 
 // NewServer creates a new HKSV server with the given configuration.
 func NewServer(cfg Config) (*Server, error) {
+	switch cfg.Mode {
+	case "", "legacy":
+		// Keep the existing HKSV flag and accessory layout unchanged.
+	case "secure_video":
+		return nil, errors.New("hksv: secure_video mode is not available yet (HAP foundation only)")
+	default:
+		return nil, fmt.Errorf("hksv: unknown camera mode %q", cfg.Mode)
+	}
+
 	if cfg.Pin == "" {
 		cfg.Pin = "27041991"
 	}

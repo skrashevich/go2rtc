@@ -35,6 +35,7 @@ func Init() {
 			CategoryID      string   `yaml:"category_id"`
 			Pairings        []string `yaml:"pairings"`
 			HKSV            bool     `yaml:"hksv"`
+			Mode            string   `yaml:"mode"`
 			Motion          string   `yaml:"motion"`
 			MotionThreshold float64  `yaml:"motion_threshold"`
 			MotionHoldTime  float64  `yaml:"motion_hold_time"`
@@ -90,6 +91,7 @@ func Init() {
 			Pairings:        conf.Pairings,
 			ProxyURL:        proxyURL,
 			HKSV:            conf.HKSV,
+			Mode:            conf.Mode,
 			MotionMode:      motionMode,
 			MotionThreshold: conf.MotionThreshold,
 			Speaker:         conf.Speaker,
