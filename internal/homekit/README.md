@@ -86,9 +86,11 @@ homekit:
 
 The iOS 27 camera protocol is being implemented separately from classic HKSV.
 The current foundation includes extended HAP type IDs, TLV8 fragmentation and
-boolean support, synchronized event subscriptions, and typed camera capabilities
-and stream-tier descriptions. It does **not** enable HEVC/4K HomeKit streaming or
-recording yet.
+boolean support, synchronized event subscriptions, typed camera capabilities
+and stream-tier descriptions, global operating-mode metadata and its streaming
+gate, and motion-zone service metadata with version 2 encoding/decoding. Zone
+validation checks sensor bounds, UUIDs, degenerate polygons and self-intersections.
+It does **not** enable HEVC/4K HomeKit streaming or recording yet.
 
 `mode: legacy` is optional and preserves the existing behavior of `hksv: true`
 and `hksv: false`. The future `mode: secure_video` is reserved: selecting it
@@ -96,11 +98,13 @@ currently logs an explicit error and skips publishing that camera. Unknown modes
 are also rejected. Leave the mode unset for normal use.
 
 The new capabilities service must not be attached to a classic camera: it tells
-the home hub to use the new protocol. The next steps are global operating mode
-and motion-zone services, multi-tier HEVC RTP, HEVC recording over HDS (including
-fragment timestamps), then WebRTC/SFrame and remote audio. CMAF direct upload is
-a separate follow-up. No automatic mode selection or migration of existing
-pairings is performed.
+the home hub to use the new protocol. These service builders are not attached to
+published cameras. Request handlers still need to enforce admin-only and timed
+writes, persist state, stop streams when privacy controls change, and apply zones
+to motion processing. The next media steps are multi-tier HEVC RTP, HEVC recording
+over HDS (including fragment timestamps), then WebRTC/SFrame and remote audio.
+CMAF direct upload is a separate follow-up. No automatic mode selection or
+migration of existing pairings is performed.
 
 Protocol reference: [Apple's HKSV Open Source Compatibility Guide](https://developer.apple.com/download/files/HomeKit-Secure-Video-Open-Source-Compatibility-Guide.pdf)
 (Developer Preview, June 3, 2026). Wire definitions are in
