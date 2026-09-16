@@ -34,7 +34,7 @@ type Accessory struct {
 func (a *Accessory) InitIID() {
 	serviceN := map[string]byte{}
 	for _, service := range a.Services {
-		if len(service.Type) > 3 {
+		if len(service.Type) > 4 {
 			panic(service.Type)
 		}
 
@@ -49,14 +49,31 @@ func (a *Accessory) InitIID() {
 		s := fmt.Sprintf("%x%x%03s000", a.AID, n, service.Type)
 		service.IID, _ = strconv.ParseUint(s, 16, 64)
 
+		// Extended HAP types use a separate, deterministic namespace. Keep
+		// legacy IIDs unchanged so adding services cannot break saved pairings.
+		// Layout: marker(1) | AID(8) | occurrence(8) | service(16) | char(16).
+		// The largest ID is below 2^49, safe for JSON's 53-bit integers.
+		typ, err := strconv.ParseUint(service.Type, 16, 16)
+		if err != nil {
+			panic(service.Type)
+		}
+		extended := uint64(1)<<48 | uint64(a.AID)<<40 | uint64(n)<<32 | typ<<16
+		if len(service.Type) > 3 {
+			service.IID = extended
+		}
+
 		for _, character := range service.Characters {
-			if len(character.Type) > 3 {
+			if len(character.Type) > 4 {
 				panic(character.Type)
 			}
 
 			// CharacterID = ANSSSCCC
 			character.IID, _ = strconv.ParseUint(character.Type, 16, 64)
-			character.IID += service.IID
+			if len(character.Type) > 3 {
+				character.IID += extended
+			} else {
+				character.IID += service.IID
+			}
 		}
 	}
 }

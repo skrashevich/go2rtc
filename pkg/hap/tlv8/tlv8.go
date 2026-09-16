@@ -55,9 +55,8 @@ func Marshal(v any) ([]byte, error) {
 	return nil, errors.New("tlv8: not implemented: " + kind.String())
 }
 
-// separator the most confusing meaning in the documentation.
-// It can have a value of 0x00 or 0xFF or even 0x05.
-const separator = 0xFF
+// HAP list separator. The decoder also accepts legacy 0xFF separators.
+const separator = 0x00
 
 func appendSlice(b []byte, value reflect.Value) ([]byte, error) {
 	for i := 0; i < value.Len(); i++ {
@@ -100,6 +99,13 @@ func appendValue(b []byte, tag byte, value reflect.Value) ([]byte, error) {
 	var err error
 
 	switch value.Kind() {
+	case reflect.Bool:
+		var v byte
+		if value.Bool() {
+			v = 1
+		}
+		return append(b, tag, 1, v), nil
+
 	case reflect.Uint8:
 		v := value.Uint()
 		return append(b, tag, 1, byte(v)), nil
@@ -121,24 +127,15 @@ func appendValue(b []byte, tag byte, value reflect.Value) ([]byte, error) {
 		return append(b, tag, 4, byte(v), byte(v>>8), byte(v>>16), byte(v>>24)), nil
 
 	case reflect.String:
-		v := value.String()
-		l := len(v) // support "big" string
-		for ; l > 255; l -= 255 {
-			b = append(b, tag, 255)
-			b = append(b, v[:255]...)
-			v = v[255:]
-		}
-		b = append(b, tag, byte(l))
-		return append(b, v...), nil
+		return appendTLV(b, tag, []byte(value.String())), nil
 
 	case reflect.Array:
 		if value.Type().Elem().Kind() == reflect.Uint8 {
-			n := value.Len()
-			b = append(b, tag, byte(n))
-			for i := range n {
-				b = append(b, byte(value.Index(i).Uint()))
+			data := make([]byte, value.Len())
+			for i := range data {
+				data[i] = byte(value.Index(i).Uint())
 			}
-			return b, nil
+			return appendTLV(b, tag, data), nil
 		}
 
 	case reflect.Slice:
@@ -153,16 +150,24 @@ func appendValue(b []byte, tag byte, value reflect.Value) ([]byte, error) {
 		return b, nil
 
 	case reflect.Struct:
-		b = append(b, tag, 0)
-		i := len(b)
-		if b, err = appendStruct(b, value); err != nil {
+		data, err := appendStruct(nil, value)
+		if err != nil {
 			return nil, err
 		}
-		b[i-1] = byte(len(b) - i) // set struct size
-		return b, nil
+		return appendTLV(b, tag, data), nil
 	}
 
 	return nil, errors.New("tlv8: not implemented: " + value.Kind().String())
+}
+
+func appendTLV(b []byte, tag byte, data []byte) []byte {
+	for len(data) > 255 {
+		b = append(b, tag, 255)
+		b = append(b, data[:255]...)
+		data = data[255:]
+	}
+	b = append(b, tag, byte(len(data)))
+	return append(b, data...)
 }
 
 func UnmarshalBase64(in any, out any) error {
@@ -296,6 +301,12 @@ func unmarshalStruct(b []byte, value reflect.Value) error {
 
 func unmarshalValue(v []byte, value reflect.Value) error {
 	switch value.Kind() {
+	case reflect.Bool:
+		if len(v) != 1 || v[0] > 1 {
+			return errors.New("tlv8: invalid boolean")
+		}
+		value.SetBool(v[0] == 1)
+
 	case reflect.Uint8:
 		if len(v) != 1 {
 			return errors.New("tlv8: wrong size: " + value.Type().Name())
@@ -330,6 +341,9 @@ func unmarshalValue(v []byte, value reflect.Value) error {
 	case reflect.Array:
 		if kind := value.Type().Elem().Kind(); kind != reflect.Uint8 {
 			return errors.New("tlv8: unsupported array: " + kind.String())
+		}
+		if len(v) != value.Len() {
+			return errors.New("tlv8: wrong size: " + value.Type().String())
 		}
 
 		for i, b := range v {

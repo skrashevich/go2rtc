@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
+	"slices"
+	"sync"
 
 	"github.com/AlexxIT/go2rtc/pkg/hap/tlv8"
 )
@@ -29,11 +32,13 @@ type Character struct {
 	//MinStep  any    `json:"minStep,omitempty"`
 	//ValidVal []any  `json:"valid-values,omitempty"`
 
-	listeners map[io.Writer]bool
+	listenersMu sync.Mutex
+	listeners   map[io.Writer]bool
 }
 
 func (c *Character) AddListener(w io.Writer) {
-	// TODO: sync.Mutex
+	c.listenersMu.Lock()
+	defer c.listenersMu.Unlock()
 	if c.listeners == nil {
 		c.listeners = map[io.Writer]bool{}
 	}
@@ -41,6 +46,8 @@ func (c *Character) AddListener(w io.Writer) {
 }
 
 func (c *Character) RemoveListener(w io.Writer) {
+	c.listenersMu.Lock()
+	defer c.listenersMu.Unlock()
 	delete(c.listeners, w)
 
 	if len(c.listeners) == 0 {
@@ -49,11 +56,16 @@ func (c *Character) RemoveListener(w io.Writer) {
 }
 
 func (c *Character) ListenerCount() int {
+	c.listenersMu.Lock()
+	defer c.listenersMu.Unlock()
 	return len(c.listeners)
 }
 
 func (c *Character) NotifyListeners(ignore io.Writer) error {
-	if c.listeners == nil {
+	c.listenersMu.Lock()
+	listeners := slices.Collect(maps.Keys(c.listeners))
+	c.listenersMu.Unlock()
+	if len(listeners) == 0 {
 		return nil
 	}
 
@@ -62,7 +74,8 @@ func (c *Character) NotifyListeners(ignore io.Writer) error {
 		return err
 	}
 
-	for w := range c.listeners {
+	// Network writes must not hold the subscription lock.
+	for _, w := range listeners {
 		if w == ignore {
 			continue
 		}

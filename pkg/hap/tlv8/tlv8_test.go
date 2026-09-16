@@ -130,7 +130,9 @@ func TestSlice1(t *testing.T) {
 	b2, err := Marshal(v)
 	require.NoError(t, err)
 
-	require.Equal(t, b1, b2)
+	canonical, err := hex.DecodeString(strings.ReplaceAll(strings.ReplaceAll(s, "ff00", "0000"), " ", ""))
+	require.NoError(t, err)
+	require.Equal(t, canonical, b2)
 }
 
 func TestSlice2(t *testing.T) {
@@ -152,5 +154,7 @@ func TestSlice2(t *testing.T) {
 	b2, err := Marshal(v)
 	require.NoError(t, err)
 
-	require.Equal(t, b1, b2)
+	canonical, err := hex.DecodeString(strings.ReplaceAll(strings.ReplaceAll(s, "ff00", "0000"), " ", ""))
+	require.NoError(t, err)
+	require.Equal(t, canonical, b2)
 }
