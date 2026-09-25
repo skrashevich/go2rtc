@@ -123,7 +123,7 @@ Ultimate camera streaming application with support for dozens formats and protoc
 - [streaming output](#streaming-output) in all popular formats
 - [streaming ingest](#streaming-ingest) in a number of popular formats
 - [publish](#publish-stream) any source to popular streaming services (YouTube, Telegram)
-- on-the-fly transcoding only if necessary via [FFmpeg](internal/ffmpeg/README.md)
+- on-the-fly audio transcoding between Opus and PCM/G.711; other transcoding via [FFmpeg](internal/ffmpeg/README.md)
 - [two-way audio](#two-way-audio) support for many formats
 - [streaming audio](#stream-to-camera) to all cameras with [two-way audio](#two-way-audio) support
 - mixing tracks from different sources to single stream
@@ -485,11 +485,9 @@ Some examples:
 
 ### Built-in transcoding
 
-There are no plans to embed complex transcoding algorithms inside go2rtc. 
-[FFmpeg source](internal/ffmpeg/README.md) does a great job with this. 
-Including [hardware acceleration](https://github.com/AlexxIT/go2rtc/wiki/Hardware-acceleration) support.
+Go2rtc automatically converts audio between Opus and `PCM`, `PCML`, `PCMA` or `PCMU` when a client or camera needs it and no matching audio track is available. This applies to playback, WebRTC, two-way audio, and HomeKit. Opus sources can also be decoded to PCM and packaged as FLAC for MSE/MP4/HLS when the client requests FLAC. The conversion uses [go-opus](https://github.com/skrashevich/go-opus) and needs no FFmpeg process or extra stream source. See [Opus conversion details](pkg/opus/README.md).
 
-But go2rtc has some simple algorithms. They are turned on automatically; you do not need to set them up additionally.
+Other codec conversions remain available through [FFmpeg](internal/ffmpeg/README.md), including [hardware acceleration](https://github.com/AlexxIT/go2rtc/wiki/Hardware-acceleration). Built-in audio conversions are enabled automatically.
 
 **PCM for MSE/MP4/HLS**
 
@@ -497,6 +495,7 @@ Go2rtc can pack `PCMA`, `PCMU` and `PCM` codecs into an MP4 container so that th
 
 ```text
 PCMA/PCMU => PCM => FLAC => MSE/MP4/HLS
+Opus => PCM => FLAC => MSE/MP4/HLS (when FLAC is requested)
 ```
 
 **Resample PCMA/PCMU for WebRTC**
@@ -524,20 +523,17 @@ For example, you want to watch an RTSP stream from a [Dahua IPC-K42](https://www
 - this camera supports codecs **AAC, PCMU, PCMA** for receiving audio (to speaker), you don't need to select them
 - your browser supports codecs **H264, VP8, VP9, AV1** for receiving video, you don't need to select them
 - your browser supports codecs **OPUS, PCMU, PCMA** for sending and receiving audio, you don't need to select them
-- you can't get the camera audio directly because its audio codecs don't match your browser's codecs
-    - so you decide to use transcoding via FFmpeg and add this setting to the config YAML file
-    - you have chosen `OPUS/48000/2` codec, because it is higher quality than the `PCMU/8000` or `PCMA/8000`
+- you can let go2rtc convert the camera's `PCMU` or `PCMA` audio to Opus for the browser
 
-Now you have a stream with two sources - **RTSP and FFmpeg**:
+The stream needs only its **RTSP** source:
 
 ```yaml
 streams:
   dahua:
     - rtsp://admin:password@192.168.1.123/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif
-    - ffmpeg:rtsp://admin:password@192.168.1.123/cam/realmonitor?channel=1&subtype=0#audio=opus
 ```
 
-**go2rtc** automatically matches codecs for your browser across all of your stream sources. This is called **multi-source two-way codec negotiation**, and it's one of the main features of this app.
+**go2rtc** automatically matches codecs for your browser across all of your stream sources and converts audio when needed. This is called **multi-source two-way codec negotiation**, and it's one of the main features of this app.
 
 **PS.** You can select `PCMU` or `PCMA` codec in camera settings and not use transcoding at all. Or you can select `AAC` codec for main stream and `PCMU` codec for second stream and add both RTSP to YAML config, this also will work fine.
 

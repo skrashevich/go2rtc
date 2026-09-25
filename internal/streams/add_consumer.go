@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 )
 
 func (s *Stream) AddConsumer(cons core.Consumer) (err error) {
@@ -20,75 +21,109 @@ func (s *Stream) AddConsumer(cons core.Consumer) (err error) {
 	for _, consMedia := range consMedias {
 		log.Trace().Msgf("[streams] check cons=%d media=%s", consN, consMedia)
 
-	producers:
-		for prodN, prod := range s.producers {
-			// check for loop request, ex. `camera1: ffmpeg:camera1`
-			if info, ok := cons.(core.Info); ok && prod.url == info.GetSource() {
-				log.Trace().Msgf("[streams] skip cons=%d prod=%d", consN, prodN)
-				continue
-			}
-
-			if prodErrors[prodN] != nil {
-				log.Trace().Msgf("[streams] skip cons=%d prod=%d", consN, prodN)
-				continue
-			}
-
-			if err = prod.Dial(); err != nil {
-				log.Trace().Err(err).Msgf("[streams] dial cons=%d prod=%d", consN, prodN)
-				prodErrors[prodN] = err
-				continue
-			}
-
-			// Step 2. Get producer medias (not tracks yet)
-			for _, prodMedia := range prod.GetMedias() {
-				log.Trace().Msgf("[streams] check cons=%d prod=%d media=%s", consN, prodN, prodMedia)
-				prodMedias = append(prodMedias, prodMedia)
-
-				// Step 3. Match consumer/producer codecs list
-				prodCodec, consCodec := prodMedia.MatchMedia(consMedia)
-				if prodCodec == nil {
+		// Prefer an existing matching track, including tracks from later
+		// producers, before creating a converted audio track.
+		matched := false
+		for pass := range 2 {
+		producers:
+			for prodN, prod := range s.producers {
+				// check for loop request, ex. `camera1: ffmpeg:camera1`
+				if info, ok := cons.(core.Info); ok && prod.url == info.GetSource() {
+					log.Trace().Msgf("[streams] skip cons=%d prod=%d", consN, prodN)
 					continue
 				}
 
-				var track *core.Receiver
-
-				switch prodMedia.Direction {
-				case core.DirectionRecvonly:
-					log.Trace().Msgf("[streams] match cons=%d <= prod=%d", consN, prodN)
-
-					// Step 4. Get recvonly track from producer
-					if track, err = prod.GetTrack(prodMedia, prodCodec); err != nil {
-						log.Info().Err(err).Msg("[streams] can't get track")
-						prodErrors[prodN] = err
-						continue
-					}
-					// Step 5. Add track to consumer
-					if err = cons.AddTrack(consMedia, consCodec, track); err != nil {
-						log.Info().Err(err).Msg("[streams] can't add track")
-						continue
-					}
-
-				case core.DirectionSendonly:
-					log.Trace().Msgf("[streams] match cons=%d => prod=%d", consN, prodN)
-
-					// Step 4. Get recvonly track from consumer (backchannel)
-					if track, err = cons.(core.Producer).GetTrack(consMedia, consCodec); err != nil {
-						log.Info().Err(err).Msg("[streams] can't get track")
-						continue
-					}
-					// Step 5. Add track to producer
-					if err = prod.AddTrack(prodMedia, prodCodec, track); err != nil {
-						log.Info().Err(err).Msg("[streams] can't add track")
-						prodErrors[prodN] = err
-						continue
-					}
+				if prodErrors[prodN] != nil {
+					log.Trace().Msgf("[streams] skip cons=%d prod=%d", consN, prodN)
+					continue
 				}
 
-				prodStarts = append(prodStarts, prod)
-
-				if !consMedia.MatchAll() {
-					break producers
+				if err = prod.Dial(); err != nil {
+					log.Trace().Err(err).Msgf("[streams] dial cons=%d prod=%d", consN, prodN)
+					prodErrors[prodN] = err
+					continue
 				}
+
+				// Step 2. Get producer medias (not tracks yet)
+				for _, prodMedia := range prod.GetMedias() {
+					log.Trace().Msgf("[streams] check cons=%d prod=%d media=%s", consN, prodN, prodMedia)
+					if pass == 0 {
+						prodMedias = append(prodMedias, prodMedia)
+					}
+
+					// Step 3. Match consumer/producer codecs list
+					var prodCodec, consCodec *core.Codec
+					if pass == 0 {
+						prodCodec, consCodec = prodMedia.MatchMedia(consMedia)
+					} else {
+						prodCodec, consCodec = matchTranscodedMedia(prodMedia, consMedia)
+					}
+					if prodCodec == nil {
+						continue
+					}
+
+					var track *core.Receiver
+
+					switch prodMedia.Direction {
+					case core.DirectionRecvonly:
+						log.Trace().Msgf("[streams] match cons=%d <= prod=%d", consN, prodN)
+
+						// Step 4. Get recvonly track from producer
+						if track, err = prod.GetTrack(prodMedia, prodCodec); err != nil {
+							log.Info().Err(err).Msg("[streams] can't get track")
+							prodErrors[prodN] = err
+							continue
+						}
+						if pass == 1 {
+							if track, err = opus.TranscodeTrack(track, consCodec); err != nil {
+								log.Info().Err(err).Msg("[streams] can't transcode track")
+								continue
+							}
+						}
+						// Step 5. Add track to consumer
+						if err = cons.AddTrack(consMedia, consCodec, track); err != nil {
+							log.Info().Err(err).Msg("[streams] can't add track")
+							if pass == 1 {
+								track.Close()
+							}
+							continue
+						}
+
+					case core.DirectionSendonly:
+						log.Trace().Msgf("[streams] match cons=%d => prod=%d", consN, prodN)
+
+						// Step 4. Get recvonly track from consumer (backchannel)
+						if track, err = cons.(core.Producer).GetTrack(consMedia, consCodec); err != nil {
+							log.Info().Err(err).Msg("[streams] can't get track")
+							continue
+						}
+						if pass == 1 {
+							if track, err = opus.TranscodeTrack(track, prodCodec); err != nil {
+								log.Info().Err(err).Msg("[streams] can't transcode backchannel")
+								continue
+							}
+						}
+						// Step 5. Add track to producer
+						if err = prod.AddTrack(prodMedia, prodCodec, track); err != nil {
+							log.Info().Err(err).Msg("[streams] can't add track")
+							if pass == 1 {
+								track.Close()
+							}
+							prodErrors[prodN] = err
+							continue
+						}
+					}
+
+					prodStarts = append(prodStarts, prod)
+					matched = true
+
+					if !consMedia.MatchAll() {
+						break producers
+					}
+				}
+			}
+			if matched {
+				break
 			}
 		}
 	}
@@ -112,6 +147,37 @@ func (s *Stream) AddConsumer(cons core.Consumer) (err error) {
 	}
 
 	return nil
+}
+
+func matchTranscodedMedia(prod, cons *core.Media) (prodCodec, consCodec *core.Codec) {
+	if prod.Kind != core.KindAudio || cons.Kind != core.KindAudio || prod.Direction == cons.Direction {
+		return nil, nil
+	}
+	bestRank := 3
+	for _, p := range prod.Codecs {
+		for _, c := range cons.Codecs {
+			var target *core.Codec
+			if prod.Direction == core.DirectionRecvonly && opus.CanTranscode(p, c) {
+				target = c
+			} else if prod.Direction == core.DirectionSendonly && opus.CanTranscode(c, p) {
+				target = p
+			}
+			if target == nil {
+				continue
+			}
+			rank := 2
+			switch target.Name {
+			case core.CodecPCML:
+				rank = 0
+			case core.CodecPCM:
+				rank = 1
+			}
+			if rank < bestRank {
+				prodCodec, consCodec, bestRank = p, c, rank
+			}
+		}
+	}
+	return
 }
 
 func formatError(consMedias, prodMedias []*core.Media, prodErrors []error) error {
