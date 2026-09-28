@@ -7,7 +7,7 @@ require (
 	github.com/expr-lang/expr v1.17.7
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/mattn/go-isatty v0.0.20
+	github.com/mattn/go-isatty v0.0.24
 	github.com/miekg/dns v1.1.70
 	github.com/pion/dtls/v3 v3.0.10
 	github.com/pion/ice/v4 v4.2.0
@@ -21,14 +21,14 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/sigurn/crc16 v0.0.0-20240131213347-83fcde1e29d1
 	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
-	github.com/skrashevich/go-opus v0.0.0-20260925005245-0ab870017ae5
+	github.com/skrashevich/go-opus v0.0.0-20260928201234-d5c15a687473
 	github.com/skrashevich/go-webp v0.1.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tadglines/go-pkgs v0.0.0-20210623144937-b983b20f54f9
-	golang.org/x/crypto v0.48.0
-	golang.org/x/net v0.50.0
+	golang.org/x/crypto v0.57.0
+	golang.org/x/net v0.59.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/libc v1.70.0
+	modernc.org/libc v1.77.1
 )
 
 require (
@@ -47,11 +47,11 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
-	golang.org/x/mod v0.33.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.42.0 // indirect
+	golang.org/x/tools v0.50.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.11.0 // indirect
+	modernc.org/memory v1.12.1 // indirect
 )
