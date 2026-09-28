@@ -1,5 +1,3 @@
-//go:build !mipsle
-
 package opus
 
 import (

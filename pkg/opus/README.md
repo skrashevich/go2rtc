@@ -16,7 +16,7 @@ When there is no directly compatible audio track, go2rtc can convert in either d
 
 Direct codec matches are preferred. Opus is sent with a 48 kHz RTP clock and 20 ms packets. The encoder resamples PCM to a supported Opus rate, enables in-band FEC with a 10% expected packet loss setting, and the decoder attempts FEC or packet loss concealment for short RTP gaps. Encoder and decoder state is released when the converted track detaches.
 
-The conversion does not add AAC, MP3, or video transcoding; use FFmpeg for those codecs. It is unavailable on `linux/mipsle`, where `go-opus`'s `modernc.org/libc` dependency cannot build. Direct Opus passthrough continues to work there.
+The conversion does not add AAC, MP3, or video transcoding; use FFmpeg for those codecs. The current `go-opus` runtime no longer depends on `modernc.org/libc`, so the built-in converter also compiles for `linux/mipsle`.
 
 ## Multichannel status
 

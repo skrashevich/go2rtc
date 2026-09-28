@@ -1,17 +1,13 @@
-//go:build !mipsle
-
 package opus
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
-	"runtime"
 	"sync"
 	"unsafe"
 
 	goopus "github.com/skrashevich/go-opus"
-	"modernc.org/libc"
 )
 
 const ApplicationVoIP int32 = 2048
@@ -27,24 +23,35 @@ const (
 
 type Encoder struct {
 	mu       sync.Mutex
-	tls      *libc.TLS
+	tls      *goopus.TLS
 	state    uintptr
 	rate     uint32
 	channels uint8
-	status   int32
-	pcm      []int16
-	packet   []byte
+	pcm      uintptr
+	packet   uintptr
+	va       uintptr
 }
 
 func NewEncoder(rate uint32, channels uint8, application int32) (*Encoder, error) {
 	if !validRate(rate) || channels < 1 || channels > 2 {
 		return nil, fmt.Errorf("opus: unsupported encoder format %d Hz/%d channels", rate, channels)
 	}
-	e := &Encoder{tls: libc.NewTLS(), rate: rate, channels: channels, packet: make([]byte, maxPacketBytes)}
-	e.state = goopus.EncoderCreate(e.tls, int32(rate), int32(channels), application, uintptr(unsafe.Pointer(&e.status)))
-	if e.state == 0 || e.status != 0 {
-		e.tls.Close()
-		return nil, fmt.Errorf("opus: encoder creation failed: %d", e.status)
+	e := &Encoder{tls: goopus.NewTLS(), rate: rate, channels: channels}
+	e.pcm = goopus.Malloc(int(rate) * 120 / 1000 * int(channels) * 2)
+	e.packet = goopus.Malloc(maxPacketBytes)
+	e.va = goopus.Malloc(8)
+	statusPtr := goopus.Malloc(4)
+	if e.pcm == 0 || e.packet == 0 || e.va == 0 || statusPtr == 0 {
+		goopus.Free(statusPtr)
+		e.Close()
+		return nil, errors.New("opus: encoder buffer allocation failed")
+	}
+	e.state = goopus.EncoderCreate(e.tls, int32(rate), int32(channels), application, statusPtr)
+	status := *(*int32)(unsafe.Pointer(statusPtr))
+	goopus.Free(statusPtr)
+	if e.state == 0 || status != 0 {
+		e.Close()
+		return nil, fmt.Errorf("opus: encoder creation failed: %d", status)
 	}
 	return e, nil
 }
@@ -62,18 +69,12 @@ func (e *Encoder) Encode(pcm []int16) ([]byte, error) {
 	if !validFrameSize(e.rate, frameSize) {
 		return nil, fmt.Errorf("opus: invalid frame size %d at %d Hz", frameSize, e.rate)
 	}
-	// The transpiled codec receives uintptr values. Keep the input on the Go
-	// heap so stack growth during the call cannot invalidate its address.
-	e.pcm = append(e.pcm[:0], pcm...)
-	n := goopus.Encode(e.tls, e.state,
-		uintptr(unsafe.Pointer(unsafe.SliceData(e.pcm))), int32(frameSize),
-		uintptr(unsafe.Pointer(unsafe.SliceData(e.packet))), int32(len(e.packet)))
-	runtime.KeepAlive(e.pcm)
-	runtime.KeepAlive(e.packet)
+	copy(unsafe.Slice((*int16)(unsafe.Pointer(e.pcm)), len(pcm)), pcm)
+	n := goopus.Encode(e.tls, e.state, e.pcm, int32(frameSize), e.packet, maxPacketBytes)
 	if n < 0 {
 		return nil, fmt.Errorf("opus: encode failed: %d", n)
 	}
-	return bytes.Clone(e.packet[:n]), nil
+	return bytes.Clone(unsafe.Slice((*byte)(unsafe.Pointer(e.packet)), int(n))), nil
 }
 
 func (e *Encoder) SetBitrate(bps int32) error {
@@ -101,9 +102,7 @@ func (e *Encoder) setControl(request, value int32) error {
 	if e.state == 0 {
 		return errors.New("opus: encoder is closed")
 	}
-	va := e.tls.Alloc(16)
-	rc := goopus.EncoderCtl(e.tls, e.state, request, libc.VaList(va, value))
-	e.tls.Free(16)
+	rc := goopus.EncoderCtl(e.tls, e.state, request, goopus.VaList(e.va, value))
 	if rc != 0 {
 		return fmt.Errorf("opus: encoder control %d failed: %d", request, rc)
 	}
@@ -123,30 +122,47 @@ func (e *Encoder) Close() {
 	if e.state != 0 {
 		goopus.EncoderDestroy(e.tls, e.state)
 		e.state = 0
+	}
+	goopus.Free(e.pcm)
+	goopus.Free(e.packet)
+	goopus.Free(e.va)
+	e.pcm, e.packet, e.va = 0, 0, 0
+	if e.tls != nil {
 		e.tls.Close()
+		e.tls = nil
 	}
 }
 
 type Decoder struct {
-	mu       sync.Mutex
-	tls      *libc.TLS
-	state    uintptr
-	rate     uint32
-	channels uint8
-	status   int32
-	packet   []byte
-	pcm      []int16
+	mu        sync.Mutex
+	tls       *goopus.TLS
+	state     uintptr
+	rate      uint32
+	channels  uint8
+	packet    uintptr
+	packetCap int
+	pcm       uintptr
 }
 
 func NewDecoder(rate uint32, channels uint8) (*Decoder, error) {
 	if !validRate(rate) || channels < 1 || channels > 2 {
 		return nil, fmt.Errorf("opus: unsupported decoder format %d Hz/%d channels", rate, channels)
 	}
-	d := &Decoder{tls: libc.NewTLS(), rate: rate, channels: channels, pcm: make([]int16, int(rate)*120/1000*int(channels))}
-	d.state = goopus.DecoderCreate(d.tls, int32(rate), int32(channels), uintptr(unsafe.Pointer(&d.status)))
-	if d.state == 0 || d.status != 0 {
-		d.tls.Close()
-		return nil, fmt.Errorf("opus: decoder creation failed: %d", d.status)
+	d := &Decoder{tls: goopus.NewTLS(), rate: rate, channels: channels, packetCap: 8192}
+	d.packet = goopus.Malloc(d.packetCap)
+	d.pcm = goopus.Malloc(int(rate) * 120 / 1000 * int(channels) * 2)
+	statusPtr := goopus.Malloc(4)
+	if d.packet == 0 || d.pcm == 0 || statusPtr == 0 {
+		goopus.Free(statusPtr)
+		d.Close()
+		return nil, errors.New("opus: decoder buffer allocation failed")
+	}
+	d.state = goopus.DecoderCreate(d.tls, int32(rate), int32(channels), statusPtr)
+	status := *(*int32)(unsafe.Pointer(statusPtr))
+	goopus.Free(statusPtr)
+	if d.state == 0 || status != 0 {
+		d.Close()
+		return nil, fmt.Errorf("opus: decoder creation failed: %d", status)
 	}
 	return d, nil
 }
@@ -175,21 +191,26 @@ func (d *Decoder) DecodeFrame(packet []byte, fec bool, samples int) ([]int16, er
 		frameSize = int32(samples)
 	}
 	if len(packet) != 0 {
-		d.packet = append(d.packet[:0], packet...)
-		data = uintptr(unsafe.Pointer(unsafe.SliceData(d.packet)))
+		if len(packet) > d.packetCap {
+			newPacket := goopus.Malloc(len(packet))
+			if newPacket == 0 {
+				return nil, errors.New("opus: packet buffer allocation failed")
+			}
+			goopus.Free(d.packet)
+			d.packet, d.packetCap = newPacket, len(packet)
+		}
+		copy(unsafe.Slice((*byte)(unsafe.Pointer(d.packet)), len(packet)), packet)
+		data = d.packet
 	}
 	var fecFlag int32
 	if fec {
 		fecFlag = 1
 	}
-	n := goopus.Decode(d.tls, d.state, data, int32(len(packet)),
-		uintptr(unsafe.Pointer(unsafe.SliceData(d.pcm))), frameSize, fecFlag)
-	runtime.KeepAlive(d.packet)
-	runtime.KeepAlive(d.pcm)
+	n := goopus.Decode(d.tls, d.state, data, int32(len(packet)), d.pcm, frameSize, fecFlag)
 	if n < 0 {
 		return nil, fmt.Errorf("opus: decode failed: %d", n)
 	}
-	return append([]int16(nil), d.pcm[:int(n)*int(d.channels)]...), nil
+	return append([]int16(nil), unsafe.Slice((*int16)(unsafe.Pointer(d.pcm)), int(n)*int(d.channels))...), nil
 }
 
 func (d *Decoder) Close() {
@@ -198,7 +219,13 @@ func (d *Decoder) Close() {
 	if d.state != 0 {
 		goopus.DecoderDestroy(d.tls, d.state)
 		d.state = 0
+	}
+	goopus.Free(d.packet)
+	goopus.Free(d.pcm)
+	d.packet, d.pcm = 0, 0
+	if d.tls != nil {
 		d.tls.Close()
+		d.tls = nil
 	}
 }
 
