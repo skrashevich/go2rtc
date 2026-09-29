@@ -49,8 +49,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,t
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /build/go2rtc /usr/local/bin/
-COPY LICENSE /usr/share/licenses/go2rtc/LICENSE
-COPY third_party/go-opus/ /usr/share/licenses/go2rtc/go-opus/
 ADD --chmod=755 https://github.com/MarcA711/Rockchip-FFmpeg-Builds/releases/download/6.1-8-no_extra_dump/ffmpeg /usr/local/bin
 COPY --from=download-cdn /web /var/www/go2rtc
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/
