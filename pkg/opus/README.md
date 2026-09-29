@@ -18,6 +18,8 @@ Direct codec matches are preferred. Opus is sent with a 48 kHz RTP clock and 20 
 
 The conversion does not add AAC, MP3, or video transcoding; use FFmpeg for those codecs. The current `go-opus` runtime no longer depends on `modernc.org/libc`, so the built-in converter also compiles for `linux/mipsle`.
 
+The `go-opus` dependency's license and attribution texts are included in [`third_party/go-opus`](../../third_party/go-opus/) and packaged with go2rtc binaries and Docker images.
+
 ## Multichannel status
 
 `go-opus` now tests multistream Opus output for four-channel and 5.1 audio. The exported encoder/decoder API used here still handles one or two channels. Multichannel support in go2rtc would also need exported multistream entry points, a channel mapping, and a container or protocol path that carries that mapping. Current WebRTC, HomeKit, and built-in Opus conversion remain mono/stereo; multichannel packets must not be sent through the single-stream path. See [RFC 7845 channel mapping](https://www.rfc-editor.org/rfc/rfc7845.html#section-5.1.1).

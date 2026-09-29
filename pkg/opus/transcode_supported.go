@@ -17,7 +17,7 @@ func CanTranscode(src, dst *core.Codec) bool {
 	if src.Name == core.CodecOpus {
 		return src.Channels <= 2 && dst.Channels <= 2 && isLinearOrG711(dst.Name)
 	}
-	return src.ClockRate != 0 && dst.Channels <= 2 && isLinearOrG711(src.Name) && dst.Name == core.CodecOpus
+	return src.ClockRate != 0 && src.Channels <= 2 && dst.Channels <= 2 && isLinearOrG711(src.Name) && dst.Name == core.CodecOpus
 }
 
 func isLinearOrG711(name string) bool {

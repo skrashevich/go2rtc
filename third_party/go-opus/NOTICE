@@ -1,0 +1,18 @@
+go-opus
+https://github.com/skrashevich/go-opus
+
+Original modifications and additions to go-opus:
+Copyright (c) 2026 Sergey Krashevich
+
+This project includes code derived from the Opus reference implementation
+published with RFC 6716, originally transpiled to Go using modernc.org/ccgo v4
+by Jan Mercl. Earlier versions used modernc.org/libc for runtime support.
+Original Opus copyright and license notices are retained in the source files
+and in COPYING. They include notices for IETF Trust, Skype Limited,
+Jean-Marc Valin, Xiph.Org Foundation, Mozilla Corporation and CSIRO.
+
+Sergey Krashevich's original contributions include Go integration, runtime
+support, performance optimizations, portability changes and tests. This
+attribution applies to those contributions, not to the underlying Opus code.
+
+This NOTICE is informational and does not modify the license terms.

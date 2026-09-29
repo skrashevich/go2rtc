@@ -62,6 +62,9 @@ func TestCanTranscodeRejectsUnsupportedChannels(t *testing.T) {
 	if CanTranscode(pcma, &core.Codec{Name: core.CodecOpus, ClockRate: 48000, Channels: 3}) {
 		t.Fatal("matched unsupported three-channel Opus encoding")
 	}
+	if CanTranscode(&core.Codec{Name: core.CodecPCML, ClockRate: 48000, Channels: 3}, opus) {
+		t.Fatal("matched unsupported three-channel PCM source")
+	}
 	if CanTranscode(opus, &core.Codec{Name: core.CodecPCML, ClockRate: 48000, Channels: 3}) {
 		t.Fatal("matched unsupported three-channel Opus decoding")
 	}

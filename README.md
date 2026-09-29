@@ -448,8 +448,8 @@ Some examples:
 - `rtsp://192.168.1.123:8554/camera1?video=h264&audio=aac&audio=opus` - H264 video codec and two separate audio tracks
 - `rtsp://192.168.1.123:8554/camera1?video&audio=all` - any video codec and all audio codecs as separate tracks
 - `http://192.168.1.123:1984/api/stream.m3u8?src=camera1&mp4` - HLS stream with MP4 compatible codecs (HLS/fMP4)
-- `http://192.168.1.123:1984/api/stream.m3u8?src=camera1&mp4=flac` - HLS stream with PCMA/PCMU/PCM audio support (HLS/fMP4), won't work on old devices
-- `http://192.168.1.123:1984/api/stream.mp4?src=camera1&mp4=flac` - MP4 file with PCMA/PCMU/PCM audio support, won't work on old devices (ex. iOS 12)
+- `http://192.168.1.123:1984/api/stream.m3u8?src=camera1&mp4=flac` - HLS stream with PCMA/PCMU/PCM/Opus audio converted to FLAC (HLS/fMP4), won't work on old devices
+- `http://192.168.1.123:1984/api/stream.mp4?src=camera1&mp4=flac` - MP4 file with PCMA/PCMU/PCM/Opus audio converted to FLAC, won't work on old devices (ex. iOS 12)
 - `http://192.168.1.123:1984/api/stream.mp4?src=camera1&mp4=all` - MP4 file with non-standard audio codecs, won't work on some players
 
 ### Codecs madness
@@ -473,7 +473,7 @@ Some examples:
 
 **Audio**
 
-- go2rtc supports [automatic repackaging](#built-in-transcoding) of `PCMA/PCMU/PCM` codecs into `FLAC` for MSE/MP4/HLS so they'll work almost anywhere
+- go2rtc supports [automatic conversion](#built-in-transcoding) of `PCMA/PCMU/PCM/Opus` audio to `FLAC` for MSE/MP4/HLS when FLAC is requested
 - **WebRTC** audio codecs: `PCMU/8000`, `PCMA/8000`, `OPUS/48000/2`
 - `OPUS` and `MP3` inside **MP4** are part of the standard, but some players do not support them anyway (especially Apple)
 
@@ -519,11 +519,11 @@ For example, you want to watch an RTSP stream from a [Dahua IPC-K42](https://www
 
 - this camera supports two-way audio standard **ONVIF Profile T**
 - this camera supports codecs **H264, H265** for sending video, and you select `H264` in camera settings
-- this camera supports codecs **AAC, PCMU, PCMA** for sending audio (from mic), and you select `AAC/16000` in camera settings
+- this camera supports codecs **AAC, PCMU, PCMA** for sending audio (from mic), and you select `PCMU/8000` in camera settings
 - this camera supports codecs **AAC, PCMU, PCMA** for receiving audio (to speaker), you don't need to select them
 - your browser supports codecs **H264, VP8, VP9, AV1** for receiving video, you don't need to select them
 - your browser supports codecs **OPUS, PCMU, PCMA** for sending and receiving audio, you don't need to select them
-- you can let go2rtc convert the camera's `PCMU` or `PCMA` audio to Opus for the browser
+- the browser receives `PCMU` directly; if a client accepts only Opus, go2rtc converts the camera audio automatically
 
 The stream needs only its **RTSP** source:
 
@@ -535,7 +535,7 @@ streams:
 
 **go2rtc** automatically matches codecs for your browser across all of your stream sources and converts audio when needed. This is called **multi-source two-way codec negotiation**, and it's one of the main features of this app.
 
-**PS.** You can select `PCMU` or `PCMA` codec in camera settings and not use transcoding at all. Or you can select `AAC` codec for main stream and `PCMU` codec for second stream and add both RTSP to YAML config, this also will work fine.
+**PS.** You can select `PCMA` instead of `PCMU` and still use the direct browser match. If the camera sends only `AAC`, Opus conversion requires an FFmpeg source. You can also select `AAC` for the main stream and `PCMU` for the second stream and add both RTSP sources to YAML config.
 
 ## Security
 
