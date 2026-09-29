@@ -92,6 +92,7 @@ func (c *Conn) Start() (err error) {
 }
 
 func (c *Conn) Stop() (err error) {
+	defer c.audio.Close()
 	for _, receiver := range c.Receivers {
 		receiver.Close()
 	}

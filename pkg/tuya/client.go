@@ -10,12 +10,14 @@ import (
 	"sync"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/webrtc"
 	"github.com/pion/rtp"
 	pion "github.com/pion/webrtc/v4"
 )
 
 type Client struct {
+	audio     opus.Consumer
 	api       TuyaAPI
 	conn      *webrtc.Conn
 	pc        *pion.PeerConnection
@@ -333,7 +335,7 @@ func Dial(rawURL string) (core.Producer, error) {
 }
 
 func (c *Client) GetMedias() []*core.Media {
-	return c.conn.GetMedias()
+	return c.audio.GetMedias(webrtc.WithResampling(c.conn.Medias))
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {
@@ -341,6 +343,10 @@ func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver,
 }
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *Client) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	localTrack := c.conn.GetSenderTrack(media.ID)
 	if localTrack == nil {
 		return errors.New("webrtc: can't get track")
@@ -445,6 +451,7 @@ func (c *Client) Start() error {
 }
 
 func (c *Client) Stop() error {
+	defer c.audio.Close()
 	if c.closed {
 		return nil
 	}

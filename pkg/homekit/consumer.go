@@ -16,6 +16,7 @@ import (
 )
 
 type Consumer struct {
+	audio opus.Consumer
 	core.Connection
 	conn net.Conn
 	srtp *srtp.Server
@@ -160,6 +161,10 @@ func (c *Consumer) Start() error {
 }
 
 func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *Consumer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	var session *srtp.Session
 	if codec.Kind() == core.KindVideo {
 		session = c.videoSession
@@ -211,6 +216,7 @@ func (c *Consumer) WriteTo(io.Writer) (int64, error) {
 }
 
 func (c *Consumer) Stop() error {
+	defer c.audio.Close()
 	if c.deadline != nil {
 		c.deadline.Reset(0)
 	}
@@ -230,4 +236,8 @@ func (c *Consumer) srtpEndpoint() *srtp.Endpoint {
 
 func toDuration(seconds float32) time.Duration {
 	return time.Duration(seconds * float32(time.Second))
+}
+
+func (c *Consumer) GetMedias() []*core.Media {
+	return c.audio.GetMedias(c.Medias)
 }

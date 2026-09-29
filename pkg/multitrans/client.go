@@ -10,12 +10,14 @@ import (
 	"net/url"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/tcp"
 	"github.com/google/uuid"
 	"github.com/pion/rtp"
 )
 
 type Client struct {
+	audio opus.Consumer
 	core.Connection
 	conn   net.Conn
 	rd     *bufio.Reader
@@ -66,7 +68,11 @@ func Dial(rawURL string) (core.Producer, error) {
 	return c, nil
 }
 
-func (c *Client) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *Client) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	sender := core.NewSender(media, track.Codec)
 	sender.Handler = func(packet *rtp.Packet) {
 		clone := rtp.Packet{
@@ -198,6 +204,11 @@ func (c *Client) Start() error {
 }
 
 func (c *Client) Stop() error {
+	defer c.audio.Close()
 	c.closed.Done(nil)
 	return c.Connection.Stop()
+}
+
+func (c *Client) GetMedias() []*core.Media {
+	return c.audio.GetMedias(c.Medias)
 }

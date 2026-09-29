@@ -11,10 +11,14 @@ import (
 )
 
 func (c *Conn) GetMedias() []*core.Media {
-	return WithResampling(c.Medias)
+	return c.audio.GetMedias(WithResampling(c.Medias))
 }
 
 func (c *Conn) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *Conn) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	core.Assert(media.Direction == core.DirectionSendonly)
 
 	for _, sender := range c.Senders {
@@ -87,4 +91,9 @@ func (c *Conn) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiv
 
 	c.Senders = append(c.Senders, sender)
 	return nil
+}
+
+func (c *Conn) Stop() error {
+	defer c.audio.Close()
+	return c.Connection.Stop()
 }

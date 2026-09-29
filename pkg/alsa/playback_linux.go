@@ -5,11 +5,13 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/alsa/device"
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	"github.com/pion/rtp"
 )
 
 type Playback struct {
+	audio opus.Consumer
 	core.Connection
 	dev    *device.Device
 	closed core.Waiter
@@ -42,6 +44,10 @@ func (p *Playback) GetTrack(media *core.Media, codec *core.Codec) (*core.Receive
 }
 
 func (p *Playback) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return p.audio.AddTrack(media, codec, track, p.addTrack)
+}
+
+func (p *Playback) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	src := track.Codec
 	dst := &core.Codec{
 		Name:      core.CodecPCML,
@@ -79,6 +85,11 @@ func (p *Playback) Start() (err error) {
 }
 
 func (p *Playback) Stop() error {
+	defer p.audio.Close()
 	p.closed.Done(nil)
 	return p.Connection.Stop()
+}
+
+func (p *Playback) GetMedias() []*core.Media {
+	return p.audio.GetMedias(p.Medias)
 }

@@ -17,11 +17,12 @@ func TestTranscodePCMAToOpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 
 	packets := make(chan *rtp.Packet, 2)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 
 	for frame := range 2 {
@@ -76,10 +77,11 @@ func TestTranscodePCMAToOpusPreservesTimestampGap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 2)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 1, Timestamp: 0}, Payload: make([]byte, 160)})
@@ -97,10 +99,11 @@ func TestTranscodeWyoming22050PCMToOpus(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 50)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 	for frame := range 50 {
 		source.WriteRTP(&rtp.Packet{Header: rtp.Header{
@@ -135,10 +138,11 @@ func TestTranscodeOpusToPCM(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 2)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 7, Timestamp: 2000}, Payload: packet})
@@ -192,10 +196,11 @@ func TestTranscodeOpusConcealsOneMissingPacket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 3)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 10, Timestamp: 0}, Payload: firstData})
@@ -234,10 +239,11 @@ func TestTranscodeOpusConcealsTenMillisecondPacket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 3)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 10, Timestamp: 0}, Payload: firstData})
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 12, Timestamp: 960}, Payload: thirdData})
@@ -277,10 +283,11 @@ func TestTranscodeOpusConcealsTwoTenMillisecondPackets(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 4)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 10, Timestamp: 0}, Payload: firstData})
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 13, Timestamp: 1440}, Payload: fourthData})
@@ -321,10 +328,11 @@ func TestTranscodeOpusConcealsSixtyMillisecondPacket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 4)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 10, Timestamp: 0}, Payload: firstData})
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 13, Timestamp: 8640}, Payload: fourthData})
@@ -354,10 +362,11 @@ func TestTranscodeOpusDropsDuplicatePacket(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(converted.Close)
 	packets := make(chan *rtp.Packet, 3)
 	sender := core.NewSender(nil, converted.Codec)
 	sender.Handler = func(p *rtp.Packet) { packets <- p }
-	sender.HandleRTP(converted)
+	sender.HandleRTP(converted.Receiver)
 	defer sender.Close()
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 10, Timestamp: 0}, Payload: data})
 	source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: 10, Timestamp: 0}, Payload: data})

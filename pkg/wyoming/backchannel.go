@@ -6,17 +6,19 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
 type Backchannel struct {
+	audio opus.Consumer
 	core.Connection
 	api *API
 }
 
 func newBackchannel(conn net.Conn) *Backchannel {
 	return &Backchannel{
-		core.Connection{
+		Connection: core.Connection{
 			ID:         core.NewID(),
 			FormatName: "wyoming",
 			Medias: []*core.Media{
@@ -30,7 +32,7 @@ func newBackchannel(conn net.Conn) *Backchannel {
 			},
 			Transport: conn,
 		},
-		NewAPI(conn),
+		api: NewAPI(conn),
 	}
 }
 
@@ -39,6 +41,10 @@ func (b *Backchannel) GetTrack(media *core.Media, codec *core.Codec) (*core.Rece
 }
 
 func (b *Backchannel) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return b.audio.AddTrack(media, codec, track, b.addTrack)
+}
+
+func (b *Backchannel) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	sender := core.NewSender(media, codec)
 	sender.Handler = func(pkt *rtp.Packet) {
 		ts := time.Now().Nanosecond()
@@ -60,4 +66,13 @@ func (b *Backchannel) Start() error {
 			return err
 		}
 	}
+}
+
+func (b *Backchannel) GetMedias() []*core.Media {
+	return b.audio.GetMedias(b.Medias)
+}
+
+func (b *Backchannel) Stop() error {
+	defer b.audio.Close()
+	return b.Connection.Stop()
 }

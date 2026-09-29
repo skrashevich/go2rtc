@@ -20,7 +20,6 @@ import (
 	"github.com/AlexxIT/go2rtc/internal/streams"
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/magic"
-	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	pkg "github.com/AlexxIT/go2rtc/pkg/rtsp"
 	"github.com/AlexxIT/go2rtc/pkg/shell"
 	"github.com/rs/zerolog"
@@ -105,7 +104,7 @@ func execHandle(rawURL string) (prod core.Producer, err error) {
 	}
 
 	if query.Get("backchannel") == "1" {
-		return pcm.NewBackchannel(cmd, query.Get("audio"))
+		return newBackchannel(cmd, query.Get("audio"))
 	}
 
 	var timeout time.Duration

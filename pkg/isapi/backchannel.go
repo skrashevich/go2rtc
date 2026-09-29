@@ -8,14 +8,18 @@ import (
 )
 
 func (c *Client) GetMedias() []*core.Media {
-	return c.medias
+	return c.audio.GetMedias(c.medias)
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {
 	return nil, core.ErrCantGetTrack
 }
 
-func (c *Client) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *Client) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	if c.sender == nil {
 		c.sender = core.NewSender(media, track.Codec)
 		c.sender.Handler = func(packet *rtp.Packet) {
@@ -39,6 +43,7 @@ func (c *Client) Start() (err error) {
 }
 
 func (c *Client) Stop() (err error) {
+	defer c.audio.Close()
 	if c.sender != nil {
 		c.sender.Close()
 	}

@@ -9,10 +9,12 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/h264"
 	"github.com/AlexxIT/go2rtc/pkg/h264/annexb"
 	"github.com/AlexxIT/go2rtc/pkg/h265"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
 type Producer struct {
+	audio opus.Consumer
 	core.Connection
 	client *Client
 }
@@ -194,6 +196,7 @@ func (p *Producer) Start() error {
 }
 
 func (p *Producer) Stop() error {
+	defer p.audio.Close()
 	_ = p.client.StopMedia()
 	return p.Connection.Stop()
 }

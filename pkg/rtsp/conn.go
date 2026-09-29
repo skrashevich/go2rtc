@@ -13,11 +13,13 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/tcp"
 	"github.com/pion/rtp"
 )
 
 type Conn struct {
+	audio opus.Consumer
 	core.Connection
 	core.Listener
 

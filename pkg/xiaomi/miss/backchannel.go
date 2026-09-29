@@ -9,7 +9,11 @@ import (
 	"github.com/pion/rtp"
 )
 
-func (p *Producer) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return p.audio.AddTrack(media, codec, track, p.addTrack)
+}
+
+func (p *Producer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	if err := p.client.StartSpeaker(); err != nil {
 		return err
 	}
@@ -71,4 +75,8 @@ func (p *Producer) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiv
 	sender.HandleRTP(track)
 	p.Senders = append(p.Senders, sender)
 	return nil
+}
+
+func (p *Producer) GetMedias() []*core.Media {
+	return p.audio.GetMedias(p.Medias)
 }

@@ -14,10 +14,14 @@ import (
 
 func (c *Conn) GetMedias() []*core.Media {
 	//core.Assert(c.Medias != nil)
-	return c.Medias
+	return c.audio.GetMedias(c.Medias)
 }
 
-func (c *Conn) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) (err error) {
+func (c *Conn) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *Conn) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) (err error) {
 	var channel byte
 
 	switch c.mode {

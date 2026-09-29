@@ -20,12 +20,14 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	"github.com/AlexxIT/go2rtc/pkg/tcp"
 )
 
 // Deprecated: should be rewritten to core.Connection
 type Client struct {
+	audio opus.Consumer
 	core.Listener
 
 	url *url.URL

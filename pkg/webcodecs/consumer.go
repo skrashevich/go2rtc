@@ -12,6 +12,7 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/h264"
 	"github.com/AlexxIT/go2rtc/pkg/h264/annexb"
 	"github.com/AlexxIT/go2rtc/pkg/h265"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
@@ -23,6 +24,7 @@ import (
 const headerSize = 9
 
 type Consumer struct {
+	audio opus.Consumer
 	core.Connection
 	wr    *core.WriteBuffer
 	mu    sync.Mutex
@@ -82,7 +84,14 @@ func NewConsumer(medias []*core.Media) *Consumer {
 	}
 }
 
-func (c *Consumer) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (c *Consumer) GetMedias() []*core.Media {
+	return c.audio.GetMedias(c.Medias)
+}
+func (c *Consumer) Stop() error { defer c.audio.Close(); return c.Connection.Stop() }
+func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+func (c *Consumer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	trackID := byte(len(c.Senders))
 
 	codec := track.Codec.Clone()

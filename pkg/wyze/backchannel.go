@@ -10,6 +10,10 @@ import (
 )
 
 func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return p.audio.AddTrack(media, codec, track, p.addTrack)
+}
+
+func (p *Producer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	if err := p.client.StartIntercom(); err != nil {
 		return fmt.Errorf("wyze: failed to enable intercom: %w", err)
 	}
@@ -52,4 +56,13 @@ func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Re
 	p.Senders = append(p.Senders, sender)
 
 	return nil
+}
+
+func (p *Producer) GetMedias() []*core.Media {
+	return p.audio.GetMedias(p.Medias)
+}
+
+func (p *Producer) Stop() error {
+	defer p.audio.Close()
+	return p.Connection.Stop()
 }

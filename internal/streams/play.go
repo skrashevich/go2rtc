@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 )
 
 func (s *Stream) Play(urlOrProd any) error {
@@ -134,45 +133,29 @@ func (s *Stream) RemoveInternalConsumer(conn core.Consumer) {
 }
 
 func matchMedia(prod core.Producer, cons core.Consumer) bool {
-	for pass := range 2 {
-		for _, consMedia := range cons.GetMedias() {
-			for _, prodMedia := range prod.GetMedias() {
-				if prodMedia.Direction != core.DirectionRecvonly {
-					continue
-				}
-
-				var prodCodec, consCodec *core.Codec
-				if pass == 0 {
-					prodCodec, consCodec = prodMedia.MatchMedia(consMedia)
-				} else {
-					prodCodec, consCodec = matchTranscodedMedia(prodMedia, consMedia)
-				}
-				if prodCodec == nil {
-					continue
-				}
-
-				track, err := prod.GetTrack(prodMedia, prodCodec)
-				if err != nil {
-					log.Warn().Err(err).Msg("[streams] can't get track")
-					continue
-				}
-				if pass == 1 {
-					if track, err = opus.TranscodeTrack(track, consCodec); err != nil {
-						log.Warn().Err(err).Msg("[streams] can't transcode track")
-						continue
-					}
-				}
-
-				if err = cons.AddTrack(consMedia, consCodec, track); err != nil {
-					log.Warn().Err(err).Msg("[streams] can't add track")
-					if pass == 1 {
-						track.Close()
-					}
-					continue
-				}
-
-				return true
+	for _, consMedia := range cons.GetMedias() {
+		for _, prodMedia := range prod.GetMedias() {
+			if prodMedia.Direction != core.DirectionRecvonly {
+				continue
 			}
+
+			prodCodec, consCodec := prodMedia.MatchMedia(consMedia)
+			if prodCodec == nil {
+				continue
+			}
+
+			track, err := prod.GetTrack(prodMedia, prodCodec)
+			if err != nil {
+				log.Warn().Err(err).Msg("[streams] can't get track")
+				continue
+			}
+
+			if err = cons.AddTrack(consMedia, consCodec, track); err != nil {
+				log.Warn().Err(err).Msg("[streams] can't add track")
+				continue
+			}
+
+			return true
 		}
 	}
 

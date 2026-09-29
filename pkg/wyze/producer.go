@@ -10,11 +10,13 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/h264"
 	"github.com/AlexxIT/go2rtc/pkg/h264/annexb"
 	"github.com/AlexxIT/go2rtc/pkg/h265"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/tutk"
 	"github.com/pion/rtp"
 )
 
 type Producer struct {
+	audio opus.Consumer
 	core.Connection
 	client *Client
 	model  string

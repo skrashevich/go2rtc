@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	"github.com/AlexxIT/go2rtc/pkg/pcm/s16le"
 	"github.com/pion/rtp"
@@ -208,6 +209,7 @@ func (s *satellite) playAudio(codec *core.Codec, rd io.Reader) bool {
 }
 
 type micConsumer struct {
+	audio opus.Consumer
 	core.Connection
 	onData  func(chunk []byte)
 	onClose func()
@@ -234,6 +236,10 @@ func newMicConsumer(onData func(chunk []byte)) *micConsumer {
 }
 
 func (c *micConsumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
+	return c.audio.AddTrack(media, codec, track, c.addTrack)
+}
+
+func (c *micConsumer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	src := track.Codec
 	dst := &core.Codec{
 		Name:      core.CodecPCML,
@@ -252,6 +258,7 @@ func (c *micConsumer) AddTrack(media *core.Media, codec *core.Codec, track *core
 }
 
 func (c *micConsumer) Stop() error {
+	defer c.audio.Close()
 	if c.onClose != nil {
 		c.onClose()
 	}
@@ -272,4 +279,8 @@ func repack(handler core.HandlerFunc) core.HandlerFunc {
 			handler(pkt)
 		}
 	}
+}
+
+func (c *micConsumer) GetMedias() []*core.Media {
+	return c.audio.GetMedias(c.Medias)
 }

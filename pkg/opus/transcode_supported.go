@@ -28,9 +28,17 @@ func isLinearOrG711(name string) bool {
 	return false
 }
 
-// TranscodeTrack adds a converted receiver below source. The converted
-// receiver and codec state are closed when its last consumer detaches.
-func TranscodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, error) {
+// Track owns a converted receiver and its codec state. Its owner must call Close
+// when the consuming connection stops, including when adding the track fails.
+type Track struct {
+	*core.Receiver
+	close func()
+}
+
+func (t *Track) Close() { t.close() }
+
+// TranscodeTrack adds a converted receiver below source.
+func TranscodeTrack(source *core.Receiver, wanted *core.Codec) (*Track, error) {
 	if source == nil || !CanTranscode(source.Codec, wanted) {
 		return nil, fmt.Errorf("opus: unsupported conversion")
 	}
@@ -40,7 +48,7 @@ func TranscodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, 
 	return encodeTrack(source, wanted)
 }
 
-func encodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, error) {
+func encodeTrack(source *core.Receiver, wanted *core.Codec) (*Track, error) {
 	src := source.Codec.Clone()
 	if src.Channels == 0 {
 		src.Channels = 1
@@ -70,7 +78,6 @@ func encodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, err
 	}
 
 	converted := core.NewReceiver(nil, dst)
-	converted.OnClose = encoder.Close
 	forward := converted.Input
 	frameSamples := int(inputRate / 50)
 	frameBytes := frameSamples * int(dst.Channels) * 2
@@ -80,9 +87,13 @@ func encodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, err
 	var expectedInputTS uint32
 	var started bool
 	var mu sync.Mutex
+	var closed bool
 	converted.Input = func(packet *rtp.Packet) {
 		mu.Lock()
 		defer mu.Unlock()
+		if closed {
+			return
+		}
 		if len(packet.Payload)%pcm.BytesPerFrame(src) != 0 {
 			return
 		}
@@ -115,10 +126,16 @@ func encodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, err
 		}
 	}
 	converted.Node.WithParent(&source.Node)
-	return converted, nil
+	return &Track{Receiver: converted, close: sync.OnceFunc(func() {
+		mu.Lock()
+		closed = true
+		encoder.Close()
+		mu.Unlock()
+		converted.Close()
+	})}, nil
 }
 
-func decodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, error) {
+func decodeTrack(source *core.Receiver, wanted *core.Codec) (*Track, error) {
 	dst := wanted.Clone()
 	if dst.ClockRate == 0 {
 		if dst.Name == core.CodecPCMA || dst.Name == core.CodecPCMU {
@@ -149,7 +166,6 @@ func decodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, err
 	}
 
 	converted := core.NewReceiver(nil, dst)
-	converted.OnClose = decoder.Close
 	forward := converted.Input
 	sourceRate := source.Codec.ClockRate
 	if sourceRate == 0 {
@@ -161,9 +177,13 @@ func decodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, err
 	var previousInputSeq uint16
 	var previousInputTS uint32
 	var mu sync.Mutex
+	var closed bool
 	converted.Input = func(packet *rtp.Packet) {
 		mu.Lock()
 		defer mu.Unlock()
+		if closed {
+			return
+		}
 		if !started {
 			timestamp = uint32(uint64(packet.Timestamp) * uint64(dst.ClockRate) / uint64(sourceRate))
 			started = true
@@ -206,7 +226,13 @@ func decodeTrack(source *core.Receiver, wanted *core.Codec) (*core.Receiver, err
 		emitDecoded(samples, packet, dst, convert, forward, &sequence, &timestamp)
 	}
 	converted.Node.WithParent(&source.Node)
-	return converted, nil
+	return &Track{Receiver: converted, close: sync.OnceFunc(func() {
+		mu.Lock()
+		closed = true
+		decoder.Close()
+		mu.Unlock()
+		converted.Close()
+	})}, nil
 }
 
 func emitDecoded(samples []int16, packet *rtp.Packet, dst *core.Codec, convert func([]byte) []byte, forward core.HandlerFunc, sequence *uint16, timestamp *uint32) {
