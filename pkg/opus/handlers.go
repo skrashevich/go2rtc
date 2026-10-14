@@ -59,7 +59,7 @@ func encodeHandler(dst, src *core.Codec, handler core.HandlerFunc) (core.Handler
 	if err != nil {
 		return nil, err
 	}
-	convert := transcodePCM(&core.Codec{Name: core.CodecPCML, ClockRate: 48000, Channels: dst.Channels}, src)
+	convert := pcm.TranscodeChannels(&core.Codec{Name: core.CodecPCML, ClockRate: 48000, Channels: dst.Channels}, src)
 	frameBytes := 960 * int(dst.Channels) * 2
 	var pending []byte
 	var sequence uint16
@@ -102,7 +102,7 @@ func decodeHandler(dst, src *core.Codec, handler core.HandlerFunc) (core.Handler
 	if err != nil {
 		return nil, err
 	}
-	convert := transcodePCM(dst, &core.Codec{Name: core.CodecPCML, ClockRate: 48000, Channels: dst.Channels})
+	convert := pcm.TranscodeChannels(dst, &core.Codec{Name: core.CodecPCML, ClockRate: 48000, Channels: dst.Channels})
 	sourceRate := src.ClockRate
 	if sourceRate == 0 {
 		sourceRate = 48000
@@ -160,31 +160,4 @@ func decodeHandler(dst, src *core.Codec, handler core.HandlerFunc) (core.Handler
 	}, nil
 }
 
-// The shared PCM converter downmixes before resampling. Keep independent
-// resampler state for each channel when both input and output are stereo.
-func transcodePCM(dst, src *core.Codec) func([]byte) []byte {
-	if dst.Name == src.Name && dst.ClockRate == src.ClockRate && dst.Channels == src.Channels {
-		return func(data []byte) []byte { return data }
-	}
-	if src.Channels != 2 || dst.Channels != 2 {
-		return pcm.Transcode(dst, src)
-	}
-	monoSrc, monoDst := src.Clone(), dst.Clone()
-	monoSrc.Channels, monoDst.Channels = 1, 1
-	left, right := pcm.Transcode(monoDst, monoSrc), pcm.Transcode(monoDst, monoSrc)
-	inBytes, outBytes := pcm.BytesPerSample(src), pcm.BytesPerSample(dst)
-	return func(data []byte) []byte {
-		l, r := make([]byte, len(data)/2), make([]byte, len(data)/2)
-		for i := 0; i < len(data)/2; i += inBytes {
-			copy(l[i:i+inBytes], data[2*i:2*i+inBytes])
-			copy(r[i:i+inBytes], data[2*i+inBytes:2*i+2*inBytes])
-		}
-		l, r = left(l), right(r)
-		out := make([]byte, min(len(l), len(r))*2)
-		for i := 0; i < len(out)/2; i += outBytes {
-			copy(out[2*i:2*i+outBytes], l[i:i+outBytes])
-			copy(out[2*i+outBytes:2*i+2*outBytes], r[i:i+outBytes])
-		}
-		return out
-	}
-}
+func isPCM(name string) bool { return name == core.CodecPCM || name == core.CodecPCML }

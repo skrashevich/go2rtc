@@ -71,7 +71,7 @@ streams:
   dahua1:
     - rtsp://admin:password@192.168.1.123/cam/realmonitor?channel=1&subtype=0
     - ffmpeg:dahua1#video=h264#hardware  # if your camera doesn't support H264, important for HomeKit
-    # PCMA/PCMU/PCM audio converts to Opus automatically; use FFmpeg for AAC-only audio
+    # PCMA/PCMU/PCM/AAC-LC audio converts to Opus automatically
 
 homekit:
   dahua1:                   # same stream ID from streams list
@@ -82,7 +82,7 @@ homekit:
     speaker: true           # enable 2-way audio (default: false, enable only if camera has a speaker)
 ```
 
-HomeKit uses Opus audio. A camera with PCMA, PCMU, or PCM audio needs no extra source for audio conversion. If it sends only AAC, add an FFmpeg Opus source such as `ffmpeg:dahua1#audio=opus`.
+HomeKit uses Opus audio. A camera with PCMA, PCMU, PCM, or AAC-LC audio needs no extra source for audio conversion. For AAC-ELD or HE-AAC, add an FFmpeg Opus source such as `ffmpeg:dahua1#audio=opus`.
 
 ### HKSV (HomeKit Secure Video)
 

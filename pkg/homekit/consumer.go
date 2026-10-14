@@ -7,6 +7,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/AlexxIT/go2rtc/pkg/audio"
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/h264"
 	"github.com/AlexxIT/go2rtc/pkg/hap/camera"
@@ -164,7 +165,7 @@ func (c *Consumer) Start() error {
 }
 
 func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
+	return audio.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *Consumer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -241,5 +242,5 @@ func toDuration(seconds float32) time.Duration {
 }
 
 func (c *Consumer) GetMedias() []*core.Media {
-	return opus.WithTranscoding(c.Medias)
+	return audio.WithTranscoding(c.Medias)
 }

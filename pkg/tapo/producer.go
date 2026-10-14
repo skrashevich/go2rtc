@@ -5,7 +5,6 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 )
 
 func (c *Client) GetMedias() []*core.Media {
@@ -36,7 +35,7 @@ func (c *Client) GetMedias() []*core.Media {
 		}
 	}
 
-	return opus.WithTranscoding(c.medias)
+	return c.medias
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {

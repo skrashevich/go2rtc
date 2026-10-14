@@ -5,16 +5,11 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/aac"
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/tutk"
 	"github.com/pion/rtp"
 )
 
 func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(p.Medias, media, codec, track, p.addTrack)
-}
-
-func (p *Producer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	if err := p.client.StartIntercom(); err != nil {
 		return fmt.Errorf("wyze: failed to enable intercom: %w", err)
 	}
@@ -57,8 +52,4 @@ func (p *Producer) addTrack(media *core.Media, codec *core.Codec, track *core.Re
 	p.Senders = append(p.Senders, sender)
 
 	return nil
-}
-
-func (p *Producer) GetMedias() []*core.Media {
-	return opus.WithTranscoding(p.Medias)
 }

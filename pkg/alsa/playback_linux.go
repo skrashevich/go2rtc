@@ -5,7 +5,6 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/alsa/device"
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	"github.com/pion/rtp"
 )
@@ -43,10 +42,6 @@ func (p *Playback) GetTrack(media *core.Media, codec *core.Codec) (*core.Receive
 }
 
 func (p *Playback) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(p.Medias, media, codec, track, p.addTrack)
-}
-
-func (p *Playback) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	src := track.Codec
 	dst := &core.Codec{
 		Name:      core.CodecPCML,
@@ -86,8 +81,4 @@ func (p *Playback) Start() (err error) {
 func (p *Playback) Stop() error {
 	p.closed.Done(nil)
 	return p.Connection.Stop()
-}
-
-func (p *Playback) GetMedias() []*core.Media {
-	return opus.WithTranscoding(p.Medias)
 }

@@ -4,23 +4,18 @@ import (
 	"encoding/json"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
 func (c *Client) GetMedias() []*core.Media {
-	return opus.WithTranscoding(c.medias)
+	return c.medias
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {
 	return nil, core.ErrCantGetTrack
 }
 
-func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(c.medias, media, codec, track, c.addTrack)
-}
-
-func (c *Client) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (c *Client) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	if c.sender == nil {
 		c.sender = core.NewSender(media, track.Codec)
 		c.sender.Handler = func(packet *rtp.Packet) {

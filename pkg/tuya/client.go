@@ -10,7 +10,6 @@ import (
 	"sync"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/webrtc"
 	"github.com/pion/rtp"
 	pion "github.com/pion/webrtc/v4"
@@ -334,7 +333,7 @@ func Dial(rawURL string) (core.Producer, error) {
 }
 
 func (c *Client) GetMedias() []*core.Media {
-	return opus.WithTranscoding(webrtc.WithResampling(c.conn.Medias))
+	return c.conn.GetMedias()
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {
@@ -342,10 +341,6 @@ func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver,
 }
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(webrtc.WithResampling(c.conn.Medias), media, codec, track, c.addTrack)
-}
-
-func (c *Client) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	localTrack := c.conn.GetSenderTrack(media.ID)
 	if localTrack == nil {
 		return errors.New("webrtc: can't get track")

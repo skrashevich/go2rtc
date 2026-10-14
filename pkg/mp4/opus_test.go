@@ -2,6 +2,8 @@ package mp4_test
 
 import (
 	"bytes"
+	"github.com/AlexxIT/go2rtc/pkg/aac"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -56,18 +58,34 @@ func testOpusToFLAC(t *testing.T, channels int) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	testToFLAC(t, &core.Codec{Name: core.CodecOpus, ClockRate: 48000, Channels: uint8(channels)}, data, mp4.ParseQuery(map[string][]string{"mp4": {"flac"}}), 48000, 960)
+}
+
+func TestAACToMP4FLAC(t *testing.T) {
+	data, err := os.ReadFile("../audio/testdata/stereo.aac")
+	if err != nil {
+		t.Fatal(err)
+	}
+	codec := aac.ADTSToCodec(data)
+	codec.PayloadType = core.PayloadTypeRAW
+	data = data[7:aac.ReadADTSSize(data)]
+	testToFLAC(t, codec, data, mp4.ParseQuery(map[string][]string{"audio": {"pcml"}}), 44100, 1024)
+}
+
+func testToFLAC(t *testing.T, codec *core.Codec, data []byte, medias []*core.Media, rate, durationExpected uint32) {
+	t.Helper()
 	prod := &opusTestProducer{Connection: core.Connection{Medias: []*core.Media{{
 		Kind: core.KindAudio, Direction: core.DirectionRecvonly,
-		Codecs: []*core.Codec{{Name: core.CodecOpus, ClockRate: 48000, Channels: uint8(channels)}},
+		Codecs: []*core.Codec{codec},
 	}}}}
-	cons := mp4.NewConsumer(mp4.ParseQuery(map[string][]string{"mp4": {"flac"}}))
+	cons := mp4.NewConsumer(medias)
 	stream := streams.NewStream(nil)
 	stream.AddProducer(prod)
 	if err := stream.AddConsumer(cons); err != nil {
 		t.Fatal(err)
 	}
 	defer stream.RemoveConsumer(cons)
-	if len(cons.Senders) != 1 || cons.Senders[0].Codec.Name != core.CodecFLAC || cons.Senders[0].Codec.ClockRate != 48000 || cons.Senders[0].Codec.Channels != 1 {
+	if len(cons.Senders) != 1 || cons.Senders[0].Codec.Name != core.CodecFLAC || cons.Senders[0].Codec.ClockRate != rate || cons.Senders[0].Codec.Channels != 1 {
 		t.Fatalf("MP4 senders = %v; want FLAC", cons.Senders)
 	}
 	output := &opusTestWriter{init: make(chan struct{}), media: make(chan struct{})}
@@ -103,14 +121,14 @@ func testOpusToFLAC(t *testing.T, channels int) {
 	}
 	var duration uint32
 	for _, atom := range atoms {
-		if audio, ok := atom.(*iso.AtomAudio); ok && (audio.Channels != 1 || audio.SampleRate != 48000) {
+		if audio, ok := atom.(*iso.AtomAudio); ok && (audio.Channels != 1 || audio.SampleRate != rate) {
 			t.Fatalf("FLAC metadata: %+v", audio)
 		}
 		if header, ok := atom.(*iso.AtomTfhd); ok {
 			duration = header.SampleDuration
 		}
 	}
-	if duration != 960 {
-		t.Fatalf("20ms FLAC fragment duration = %d, want 960 samples", duration)
+	if duration != durationExpected {
+		t.Fatalf("FLAC fragment duration = %d, want %d samples", duration, durationExpected)
 	}
 }

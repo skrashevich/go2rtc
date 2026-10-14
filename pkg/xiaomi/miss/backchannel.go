@@ -9,11 +9,7 @@ import (
 	"github.com/pion/rtp"
 )
 
-func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(p.Medias, media, codec, track, p.addTrack)
-}
-
-func (p *Producer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (p *Producer) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	if err := p.client.StartSpeaker(); err != nil {
 		return err
 	}
@@ -75,8 +71,4 @@ func (p *Producer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiv
 	sender.HandleRTP(track)
 	p.Senders = append(p.Senders, sender)
 	return nil
-}
-
-func (p *Producer) GetMedias() []*core.Media {
-	return opus.WithTranscoding(p.Medias)
 }

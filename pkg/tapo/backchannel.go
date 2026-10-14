@@ -6,15 +6,10 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
-func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(c.medias, media, codec, track, c.addTrack)
-}
-
-func (c *Client) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
+func (c *Client) AddTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	if c.sender == nil {
 		if err := c.SetupBackchannel(); err != nil {
 			return err

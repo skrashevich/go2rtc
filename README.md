@@ -123,7 +123,7 @@ Ultimate camera streaming application with support for dozens formats and protoc
 - [streaming output](#streaming-output) in all popular formats
 - [streaming ingest](#streaming-ingest) in a number of popular formats
 - [publish](#publish-stream) any source to popular streaming services (YouTube, Telegram)
-- on-the-fly audio transcoding between Opus and PCM/G.711; other transcoding via [FFmpeg](internal/ffmpeg/README.md)
+- on-the-fly audio transcoding between Opus and PCM/G.711, and AAC-LC decoding; other transcoding via [FFmpeg](internal/ffmpeg/README.md)
 - [two-way audio](#two-way-audio) support for many formats
 - [streaming audio](#stream-to-camera) to all cameras with [two-way audio](#two-way-audio) support
 - mixing tracks from different sources to single stream
@@ -473,7 +473,7 @@ Some examples:
 
 **Audio**
 
-- go2rtc supports [automatic conversion](#built-in-transcoding) of `PCMA/PCMU/PCM/Opus` audio to `FLAC` for MSE/MP4/HLS when FLAC is requested
+- go2rtc supports [automatic conversion](#built-in-transcoding) of `PCMA/PCMU/PCM/Opus` audio to `FLAC` for MSE/MP4/HLS when FLAC is requested; an AAC source can also be decoded when only PCM/FLAC output is selected (for example, `?audio=pcml`)
 - **WebRTC** audio codecs: `PCMU/8000`, `PCMA/8000`, `OPUS/48000/2`
 - `OPUS` and `MP3` inside **MP4** are part of the standard, but some players do not support them anyway (especially Apple)
 
@@ -485,9 +485,9 @@ Some examples:
 
 ### Built-in transcoding
 
-WebRTC, HomeKit, RTSP, MP4 and WebCodecs consumers can automatically convert audio between Opus and `PCM`, `PCML`, `PCMA` or `PCMU`. Supported camera backchannels and audio outputs also accept Opus for two-way audio and playback. Sources are tried in their configured order; place a preferred direct source first. Opus sources can also be decoded to PCM and packaged as FLAC for MSE/MP4/HLS when the client requests FLAC. The conversion uses [go-opus v0.1.1](https://github.com/skrashevich/go-opus/releases/tag/v0.1.1) and needs no FFmpeg process or extra stream source. See [Opus conversion details](pkg/opus/README.md).
+WebRTC, HomeKit, RTSP, MP4 and WebCodecs consumers can automatically convert audio between Opus and `PCM`, `PCML`, `PCMA` or `PCMU`. Supported camera backchannels and audio outputs also accept Opus for two-way audio and playback. AAC-LC sources can also be decoded to PCM/G.711 or converted to Opus through PCM using [go-aac](https://github.com/skrashevich/go-aac). Sources are tried in their configured order; place a preferred direct source first. Opus sources can also be decoded to PCM and packaged as FLAC for MSE/MP4/HLS when the client requests FLAC. The conversion uses [go-opus v0.1.1](https://github.com/skrashevich/go-opus/releases/tag/v0.1.1) and needs no FFmpeg process or extra stream source. See [audio conversion details](pkg/audio/README.md).
 
-Other codec conversions remain available through [FFmpeg](internal/ffmpeg/README.md), including [hardware acceleration](https://github.com/AlexxIT/go2rtc/wiki/Hardware-acceleration). Built-in audio conversions are enabled automatically.
+AAC encoding, AAC-ELD and HE-AAC still need FFmpeg. Other codec conversions remain available through [FFmpeg](internal/ffmpeg/README.md), including [hardware acceleration](https://github.com/AlexxIT/go2rtc/wiki/Hardware-acceleration). Built-in audio conversions are enabled automatically.
 
 **PCM for MSE/MP4/HLS**
 
@@ -495,7 +495,8 @@ Go2rtc can pack `PCMA`, `PCMU` and `PCM` codecs into an MP4 container so that th
 
 ```text
 PCMA/PCMU => PCM => FLAC => MSE/MP4/HLS
-Opus => PCM => FLAC => MSE/MP4/HLS (when FLAC is requested)
+Opus/AAC-LC => PCM => FLAC => MSE/MP4/HLS (when FLAC is requested)
+AAC-LC => PCM => Opus/G.711
 ```
 
 **Resample PCMA/PCMU for WebRTC**
@@ -535,7 +536,7 @@ streams:
 
 **go2rtc** automatically matches codecs for your browser across all of your stream sources and converts audio when needed. This is called **multi-source two-way codec negotiation**, and it's one of the main features of this app.
 
-**PS.** You can select `PCMA` instead of `PCMU` and still use the direct browser match. If the camera sends only `AAC`, Opus conversion requires an FFmpeg source. You can also select `AAC` for the main stream and `PCMU` for the second stream and add both RTSP sources to YAML config.
+**PS.** You can select `PCMA` instead of `PCMU` and still use the direct browser match. AAC-LC camera audio can be converted to Opus automatically; AAC-ELD and HE-AAC still require an FFmpeg source. You can also select `AAC` for the main stream and `PCMU` for the second stream and add both RTSP sources to YAML config.
 
 ## Security
 

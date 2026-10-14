@@ -7,8 +7,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/AlexxIT/go2rtc/pkg/audio"
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	"github.com/AlexxIT/go2rtc/pkg/pcm/s16le"
 	"github.com/pion/rtp"
@@ -235,7 +235,7 @@ func newMicConsumer(onData func(chunk []byte)) *micConsumer {
 }
 
 func (c *micConsumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
+	return audio.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *micConsumer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -280,5 +280,5 @@ func repack(handler core.HandlerFunc) core.HandlerFunc {
 }
 
 func (c *micConsumer) GetMedias() []*core.Media {
-	return opus.WithTranscoding(c.Medias)
+	return audio.WithTranscoding(c.Medias)
 }

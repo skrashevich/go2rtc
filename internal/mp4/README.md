@@ -44,7 +44,7 @@ data:
 
 Record from service call to the future. Doesn't support loopback.
 
-- `mp4=flac` - converts PCMA/PCMU/PCM audio to FLAC and decodes Opus to FLAC when no directly compatible audio track is available
+- `mp4=flac` - converts PCMA/PCMU/PCM audio to FLAC and decodes Opus to FLAC; native AAC remains passthrough. Select `audio=pcml` instead to decode AAC-LC to FLAC
 - `filename=record.mp4` - set name for downloaded file
 
 ```yaml

@@ -2,7 +2,6 @@ package wav
 
 import (
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/shell"
 	"github.com/pion/rtp"
 )
@@ -42,10 +41,6 @@ func (c *Backchannel) GetTrack(media *core.Media, codec *core.Codec) (*core.Rece
 }
 
 func (c *Backchannel) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
-}
-
-func (c *Backchannel) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	wr, err := c.cmd.StdinPipe()
 	if err != nil {
 		return err
@@ -69,8 +64,4 @@ func (c *Backchannel) addTrack(media *core.Media, codec *core.Codec, track *core
 
 func (c *Backchannel) Start() error {
 	return c.cmd.Run()
-}
-
-func (c *Backchannel) GetMedias() []*core.Media {
-	return opus.WithTranscoding(c.Medias)
 }

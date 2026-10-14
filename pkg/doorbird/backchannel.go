@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
@@ -74,10 +73,6 @@ func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver,
 }
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
-}
-
-func (c *Client) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
 	sender := core.NewSender(media, track.Codec)
 
 	sender.Handler = func(pkt *rtp.Packet) {
@@ -97,8 +92,4 @@ func (c *Client) Start() (err error) {
 	b := make([]byte, 1)
 	_, err = c.conn.Read(b)
 	return
-}
-
-func (c *Client) GetMedias() []*core.Media {
-	return opus.WithTranscoding(c.Medias)
 }
