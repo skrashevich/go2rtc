@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
 func (c *Client) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.medias)
+	return opus.WithTranscoding(c.medias)
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {
@@ -16,7 +17,7 @@ func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver,
 }
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.medias, media, codec, track, c.addTrack)
 }
 
 func (c *Client) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
@@ -43,7 +44,6 @@ func (c *Client) Start() (err error) {
 }
 
 func (c *Client) Stop() (err error) {
-	defer c.audio.Close()
 	if c.sender != nil {
 		c.sender.Close()
 	}

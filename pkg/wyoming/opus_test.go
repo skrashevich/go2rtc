@@ -7,8 +7,8 @@ import (
 
 	"github.com/AlexxIT/go2rtc/internal/streams"
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
+	goopus "github.com/skrashevich/go-opus"
 )
 
 type opusSource struct {
@@ -51,12 +51,13 @@ func TestOpusPlaybackAndBackchannel(t *testing.T) {
 				}
 				defer stream.RemoveConsumer(source)
 			}
-			encoder, err := opus.NewEncoder(48000, 2, opus.ApplicationVoIP)
+			encoder, err := goopus.NewEncoder(goopus.WithChannels(2))
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer encoder.Close()
-			data, err := encoder.Encode(make([]int16, 1920))
+			data := make([]byte, 1276)
+			n, err := encoder.Encode(make([]byte, 3840), data)
+			data = data[:max(n, 0)]
 			if err != nil {
 				t.Fatal(err)
 			}

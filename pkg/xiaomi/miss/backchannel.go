@@ -10,7 +10,7 @@ import (
 )
 
 func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return p.audio.AddTrack(media, codec, track, p.addTrack)
+	return opus.AddTrack(p.Medias, media, codec, track, p.addTrack)
 }
 
 func (p *Producer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
@@ -78,5 +78,5 @@ func (p *Producer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiv
 }
 
 func (p *Producer) GetMedias() []*core.Media {
-	return p.audio.GetMedias(p.Medias)
+	return opus.WithTranscoding(p.Medias)
 }

@@ -5,12 +5,13 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/aac"
 	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/tutk"
 	"github.com/pion/rtp"
 )
 
 func (p *Producer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return p.audio.AddTrack(media, codec, track, p.addTrack)
+	return opus.AddTrack(p.Medias, media, codec, track, p.addTrack)
 }
 
 func (p *Producer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -59,10 +60,5 @@ func (p *Producer) addTrack(media *core.Media, codec *core.Codec, track *core.Re
 }
 
 func (p *Producer) GetMedias() []*core.Media {
-	return p.audio.GetMedias(p.Medias)
-}
-
-func (p *Producer) Stop() error {
-	defer p.audio.Close()
-	return p.Connection.Stop()
+	return opus.WithTranscoding(p.Medias)
 }

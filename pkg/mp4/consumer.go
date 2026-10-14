@@ -15,7 +15,6 @@ import (
 )
 
 type Consumer struct {
-	audio opus.Consumer
 	core.Connection
 	wr    *core.WriteBuffer
 	muxer *Muxer
@@ -63,7 +62,7 @@ func NewConsumer(medias []*core.Media) *Consumer {
 }
 
 func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *Consumer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
@@ -144,12 +143,21 @@ func (c *Consumer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiv
 		case core.CodecOpus, core.CodecMP3: // no changes
 		case core.CodecPCMA, core.CodecPCMU, core.CodecPCM, core.CodecPCML:
 			codec.Name = core.CodecFLAC
-			if codec.Channels == 2 {
-				// hacky way for support two channels audio
-				codec.Channels = 1
-				codec.ClockRate *= 2
-			}
 			handler.Handler = pcm.FLACEncoder(track.Codec.Name, codec.ClockRate, handler.Handler)
+			if codec.Channels == 2 {
+				// The verbatim FLAC writer is mono. Downmix samples while
+				// preserving the RTP clock, rather than doubling the rate.
+				codec.Channels = 1
+				mono := track.Codec.Clone()
+				mono.Channels = 1
+				convert := pcm.Transcode(mono, track.Codec)
+				forward := handler.Handler
+				handler.Handler = func(packet *rtp.Packet) {
+					clone := *packet
+					clone.Payload = convert(packet.Payload)
+					forward(&clone)
+				}
+			}
 
 		default:
 			handler.Handler = nil
@@ -195,10 +203,5 @@ func (c *Consumer) WriteTo(wr io.Writer) (int64, error) {
 }
 
 func (c *Consumer) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
-}
-
-func (c *Consumer) Stop() error {
-	defer c.audio.Close()
-	return c.Connection.Stop()
+	return opus.WithTranscoding(c.Medias)
 }

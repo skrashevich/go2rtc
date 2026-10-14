@@ -7,14 +7,12 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtcp"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 )
 
 type Conn struct {
-	audio opus.Consumer
 	core.Connection
 	core.Listener
 
@@ -154,7 +152,6 @@ func (c *Conn) MarshalJSON() ([]byte, error) {
 }
 
 func (c *Conn) Close() error {
-	c.audio.Close()
 	c.closed.Done(nil)
 	return c.pc.Close()
 }

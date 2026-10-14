@@ -6,11 +6,12 @@ import (
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
 	"github.com/AlexxIT/go2rtc/pkg/mpegts"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 )
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.medias, media, codec, track, c.addTrack)
 }
 
 func (c *Client) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {

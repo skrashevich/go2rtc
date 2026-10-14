@@ -17,7 +17,6 @@ import (
 )
 
 type Client struct {
-	audio     opus.Consumer
 	api       TuyaAPI
 	conn      *webrtc.Conn
 	pc        *pion.PeerConnection
@@ -335,7 +334,7 @@ func Dial(rawURL string) (core.Producer, error) {
 }
 
 func (c *Client) GetMedias() []*core.Media {
-	return c.audio.GetMedias(webrtc.WithResampling(c.conn.Medias))
+	return opus.WithTranscoding(webrtc.WithResampling(c.conn.Medias))
 }
 
 func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver, error) {
@@ -343,7 +342,7 @@ func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver,
 }
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(webrtc.WithResampling(c.conn.Medias), media, codec, track, c.addTrack)
 }
 
 func (c *Client) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -451,7 +450,6 @@ func (c *Client) Start() error {
 }
 
 func (c *Client) Stop() error {
-	defer c.audio.Close()
 	if c.closed {
 		return nil
 	}

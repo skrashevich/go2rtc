@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
+	goopus "github.com/skrashevich/go-opus"
 )
 
 func TestConsumerOpusRTP(t *testing.T) {
@@ -48,13 +48,13 @@ func TestConsumerOpusRTP(t *testing.T) {
 	if header[0] != '$' || packet.PayloadType != 96 {
 		t.Fatal("wrong RTSP framing")
 	}
-	d, err := opus.NewDecoder(48000, 1)
+	d, err := goopus.NewDecoderWithOutput(48000, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer d.Close()
-	samples, err := d.Decode(packet.Payload, false)
-	if err != nil || len(samples) != 960 {
+	samples := make([]int16, 960)
+	n, err := d.DecodeToInt16(packet.Payload, samples)
+	if err != nil || n != 960 {
 		t.Fatalf("Opus output: %d samples, %v", len(samples), err)
 	}
 	c.Senders[0].Close()

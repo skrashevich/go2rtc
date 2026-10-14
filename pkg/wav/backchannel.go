@@ -8,7 +8,6 @@ import (
 )
 
 type Backchannel struct {
-	audio opus.Consumer
 	core.Connection
 	cmd *shell.Command
 }
@@ -43,7 +42,7 @@ func (c *Backchannel) GetTrack(media *core.Media, codec *core.Codec) (*core.Rece
 }
 
 func (c *Backchannel) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *Backchannel) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -73,10 +72,5 @@ func (c *Backchannel) Start() error {
 }
 
 func (c *Backchannel) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
-}
-
-func (c *Backchannel) Stop() error {
-	defer c.audio.Close()
-	return c.Connection.Stop()
+	return opus.WithTranscoding(c.Medias)
 }

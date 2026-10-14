@@ -8,17 +8,18 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/h264"
 	"github.com/AlexxIT/go2rtc/pkg/h265"
 	"github.com/AlexxIT/go2rtc/pkg/mjpeg"
+	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/pcm"
 	"github.com/pion/rtp"
 )
 
 func (c *Conn) GetMedias() []*core.Media {
 	//core.Assert(c.Medias != nil)
-	return c.audio.GetMedias(c.Medias)
+	return opus.WithTranscoding(c.Medias)
 }
 
 func (c *Conn) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *Conn) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) (err error) {

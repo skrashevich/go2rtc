@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/pion/rtp"
 	pion "github.com/pion/webrtc/v4"
+	goopus "github.com/skrashevich/go-opus"
 )
 
 type opusWriter chan *rtp.Packet
@@ -52,11 +52,10 @@ func TestConsumerEncodesOpus(t *testing.T) {
 	if len(c.Medias[0].Codecs) != 1 {
 		t.Fatal("local input aliases leaked into SDP codecs")
 	}
-	d, err := opus.NewDecoder(48000, 2)
+	d, err := goopus.NewDecoderWithOutput(48000, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer d.Close()
 	for i := range 2 {
 		source.WriteRTP(&rtp.Packet{Header: rtp.Header{Version: 2, Timestamp: uint32(i * 160)}, Payload: make([]byte, 160)})
 		select {
@@ -64,8 +63,9 @@ func TestConsumerEncodesOpus(t *testing.T) {
 			if packet.PayloadType != 111 || packet.Timestamp != uint32(i*960) {
 				t.Fatalf("wrong RTP header: %+v", packet.Header)
 			}
-			samples, err := d.Decode(packet.Payload, false)
-			if err != nil || len(samples) != 1920 {
+			samples := make([]int16, 1920)
+			n, err := d.DecodeToInt16(packet.Payload, samples)
+			if err != nil || n != 960 {
 				t.Fatalf("Opus output: %d samples, %v", len(samples), err)
 			}
 		case <-time.After(2 * time.Second):

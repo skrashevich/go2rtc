@@ -12,7 +12,6 @@ import (
 )
 
 type Client struct {
-	audio opus.Consumer
 	core.Connection
 	conn net.Conn
 }
@@ -58,7 +57,7 @@ func Dial(rawURL string) (*Client, error) {
 	}
 
 	return &Client{
-		Connection: core.Connection{
+		core.Connection{
 			ID:         core.NewID(),
 			FormatName: "doorbird",
 			Protocol:   "http",
@@ -66,7 +65,7 @@ func Dial(rawURL string) (*Client, error) {
 			Medias:     medias,
 			Transport:  conn,
 		},
-		conn: conn,
+		conn,
 	}, nil
 }
 
@@ -75,7 +74,7 @@ func (c *Client) GetTrack(media *core.Media, codec *core.Codec) (*core.Receiver,
 }
 
 func (c *Client) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *Client) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -101,10 +100,5 @@ func (c *Client) Start() (err error) {
 }
 
 func (c *Client) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
-}
-
-func (c *Client) Stop() error {
-	defer c.audio.Close()
-	return c.Connection.Stop()
+	return opus.WithTranscoding(c.Medias)
 }

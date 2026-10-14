@@ -11,7 +11,6 @@ import (
 )
 
 type Playback struct {
-	audio opus.Consumer
 	core.Connection
 	dev    *device.Device
 	closed core.Waiter
@@ -44,7 +43,7 @@ func (p *Playback) GetTrack(media *core.Media, codec *core.Codec) (*core.Receive
 }
 
 func (p *Playback) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return p.audio.AddTrack(media, codec, track, p.addTrack)
+	return opus.AddTrack(p.Medias, media, codec, track, p.addTrack)
 }
 
 func (p *Playback) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -85,11 +84,10 @@ func (p *Playback) Start() (err error) {
 }
 
 func (p *Playback) Stop() error {
-	defer p.audio.Close()
 	p.closed.Done(nil)
 	return p.Connection.Stop()
 }
 
 func (p *Playback) GetMedias() []*core.Media {
-	return p.audio.GetMedias(p.Medias)
+	return opus.WithTranscoding(p.Medias)
 }

@@ -11,14 +11,13 @@ import (
 )
 
 type Backchannel struct {
-	audio opus.Consumer
 	core.Connection
 	api *API
 }
 
 func newBackchannel(conn net.Conn) *Backchannel {
 	return &Backchannel{
-		Connection: core.Connection{
+		core.Connection{
 			ID:         core.NewID(),
 			FormatName: "wyoming",
 			Medias: []*core.Media{
@@ -32,7 +31,7 @@ func newBackchannel(conn net.Conn) *Backchannel {
 			},
 			Transport: conn,
 		},
-		api: NewAPI(conn),
+		NewAPI(conn),
 	}
 }
 
@@ -41,7 +40,7 @@ func (b *Backchannel) GetTrack(media *core.Media, codec *core.Codec) (*core.Rece
 }
 
 func (b *Backchannel) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return b.audio.AddTrack(media, codec, track, b.addTrack)
+	return opus.AddTrack(b.Medias, media, codec, track, b.addTrack)
 }
 
 func (b *Backchannel) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -69,10 +68,5 @@ func (b *Backchannel) Start() error {
 }
 
 func (b *Backchannel) GetMedias() []*core.Media {
-	return b.audio.GetMedias(b.Medias)
-}
-
-func (b *Backchannel) Stop() error {
-	defer b.audio.Close()
-	return b.Connection.Stop()
+	return opus.WithTranscoding(b.Medias)
 }

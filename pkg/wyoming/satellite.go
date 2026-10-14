@@ -209,7 +209,6 @@ func (s *satellite) playAudio(codec *core.Codec, rd io.Reader) bool {
 }
 
 type micConsumer struct {
-	audio opus.Consumer
 	core.Connection
 	onData  func(chunk []byte)
 	onClose func()
@@ -236,7 +235,7 @@ func newMicConsumer(onData func(chunk []byte)) *micConsumer {
 }
 
 func (c *micConsumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *micConsumer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -258,7 +257,6 @@ func (c *micConsumer) addTrack(media *core.Media, codec *core.Codec, track *core
 }
 
 func (c *micConsumer) Stop() error {
-	defer c.audio.Close()
 	if c.onClose != nil {
 		c.onClose()
 	}
@@ -282,5 +280,5 @@ func repack(handler core.HandlerFunc) core.HandlerFunc {
 }
 
 func (c *micConsumer) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
+	return opus.WithTranscoding(c.Medias)
 }

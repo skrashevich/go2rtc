@@ -10,7 +10,6 @@ import (
 // Keep Opus conversion at the exec boundary: pkg/opus itself uses pkg/pcm.
 type backchannel struct {
 	*pcm.Backchannel
-	audio opus.Consumer
 }
 
 func newBackchannel(cmd *shell.Command, format string) (core.Producer, error) {
@@ -22,14 +21,9 @@ func newBackchannel(cmd *shell.Command, format string) (core.Producer, error) {
 }
 
 func (c *backchannel) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
+	return opus.WithTranscoding(c.Medias)
 }
 
 func (c *backchannel) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.Backchannel.AddTrack)
-}
-
-func (c *backchannel) Stop() error {
-	defer c.audio.Close()
-	return c.Backchannel.Stop()
+	return opus.AddTrack(c.Medias, media, codec, track, c.Backchannel.AddTrack)
 }

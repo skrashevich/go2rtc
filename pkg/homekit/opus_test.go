@@ -9,6 +9,7 @@ import (
 	"github.com/AlexxIT/go2rtc/pkg/opus"
 	"github.com/AlexxIT/go2rtc/pkg/srtp"
 	"github.com/pion/rtp"
+	goopus "github.com/skrashevich/go-opus"
 )
 
 func TestConsumerEncodesOpus(t *testing.T) {
@@ -48,4 +49,43 @@ func TestConsumerEncodesOpus(t *testing.T) {
 	}
 	sender.Close()
 	sender.Wait()
+}
+
+func TestBackchannelClockAndLoss(t *testing.T) {
+	local, remote := net.Pipe()
+	defer remote.Close()
+	c := NewConsumer(local, nil)
+	defer c.Stop()
+	c.audioSession = &srtp.Session{}
+	media := c.Medias[2]
+	source, err := c.GetTrack(media, media.Codecs[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var packets []*core.Packet
+	h, err := opus.TranscodeHandler(&core.Codec{Name: core.CodecPCML, ClockRate: 16000, Channels: 1}, source.Codec, func(p *core.Packet) { packets = append(packets, p) })
+	if err != nil {
+		t.Fatal(err)
+	}
+	source.AppendChild(&core.Node{Input: h})
+	e, err := goopus.NewEncoder()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := make([]byte, 1276)
+	n, err := e.Encode(make([]byte, 1920), data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, i := range []uint16{0, 2} {
+		c.audioSession.OnReadRTP(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: i, Timestamp: uint32(i) * 320}, Payload: data[:n]})
+	}
+	if len(packets) != 3 {
+		t.Fatalf("got %d output packets, want packet/PLC/packet", len(packets))
+	}
+	for i, p := range packets {
+		if p.Timestamp != uint32(i)*320 || len(p.Payload) != 640 {
+			t.Fatalf("packet %d: ts=%d payload=%d", i, p.Timestamp, len(p.Payload))
+		}
+	}
 }

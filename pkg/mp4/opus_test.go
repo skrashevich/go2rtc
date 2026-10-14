@@ -2,14 +2,17 @@ package mp4_test
 
 import (
 	"bytes"
-	"github.com/AlexxIT/go2rtc/internal/streams"
-	"github.com/AlexxIT/go2rtc/pkg/core"
-	"github.com/AlexxIT/go2rtc/pkg/mp4"
-	"github.com/AlexxIT/go2rtc/pkg/opus"
-	"github.com/pion/rtp"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/AlexxIT/go2rtc/internal/streams"
+	"github.com/AlexxIT/go2rtc/pkg/core"
+	"github.com/AlexxIT/go2rtc/pkg/iso"
+	"github.com/AlexxIT/go2rtc/pkg/mp4"
+	"github.com/pion/rtp"
+	goopus "github.com/skrashevich/go-opus"
 )
 
 type opusTestProducer struct{ core.Connection }
@@ -38,18 +41,24 @@ func (w *opusTestWriter) Write(p []byte) (int, error) {
 }
 
 func TestAddConsumerOpusToMP4FLAC(t *testing.T) {
-	encoder, err := opus.NewEncoder(16000, 1, opus.ApplicationVoIP)
+	for _, channels := range []int{1, 2} {
+		t.Run(strconv.Itoa(channels), func(t *testing.T) { testOpusToFLAC(t, channels) })
+	}
+}
+func testOpusToFLAC(t *testing.T, channels int) {
+	encoder, err := goopus.NewEncoder(goopus.WithChannels(channels))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer encoder.Close()
-	data, err := encoder.Encode(make([]int16, 320))
+	data := make([]byte, 1276)
+	n, err := encoder.Encode(make([]byte, 1920*channels), data)
+	data = data[:max(n, 0)]
 	if err != nil {
 		t.Fatal(err)
 	}
 	prod := &opusTestProducer{Connection: core.Connection{Medias: []*core.Media{{
 		Kind: core.KindAudio, Direction: core.DirectionRecvonly,
-		Codecs: []*core.Codec{{Name: core.CodecOpus, ClockRate: 48000, Channels: 1}},
+		Codecs: []*core.Codec{{Name: core.CodecOpus, ClockRate: 48000, Channels: uint8(channels)}},
 	}}}}
 	cons := mp4.NewConsumer(mp4.ParseQuery(map[string][]string{"mp4": {"flac"}}))
 	stream := streams.NewStream(nil)
@@ -58,7 +67,7 @@ func TestAddConsumerOpusToMP4FLAC(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer stream.RemoveConsumer(cons)
-	if len(cons.Senders) != 1 || cons.Senders[0].Codec.Name != core.CodecFLAC {
+	if len(cons.Senders) != 1 || cons.Senders[0].Codec.Name != core.CodecFLAC || cons.Senders[0].Codec.ClockRate != 48000 || cons.Senders[0].Codec.Channels != 1 {
 		t.Fatalf("MP4 senders = %v; want FLAC", cons.Senders)
 	}
 	output := &opusTestWriter{init: make(chan struct{}), media: make(chan struct{})}
@@ -87,5 +96,21 @@ func TestAddConsumerOpusToMP4FLAC(t *testing.T) {
 	}
 	if cons.Send == 0 {
 		t.Fatal("Opus to FLAC conversion produced no MP4 media payload")
+	}
+	atoms, err := iso.DecodeAtoms(output.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	var duration uint32
+	for _, atom := range atoms {
+		if audio, ok := atom.(*iso.AtomAudio); ok && (audio.Channels != 1 || audio.SampleRate != 48000) {
+			t.Fatalf("FLAC metadata: %+v", audio)
+		}
+		if header, ok := atom.(*iso.AtomTfhd); ok {
+			duration = header.SampleDuration
+		}
+	}
+	if duration != 960 {
+		t.Fatalf("20ms FLAC fragment duration = %d, want 960 samples", duration)
 	}
 }

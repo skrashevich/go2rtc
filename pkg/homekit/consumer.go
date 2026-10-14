@@ -16,7 +16,6 @@ import (
 )
 
 type Consumer struct {
-	audio opus.Consumer
 	core.Connection
 	conn net.Conn
 	srtp *srtp.Server
@@ -148,7 +147,11 @@ func (c *Consumer) GetTrack(media *core.Media, codec *core.Codec) (*core.Receive
 	c.backTrack = core.NewReceiver(media, codec)
 
 	c.audioSession.OnReadRTP = func(packet *rtp.Packet) {
-		c.backTrack.WriteRTP(packet)
+		// HAP uses a 16 kHz audio clock; other Opus paths use RFC 7587's
+		// 48 kHz clock. Normalize before forwarding the talker's packets.
+		clone := *packet
+		clone.Timestamp *= 3
+		c.backTrack.WriteRTP(&clone)
 		c.Recv += len(packet.Payload)
 	}
 
@@ -161,7 +164,7 @@ func (c *Consumer) Start() error {
 }
 
 func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 
 func (c *Consumer) addTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
@@ -216,7 +219,6 @@ func (c *Consumer) WriteTo(io.Writer) (int64, error) {
 }
 
 func (c *Consumer) Stop() error {
-	defer c.audio.Close()
 	if c.deadline != nil {
 		c.deadline.Reset(0)
 	}
@@ -239,5 +241,5 @@ func toDuration(seconds float32) time.Duration {
 }
 
 func (c *Consumer) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
+	return opus.WithTranscoding(c.Medias)
 }

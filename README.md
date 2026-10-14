@@ -485,7 +485,7 @@ Some examples:
 
 ### Built-in transcoding
 
-WebRTC, HomeKit, RTSP, MP4 and WebCodecs consumers can automatically convert audio between Opus and `PCM`, `PCML`, `PCMA` or `PCMU`. Supported camera backchannels and audio outputs also accept Opus for two-way audio and playback. Sources are tried in their configured order; place a preferred direct source first. Opus sources can also be decoded to PCM and packaged as FLAC for MSE/MP4/HLS when the client requests FLAC. The conversion uses [go-opus](https://github.com/skrashevich/go-opus) and needs no FFmpeg process or extra stream source. See [Opus conversion details](pkg/opus/README.md).
+WebRTC, HomeKit, RTSP, MP4 and WebCodecs consumers can automatically convert audio between Opus and `PCM`, `PCML`, `PCMA` or `PCMU`. Supported camera backchannels and audio outputs also accept Opus for two-way audio and playback. Sources are tried in their configured order; place a preferred direct source first. Opus sources can also be decoded to PCM and packaged as FLAC for MSE/MP4/HLS when the client requests FLAC. The conversion uses [go-opus v0.1.1](https://github.com/skrashevich/go-opus/releases/tag/v0.1.1) and needs no FFmpeg process or extra stream source. See [Opus conversion details](pkg/opus/README.md).
 
 Other codec conversions remain available through [FFmpeg](internal/ffmpeg/README.md), including [hardware acceleration](https://github.com/AlexxIT/go2rtc/wiki/Hardware-acceleration). Built-in audio conversions are enabled automatically.
 

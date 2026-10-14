@@ -24,7 +24,6 @@ import (
 const headerSize = 9
 
 type Consumer struct {
-	audio opus.Consumer
 	core.Connection
 	wr    *core.WriteBuffer
 	mu    sync.Mutex
@@ -85,11 +84,10 @@ func NewConsumer(medias []*core.Media) *Consumer {
 }
 
 func (c *Consumer) GetMedias() []*core.Media {
-	return c.audio.GetMedias(c.Medias)
+	return opus.WithTranscoding(c.Medias)
 }
-func (c *Consumer) Stop() error { defer c.audio.Close(); return c.Connection.Stop() }
 func (c *Consumer) AddTrack(media *core.Media, codec *core.Codec, track *core.Receiver) error {
-	return c.audio.AddTrack(media, codec, track, c.addTrack)
+	return opus.AddTrack(c.Medias, media, codec, track, c.addTrack)
 }
 func (c *Consumer) addTrack(media *core.Media, _ *core.Codec, track *core.Receiver) error {
 	trackID := byte(len(c.Senders))
