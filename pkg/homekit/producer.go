@@ -129,6 +129,12 @@ func (c *Client) Start() error {
 	videoCodec := trackToVideo(videoTrack, &c.videoConfig.Codecs[0], c.MaxWidth, c.MaxHeight)
 
 	audioTrack := c.trackByKind(core.KindAudio)
+	if audioTrack == nil {
+		// HomeKit negotiates audio even for video-only consumers. Keep its receiver
+		// ready so a later audio consumer can attach to the running session.
+		media := c.Medias[1]
+		audioTrack, _ = c.Connection.GetTrack(media, media.Codecs[0])
+	}
 	audioCodec := trackToAudio(audioTrack, &c.audioConfig.Codecs[0])
 
 	c.videoSession = &srtp.Session{Local: c.srtpEndpoint()}
