@@ -6,8 +6,8 @@ Consumers advertise additional input formats and convert them before their proto
 | --- | --- | --- |
 | PCM, PCML, PCMA, PCMU | Opus | WebRTC, HomeKit and clients requesting Opus |
 | Opus | PCM, PCML, PCMA, PCMU | Camera speakers and audio playback |
-| AAC-LC | PCM, PCML, PCMA, PCMU, Opus | Camera audio for WebRTC/HomeKit, speakers and audio playback |
-| Opus or AAC-LC | PCM then FLAC | FLAC-only MSE/MP4/HLS outputs, for example MP4 `?audio=pcml` |
+| AAC-LC/AAC-ELD | PCM, PCML, PCMA, PCMU, Opus | Camera audio for WebRTC/HomeKit, speakers and audio playback |
+| Opus or AAC-LC/AAC-ELD | PCM then FLAC | FLAC-only MSE/MP4/HLS outputs, for example MP4 `?audio=pcml` |
 
 No extra stream source or FFmpeg process is needed for these routes. Streams try sources in their configured order. Native codecs precede conversion aliases within each consumer; an earlier source can be converted even if a later source offers a direct match. `ANY`/`ALL` requests retain passthrough behavior. `?mp4=flac` also accepts native AAC, so an AAC source remains passthrough with that filter; request only PCM/FLAC to decode AAC.
 
@@ -20,8 +20,8 @@ Mono and stereo are supported. Concrete PCM outputs with omitted channels are mo
 ## Codec limits
 
 - [go-opus v0.1.1](https://github.com/skrashevich/go-opus/releases/tag/v0.1.1) encodes 20 ms CELT packets at 48 kHz. The decoder accepts SILK, CELT and hybrid packets, rejects duplicate/late packets and attempts PLC for up to three lost packets. Unsupported PLC durations preserve the source timeline. FEC is not requested by this adapter. HomeKit's 16 kHz talker clock is normalized to the 48 kHz Opus clock.
-- [go-aac](https://github.com/skrashevich/go-aac) decodes AAC-LC with 1024 samples per access unit and one or two channels. The adapter accepts raw/ADTS units and complete, non-interleaved MPEG4-GENERIC AAC-hbr RTP packets with 13-bit size and zero 3-bit index/delta fields. AudioSpecificConfig must be present and agree with the advertised sample rate and channel count. Fragmented RTP access units and unsupported header layouts are rejected.
-- AAC encoding, AAC-ELD, HE-AAC, MP3, multichannel audio and video conversion still require other processing such as FFmpeg. AAC-only camera speakers need AAC encoding and therefore still need FFmpeg.
+- [go-aac](https://github.com/skrashevich/go-aac) decodes AAC-LC with 1024 samples and AAC-ELD with 512/480 samples per access unit, in mono or stereo. AAC-ELD SBR and resilience tools are unsupported. The adapter accepts raw/ADTS units and complete, non-interleaved MPEG4-GENERIC AAC-hbr RTP packets with 13-bit size and zero 3-bit index/delta fields. AudioSpecificConfig must be present and agree with the advertised sample rate and channel count. HomeKit ELD uses its advertised playback clock for PCM output while retaining the source's existing decoder config for passthrough compatibility. Fragmented RTP access units and unsupported header layouts are rejected.
+- AAC encoding, ELD SBR, HE-AAC, MP3, multichannel audio and video conversion still require other processing such as FFmpeg. AAC-only camera speakers need AAC encoding and therefore still need FFmpeg.
 
 ## Implementation
 

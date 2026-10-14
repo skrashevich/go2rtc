@@ -354,11 +354,116 @@ func TestAACDestinations(t *testing.T) {
 			}
 		})
 	}
-	for _, profile := range []byte{aac.TypeAACELD, aac.TypeAACLD, 5} {
+	for _, profile := range []byte{aac.TypeAACLD, 5} {
 		invalid := aac.ConfigToCodec(aac.EncodeConfig(profile, 48000, 1, false))
 		if _, err := TranscodeHandler(&core.Codec{Name: core.CodecOpus, ClockRate: 48000, Channels: 2}, invalid, func(*core.Packet) {}); err == nil {
 			t.Fatalf("accepted AAC profile %d", profile)
 		}
+	}
+}
+
+func eldFrames(t *testing.T) (*core.Codec, [][]byte) {
+	t.Helper()
+	b, err := os.ReadFile("testdata/mono.eld")
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := aac.ConfigToCodec(b[1 : 1+int(b[0])])
+	b = b[1+int(b[0]):]
+	var frames [][]byte
+	for len(b) > 0 {
+		n := int(binary.BigEndian.Uint16(b))
+		frames = append(frames, b[2:2+n])
+		b = b[2+n:]
+	}
+	return src, frames
+}
+
+func TestELDInputsAndFrameTiming(t *testing.T) {
+	for _, format := range []string{"raw", "RTP", "HomeKit"} {
+		t.Run(format, func(t *testing.T) {
+			src, frames := eldFrames(t)
+			if format != "raw" {
+				src.PayloadType = 96
+			}
+			if format == "HomeKit" {
+				src.Name, src.ClockRate = core.CodecELD, 16000
+			}
+			var packets []*core.Packet
+			h, err := TranscodeHandler(&core.Codec{Name: core.CodecPCML, ClockRate: src.ClockRate, Channels: 1}, src, func(p *core.Packet) { packets = append(packets, p) })
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i := 0; i < len(frames); i += 2 {
+				if format == "raw" {
+					for j := range 2 {
+						h(&core.Packet{Header: packetHeader(9000 + uint32(i+j)*480), Payload: frames[i+j]})
+					}
+					continue
+				}
+				payload := []byte{0, 32}
+				for _, f := range frames[i : i+2] {
+					payload = append(payload, byte(len(f)>>5), byte(len(f)<<3))
+				}
+				for _, f := range frames[i : i+2] {
+					payload = append(payload, f...)
+				}
+				h(&core.Packet{Header: packetHeader(9000 + uint32(i)*480), Payload: payload})
+			}
+			if len(packets) != len(frames) {
+				t.Fatalf("decoded %d/%d ELD frames", len(packets), len(frames))
+			}
+			for i, p := range packets {
+				if p.Timestamp != 9000+uint32(i)*480 || len(p.Payload) != 960 {
+					t.Fatalf("ELD frame %d: ts=%d bytes=%d", i, p.Timestamp, len(p.Payload))
+				}
+			}
+		})
+	}
+}
+
+func TestHomeKitELDDestinations(t *testing.T) {
+	for _, name := range []string{core.CodecOpus, core.CodecPCMA, core.CodecPCMU, core.CodecPCM, core.CodecPCML} {
+		t.Run(name, func(t *testing.T) {
+			src, frames := eldFrames(t)
+			src.Name, src.ClockRate = core.CodecELD, 16000
+			input := &core.Media{Kind: core.KindAudio, Direction: core.DirectionRecvonly, Codecs: []*core.Codec{src}}
+			output := &core.Media{Kind: core.KindAudio, Direction: core.DirectionSendonly, Codecs: []*core.Codec{{Name: name, ClockRate: 8000, Channels: 1}}}
+			if _, codec := input.MatchMedia(WithTranscoding([]*core.Media{output})[0]); codec == nil {
+				t.Fatal("ELD source not advertised")
+			}
+			var packets []*core.Packet
+			h, err := TranscodeHandler(output.Codecs[0], src, func(p *core.Packet) { packets = append(packets, p) })
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i, f := range frames {
+				h(&core.Packet{Header: packetHeader(uint32(i) * 480), Payload: f})
+			}
+			if name == core.CodecOpus {
+				if len(packets) != 6 {
+					t.Fatalf("120 ms ELD produced %d Opus packets, want 6", len(packets))
+				}
+				for i, p := range packets {
+					if p.Timestamp != uint32(i)*960 {
+						t.Fatalf("Opus timestamp %d", p.Timestamp)
+					}
+				}
+			} else {
+				unit := 1
+				if name == core.CodecPCM || name == core.CodecPCML {
+					unit = 2
+				}
+				if len(packets) != 4 {
+					t.Fatalf("got %d packets", len(packets))
+				}
+				for i, p := range packets {
+					if p.Timestamp != uint32(i)*240 || len(p.Payload) != 240*unit {
+						t.Fatalf("PCM/G711 frame %d: ts=%d bytes=%d", i, p.Timestamp, len(p.Payload))
+					}
+				}
+			}
+		})
 	}
 }
 

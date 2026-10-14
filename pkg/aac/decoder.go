@@ -14,29 +14,39 @@ import (
 
 func newDecoder(codec *core.Codec) (*decoder.Decoder, error) {
 	conf, err := hex.DecodeString(strings.TrimSpace(core.Between(codec.FmtpLine, "config=", ";")))
-	if err != nil || len(conf) < 2 || conf[0]>>3 != TypeAACLC {
-		return nil, fmt.Errorf("aac: built-in decoder requires AAC-LC AudioSpecificConfig")
+	if err != nil || len(conf) < 2 {
+		return nil, fmt.Errorf("aac: invalid AudioSpecificConfig")
 	}
 	d := decoder.New()
 	if err = d.SetASC(conf); err != nil {
 		return nil, err
 	}
+	if d.Config.Profile != TypeAACLC && d.Config.Profile != TypeAACELD {
+		return nil, fmt.Errorf("aac: built-in decoder requires AAC-LC or AAC-ELD")
+	}
+	// HomeKit ELD advertises a playback clock separately from its decoder
+	// config (the source uses a 24 kHz ASC for FFmpeg compatibility).
+	homekit := codec.Name == core.CodecELD && d.Config.Profile == TypeAACELD
 	if d.Config.ChanConfig < 1 || d.Config.ChanConfig > 2 || d.Config.SampleRate <= 0 || d.Config.SampleIndex >= 13 ||
 		sampleRates[d.Config.SampleIndex] != uint32(d.Config.SampleRate) ||
-		codec.ClockRate != 0 && codec.ClockRate != uint32(d.Config.SampleRate) ||
+		!homekit && codec.ClockRate != 0 && codec.ClockRate != uint32(d.Config.SampleRate) ||
 		codec.Channels != 0 && codec.Channels != uint8(d.Config.ChanConfig) {
 		return nil, fmt.Errorf("aac: unsupported or inconsistent audio configuration")
 	}
 	return d, nil
 }
 
-// PCMCodec describes the interleaved S16LE output of the AAC-LC decoder.
+// PCMCodec describes the interleaved S16LE output of the AAC decoder.
 func PCMCodec(src *core.Codec) (*core.Codec, error) {
 	d, err := newDecoder(src)
 	if err != nil {
 		return nil, err
 	}
-	return &core.Codec{Name: core.CodecPCML, ClockRate: uint32(d.Config.SampleRate),
+	rate := uint32(d.Config.SampleRate)
+	if src.Name == core.CodecELD && src.ClockRate != 0 {
+		rate = src.ClockRate
+	}
+	return &core.Codec{Name: core.CodecPCML, ClockRate: rate,
 		Channels: uint8(d.Config.ChanConfig), PayloadType: core.PayloadTypeRAW}, nil
 }
 
@@ -58,6 +68,7 @@ func DecodeHandler(src *core.Codec, handler core.HandlerFunc) (core.HandlerFunc,
 		}
 	}
 	var sequence uint16
+	auTime := uint32(d.Config.FrameLength)
 	var mu sync.Mutex
 	decode := func(packet *core.Packet, payload []byte, timestamp uint32) {
 		if IsADTS(payload) {
@@ -72,7 +83,7 @@ func DecodeHandler(src *core.Codec, handler core.HandlerFunc) (core.HandlerFunc,
 			payload = payload[header:]
 		}
 		samples, err := d.DecodeFrame(payload)
-		if err != nil || len(samples) != AUTime*int(d.Config.ChanConfig) {
+		if err != nil || len(samples) != int(auTime)*int(d.Config.ChanConfig) {
 			return
 		}
 		out := *packet
@@ -118,7 +129,7 @@ func DecodeHandler(src *core.Codec, handler core.HandlerFunc) (core.HandlerFunc,
 			} // fragmented/truncated AUs aren't complete frames
 			for i := 0; i < len(headers); i += 2 {
 				n := int(binary.BigEndian.Uint16(headers[i:]) >> 3)
-				decode(packet, units[:n], packet.Timestamp+uint32(i/2)*AUTime)
+				decode(packet, units[:n], packet.Timestamp+uint32(i/2)*auTime)
 				units = units[n:]
 			}
 		} else if IsADTS(payload) {
@@ -129,7 +140,7 @@ func DecodeHandler(src *core.Codec, handler core.HandlerFunc) (core.HandlerFunc,
 					return
 				}
 				decode(packet, payload[:n], timestamp)
-				payload, timestamp = payload[n:], timestamp+AUTime
+				payload, timestamp = payload[n:], timestamp+auTime
 			}
 		} else {
 			decode(packet, payload, packet.Timestamp)

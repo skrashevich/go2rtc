@@ -25,7 +25,7 @@ func WithTranscoding(medias []*core.Media) []*core.Media {
 		clone := *media
 		clone.Codecs = slices.Clone(media.Codecs)
 		for _, alias := range inputAliases {
-			if alias.Name == core.CodecAAC || target.Name == core.CodecOpus && alias.Name != core.CodecOpus || target.Name != core.CodecOpus && alias.Name == core.CodecOpus {
+			if alias.Name == core.CodecAAC || alias.Name == core.CodecELD || target.Name == core.CodecOpus && alias.Name != core.CodecOpus || target.Name != core.CodecOpus && alias.Name == core.CodecOpus {
 				appendCodec(&clone, alias)
 			}
 		}
@@ -136,7 +136,7 @@ func TranscodeHandler(dst, src *core.Codec, handler core.HandlerFunc) (core.Hand
 		return nil, core.ErrCantGetTrack
 	}
 	dst = outputCodec(dst, src)
-	if src.Name != core.CodecAAC {
+	if src.Name != core.CodecAAC && src.Name != core.CodecELD {
 		return opus.TranscodeHandler(dst, src, handler)
 	}
 	input, err := aac.PCMCodec(src)
@@ -203,12 +203,12 @@ func (c *backchannel) MarshalJSON() ([]byte, error) { return json.Marshal(c.Prod
 // Sharing these pointers also makes capability expansion idempotent.
 var inputAliases = func() []*core.Codec {
 	var aliases []*core.Codec
-	for _, name := range []string{core.CodecOpus, core.CodecPCMA, core.CodecPCMU, core.CodecPCM, core.CodecPCML, core.CodecAAC} {
+	for _, name := range []string{core.CodecOpus, core.CodecPCMA, core.CodecPCMU, core.CodecPCM, core.CodecPCML, core.CodecAAC, core.CodecELD} {
 		aliases = append(aliases, &core.Codec{Name: name})
 		rate := uint32(8000)
 		if name == core.CodecOpus {
 			rate = 48000
-		} else if isPCM(name) || name == core.CodecAAC {
+		} else if isPCM(name) || name == core.CodecAAC || name == core.CodecELD {
 			continue
 		}
 		for channels := range uint8(3) {
