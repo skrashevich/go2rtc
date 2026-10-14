@@ -21,7 +21,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/sigurn/crc16 v0.0.0-20240131213347-83fcde1e29d1
 	github.com/sigurn/crc8 v0.0.0-20220107193325-2243fe600f9f
-	github.com/skrashevich/go-aac v0.1.1-0.20261014114634-b3c8dc6cd98f
+	github.com/skrashevich/go-aac v0.1.1-0.20261014125626-800d9fa00267
 	github.com/skrashevich/go-opus v0.1.1
 	github.com/skrashevich/go-webp v0.1.0
 	github.com/stretchr/testify v1.11.1
