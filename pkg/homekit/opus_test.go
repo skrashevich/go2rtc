@@ -3,6 +3,7 @@ package homekit
 import (
 	"net"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/AlexxIT/go2rtc/pkg/core"
@@ -11,6 +12,25 @@ import (
 	"github.com/pion/rtp"
 	goopus "github.com/skrashevich/go-opus"
 )
+
+func TestProducerOpusTiming(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var packets []*rtp.Packet
+		h := timekeeper(&core.Codec{Name: core.CodecOpus, ClockRate: 16000}, func(p *rtp.Packet) { packets = append(packets, p) })
+		for i := range 50 {
+			h(&rtp.Packet{Header: rtp.Header{Version: 2, SequenceNumber: uint16(i), Timestamp: 1000 + uint32(i)*320}, Payload: []byte{0x48, 0}})
+			time.Sleep(20 * time.Millisecond)
+		}
+		if len(packets) != 50 {
+			t.Fatalf("one second of HomeKit Opus lost packets: got %d, want 50", len(packets))
+		}
+		for i, p := range packets {
+			if p.Timestamp != 1000+uint32(i)*320 || p.SequenceNumber != uint16(i) {
+				t.Fatalf("packet %d: seq=%d timestamp=%d", i, p.SequenceNumber, p.Timestamp)
+			}
+		}
+	})
+}
 
 func TestConsumerEncodesOpus(t *testing.T) {
 	local, remote := net.Pipe()

@@ -158,7 +158,7 @@ func (c *Client) Start() error {
 	}
 
 	if c.audioSession.OnReadRTP != nil {
-		c.audioSession.OnReadRTP = timekeeper(c.audioSession.OnReadRTP)
+		c.audioSession.OnReadRTP = timekeeper(audioTrack.Codec, c.audioSession.OnReadRTP)
 	}
 
 	<-deadline.C
@@ -215,7 +215,13 @@ func (c *Client) srtpEndpoint() *srtp.Endpoint {
 	}
 }
 
-func timekeeper(handler core.HandlerFunc) core.HandlerFunc {
+func timekeeper(codec *core.Codec, handler core.HandlerFunc) core.HandlerFunc {
+	if codec.Name == core.CodecOpus {
+		// Opus cameras use the negotiated HomeKit audio clock. Preserve their
+		// RTP timeline; the fixed 30 ms workaround below drops 20 ms packets.
+		return handler
+	}
+
 	const sampleRate = 16000
 	const sampleSize = 480
 
